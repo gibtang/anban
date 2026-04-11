@@ -1,0 +1,51 @@
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+
+const publicRoutes = [
+  '/login',
+  '/api/firebase-config',
+  '/api/auth',
+  '/api/telegram/webhook'
+];
+
+export function middleware(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
+
+  // Check if the current path is a public route
+  const isPublicRoute = publicRoutes.some(route => {
+    if (route.endsWith('*')) {
+      const prefix = route.slice(0, -1);
+      return pathname.startsWith(prefix);
+    }
+    return pathname === route;
+  });
+
+  // Public routes pass through
+  if (isPublicRoute) {
+    return NextResponse.next();
+  }
+
+  // Protected routes require firebase-auth-token cookie
+  const token = request.cookies.get('firebase-auth-token')?.value;
+
+  if (!token) {
+    // Redirect to login if no token is present
+    return NextResponse.redirect(new URL('/login', request.url));
+  }
+
+  // Valid token, allow access
+  return NextResponse.next();
+}
+
+export const config = {
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api (API routes)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     */
+    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+  ],
+};

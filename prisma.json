@@ -1,0 +1,11 @@
+{
+  "schema": "./prisma/schema.prisma",
+  "migrations": {
+    "seed": "bun ./prisma/seed.ts"
+  },
+  "datasources": {
+    "db": {
+      "url": "postgresql://user:password@localhost:5432/anban?schema=public"
+    }
+  }
+}

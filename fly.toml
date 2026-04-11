@@ -1,0 +1,20 @@
+app = "anban"
+primary_region = "sjc"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0
+  max_machines_running = 1
+
+[[http_service.checks]]
+  interval = "15s"
+  timeout = "10s"
+  grace_period = "5s"
+  method = "GET"
+  path = "/health"

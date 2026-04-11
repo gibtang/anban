@@ -1,0 +1,104 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  firebaseUid String   @unique
+  telegramId  String?  @unique
+  createdAt   DateTime @default(now())
+}
+
+model Board {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  ownerId   String   @db.ObjectId
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([ownerId])
+}
+
+model Column {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  position  Int
+  boardId   String   @db.ObjectId
+  createdAt DateTime @default(now())
+
+  @@index([boardId])
+}
+
+model Card {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  description String?
+  position    Int
+  columnId    String   @db.ObjectId
+  boardId     String   @db.ObjectId
+  assigneeId  String?  @db.ObjectId
+  tags        String[]
+  agentId     String?  @db.ObjectId
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([boardId])
+  @@index([columnId])
+  @@index([assigneeId])
+}
+
+model AgentConfig {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  openClawId  String
+  description String?
+  model       String?
+  enabled     Boolean  @default(true)
+  ownerId     String   @db.ObjectId
+
+  @@index([openClawId])
+  @@index([ownerId])
+}
+
+model OpenClawConnection {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  gatewayUrl String
+  apiKey     String?
+  enabled    Boolean  @default(true)
+  boardId    String   @unique @db.ObjectId
+}
+
+model TelegramConfig {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  botToken  String
+  username  String?
+  chatId    String?
+  enabled   Boolean  @default(true)
+  boardId   String   @unique @db.ObjectId
+  boardName String?  // Denormalized board name for easier lookup
+
+  @@index([boardName])
+}
+
+model AuditLog {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId     String   @db.ObjectId
+  action     String
+  entityType String
+  entityId   String
+  oldValues  Json?
+  newValues  Json?
+  timestamp  DateTime @default(now())
+
+  @@index([userId])
+  @@index([entityType, entityId])
+  @@index([timestamp])
+}

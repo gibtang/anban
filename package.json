@@ -6,12 +6,23 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:seed": "bun ./prisma/seed.ts"
   },
   "dependencies": {
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@prisma/client": "^6.19.3",
+    "firebase": "^12.12.0",
+    "firebase-admin": "^13.8.0",
+    "grammy": "^1.42.0",
+    "mongodb": "^6.21.0",
     "next": "16.2.3",
+    "prisma": "^6.19.3",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "swr": "^2.4.1",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

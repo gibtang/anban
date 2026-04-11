@@ -1,0 +1,166 @@
+{
+  "version": "1.0.0",
+  "lastScanned": 1775897718855,
+  "projectRoot": "/Users/gibsontang/code/anban",
+  "techStack": {
+    "languages": [
+      {
+        "name": "JavaScript/TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "package.json"
+        ]
+      },
+      {
+        "name": "TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "tsconfig.json"
+        ]
+      }
+    ],
+    "frameworks": [
+      {
+        "name": "next",
+        "version": "16.2.3",
+        "category": "fullstack"
+      },
+      {
+        "name": "react",
+        "version": "19.2.4",
+        "category": "frontend"
+      },
+      {
+        "name": "react-dom",
+        "version": "19.2.4",
+        "category": "frontend"
+      }
+    ],
+    "packageManager": "npm",
+    "runtime": null
+  },
+  "build": {
+    "buildCommand": "npm run build",
+    "testCommand": null,
+    "lintCommand": "npm run lint",
+    "devCommand": "npm run dev",
+    "scripts": {
+      "dev": "next dev",
+      "build": "next build",
+      "start": "next start",
+      "lint": "eslint",
+      "db:seed": "bun ./prisma/seed.ts"
+    }
+  },
+  "conventions": {
+    "namingStyle": null,
+    "importStyle": null,
+    "testPattern": null,
+    "fileOrganization": null
+  },
+  "structure": {
+    "isMonorepo": false,
+    "workspaces": [],
+    "mainDirectories": [
+      "app",
+      "components",
+      "lib",
+      "public"
+    ],
+    "gitBranches": null
+  },
+  "customNotes": [],
+  "directoryMap": {
+    "app": {
+      "path": "app",
+      "purpose": "Application code",
+      "fileCount": 5,
+      "lastAccessed": 1775897718838,
+      "keyFiles": [
+        "favicon.ico",
+        "firebase.ts",
+        "globals.css",
+        "layout.tsx",
+        "page.tsx"
+      ]
+    },
+    "components": {
+      "path": "components",
+      "purpose": "UI components",
+      "fileCount": 1,
+      "lastAccessed": 1775897718838,
+      "keyFiles": [
+        "ErrorBoundary.tsx"
+      ]
+    },
+    "lib": {
+      "path": "lib",
+      "purpose": "Library code",
+      "fileCount": 0,
+      "lastAccessed": 1775897718838,
+      "keyFiles": []
+    },
+    "prisma": {
+      "path": "prisma",
+      "purpose": null,
+      "fileCount": 2,
+      "lastAccessed": 1775897718838,
+      "keyFiles": [
+        "schema.prisma",
+        "seed.ts"
+      ]
+    },
+    "public": {
+      "path": "public",
+      "purpose": "Public files",
+      "fileCount": 5,
+      "lastAccessed": 1775897718839,
+      "keyFiles": [
+        "file.svg",
+        "globe.svg",
+        "next.svg",
+        "vercel.svg",
+        "window.svg"
+      ]
+    },
+    "qa-logs": {
+      "path": "qa-logs",
+      "purpose": null,
+      "fileCount": 0,
+      "lastAccessed": 1775897718839,
+      "keyFiles": []
+    },
+    "types": {
+      "path": "types",
+      "purpose": "Type definitions",
+      "fileCount": 4,
+      "lastAccessed": 1775897718839,
+      "keyFiles": [
+        "agent.ts",
+        "board.ts",
+        "card.ts",
+        "user.ts"
+      ]
+    },
+    "app/api": {
+      "path": "app/api",
+      "purpose": "API routes",
+      "fileCount": 0,
+      "lastAccessed": 1775897718840,
+      "keyFiles": []
+    },
+    "lib/utils": {
+      "path": "lib/utils",
+      "purpose": "Utility functions",
+      "fileCount": 1,
+      "lastAccessed": 1775897718840,
+      "keyFiles": [
+        "retry.ts"
+      ]
+    }
+  },
+  "hotPaths": [],
+  "userDirectives": []
+}
