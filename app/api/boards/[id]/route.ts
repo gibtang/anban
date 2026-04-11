@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
-import { verifyIdToken } from '@/lib/firebase/admin';
+import { verifyAuth } from '@/lib/auth/helpers';
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -8,22 +8,7 @@ interface RouteContext {
 
 export async function GET(request: NextRequest, context: RouteContext) {
   try {
-    const token = request.cookies.get('firebase-auth-token')?.value;
-    if (!token) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const decodedToken = await verifyIdToken(token);
-    const firebaseUid = decodedToken.uid;
-
-    // Get user by Firebase UID
-    const user = await prisma.user.findUnique({
-      where: { firebaseUid },
-    });
-
-    if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
-    }
+    const userId = await verifyAuth(request);
 
     const { id } = await context.params;
 
@@ -31,7 +16,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
     const board = await prisma.board.findFirst({
       where: {
         id,
-        ownerId: user.id,
+        ownerId: userId,
       },
     });
 
@@ -64,28 +49,16 @@ export async function GET(request: NextRequest, context: RouteContext) {
     });
   } catch (error) {
     console.error('Error fetching board:', error);
+    if (error instanceof Error && error.message === 'Unauthorized') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     return NextResponse.json({ error: 'Failed to fetch board' }, { status: 500 });
   }
 }
 
 export async function PUT(request: NextRequest, context: RouteContext) {
   try {
-    const token = request.cookies.get('firebase-auth-token')?.value;
-    if (!token) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const decodedToken = await verifyIdToken(token);
-    const firebaseUid = decodedToken.uid;
-
-    // Get user by Firebase UID
-    const user = await prisma.user.findUnique({
-      where: { firebaseUid },
-    });
-
-    if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
-    }
+    const userId = await verifyAuth(request);
 
     const { id } = await context.params;
     const body = await request.json();
@@ -95,7 +68,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     const existingBoard = await prisma.board.findFirst({
       where: {
         id,
-        ownerId: user.id,
+        ownerId: userId,
       },
     });
 
@@ -129,28 +102,16 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     return NextResponse.json(board);
   } catch (error) {
     console.error('Error updating board:', error);
+    if (error instanceof Error && error.message === 'Unauthorized') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     return NextResponse.json({ error: 'Failed to update board' }, { status: 500 });
   }
 }
 
 export async function DELETE(request: NextRequest, context: RouteContext) {
   try {
-    const token = request.cookies.get('firebase-auth-token')?.value;
-    if (!token) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const decodedToken = await verifyIdToken(token);
-    const firebaseUid = decodedToken.uid;
-
-    // Get user by Firebase UID
-    const user = await prisma.user.findUnique({
-      where: { firebaseUid },
-    });
-
-    if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
-    }
+    const userId = await verifyAuth(request);
 
     const { id } = await context.params;
 
@@ -158,7 +119,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
     const existingBoard = await prisma.board.findFirst({
       where: {
         id,
-        ownerId: user.id,
+        ownerId: userId,
       },
     });
 
@@ -199,6 +160,9 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (error) {
     console.error('Error deleting board:', error);
+    if (error instanceof Error && error.message === 'Unauthorized') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     return NextResponse.json({ error: 'Failed to delete board' }, { status: 500 });
   }
 }

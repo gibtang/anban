@@ -161,6 +161,121 @@
       ]
     }
   },
-  "hotPaths": [],
+  "hotPaths": [
+    {
+      "path": "app/api/boards/[id]/route.ts",
+      "accessCount": 8,
+      "lastAccessed": 1775900531204,
+      "type": "file"
+    },
+    {
+      "path": "app/api/cards/[id]/route.ts",
+      "accessCount": 8,
+      "lastAccessed": 1775900539387,
+      "type": "file"
+    },
+    {
+      "path": "app/api/agents/[id]/route.ts",
+      "accessCount": 7,
+      "lastAccessed": 1775900515239,
+      "type": "file"
+    },
+    {
+      "path": "app/api/cards/route.ts",
+      "accessCount": 7,
+      "lastAccessed": 1775900551552,
+      "type": "file"
+    },
+    {
+      "path": "app/api/settings/route.ts",
+      "accessCount": 6,
+      "lastAccessed": 1775900559700,
+      "type": "file"
+    },
+    {
+      "path": "app/api/agents/[id]/health/route.ts",
+      "accessCount": 5,
+      "lastAccessed": 1775900507689,
+      "type": "file"
+    },
+    {
+      "path": "app/api/agents/route.ts",
+      "accessCount": 5,
+      "lastAccessed": 1775900522720,
+      "type": "file"
+    },
+    {
+      "path": "app/contexts/AuthContext.tsx",
+      "accessCount": 5,
+      "lastAccessed": 1775900693514,
+      "type": "file"
+    },
+    {
+      "path": "app/api/events/route.ts",
+      "accessCount": 4,
+      "lastAccessed": 1775900559380,
+      "type": "file"
+    },
+    {
+      "path": "lib/openclaw/http-adapter.ts",
+      "accessCount": 3,
+      "lastAccessed": 1775900108730,
+      "type": "file"
+    },
+    {
+      "path": "app/api/agents/[id]/chat/route.ts",
+      "accessCount": 3,
+      "lastAccessed": 1775900507349,
+      "type": "file"
+    },
+    {
+      "path": "app/api/settings/test-connection/route.ts",
+      "accessCount": 3,
+      "lastAccessed": 1775900562888,
+      "type": "file"
+    },
+    {
+      "path": "app/(dashboard)/settings/page.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1775900121618,
+      "type": "file"
+    },
+    {
+      "path": "middleware.ts",
+      "accessCount": 2,
+      "lastAccessed": 1775900452687,
+      "type": "file"
+    },
+    {
+      "path": "app/api/boards/route.ts",
+      "accessCount": 2,
+      "lastAccessed": 1775900485762,
+      "type": "file"
+    },
+    {
+      "path": "lib/auth/helpers.ts",
+      "accessCount": 2,
+      "lastAccessed": 1775900495508,
+      "type": "file"
+    },
+    {
+      "path": "docs/TAILSCALE_SETUP.md",
+      "accessCount": 2,
+      "lastAccessed": 1775900722343,
+      "type": "file"
+    },
+    {
+      "path": ".env.local",
+      "accessCount": 1,
+      "lastAccessed": 1775900467326,
+      "type": "file"
+    },
+    {
+      "path": ".env.example",
+      "accessCount": 1,
+      "lastAccessed": 1775900470403,
+      "type": "file"
+    }
+  ],
   "userDirectives": []
 }

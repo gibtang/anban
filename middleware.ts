@@ -11,6 +11,14 @@ const publicRoutes = [
 export function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
+  // Check if auth is disabled via environment variable
+  const authDisabled = process.env.DISABLE_AUTH === 'true';
+
+  if (authDisabled) {
+    // Auth disabled - allow all requests through
+    return NextResponse.next();
+  }
+
   // Check if the current path is a public route
   const isPublicRoute = publicRoutes.some(route => {
     if (route.endsWith('*')) {

@@ -15,8 +15,18 @@ export class OpenClawHTTPAdapter {
    */
   static async healthCheck(config: OpenClawConnectionConfig): Promise<boolean> {
     try {
+      const headers: Record<string, string> = {};
+
+      // Support both Bearer token and raw auth token
+      if (config.apiKey) {
+        headers["Authorization"] = config.apiKey.startsWith('Bearer ')
+          ? config.apiKey
+          : `Bearer ${config.apiKey}`;
+      }
+
       const response = await fetch(`${config.gatewayUrl}/health`, {
         method: "GET",
+        headers,
         signal: AbortSignal.timeout(5000), // 5 second timeout
       });
 
@@ -36,12 +46,20 @@ export class OpenClawHTTPAdapter {
     messages: Array<{ role: string; content: string }>,
     stream = false
   ): Promise<ChatCompletionResponse | AsyncIterable<ChatCompletionChunk>> {
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+
+    // Support both Bearer token and raw auth token
+    if (config.apiKey) {
+      headers["Authorization"] = config.apiKey.startsWith('Bearer ')
+        ? config.apiKey
+        : `Bearer ${config.apiKey}`;
+    }
+
     const response = await fetch(`${config.gatewayUrl}/v1/chat/completions`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${config.apiKey}`,
-      },
+      headers,
       body: JSON.stringify({
         model: agentId,
         messages,

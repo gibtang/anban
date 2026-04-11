@@ -1,31 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
-import { verifyIdToken } from '@/lib/firebase/admin';
+import { verifyAuth } from '@/lib/auth/helpers';
 
 export const runtime = 'nodejs';
 
 export async function GET(request: NextRequest) {
   try {
-    const token = request.cookies.get('firebase-auth-token')?.value;
-    if (!token) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const decodedToken = await verifyIdToken(token);
-    const firebaseUid = decodedToken.uid;
-
-    // Get user by Firebase UID
-    const user = await prisma.user.findUnique({
-      where: { firebaseUid },
-    });
-
-    if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
-    }
+    const userId = await verifyAuth(request);
 
     // Get all boards for the user
     const boards = await prisma.board.findMany({
-      where: { ownerId: user.id },
+      where: { ownerId: userId },
       orderBy: { updatedAt: 'desc' },
     });
 
@@ -50,28 +35,16 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(boardsWithCounts);
   } catch (error) {
     console.error('Error fetching boards:', error);
+    if (error instanceof Error && error.message === 'Unauthorized') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     return NextResponse.json({ error: 'Failed to fetch boards' }, { status: 500 });
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const token = request.cookies.get('firebase-auth-token')?.value;
-    if (!token) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const decodedToken = await verifyIdToken(token);
-    const firebaseUid = decodedToken.uid;
-
-    // Get user by Firebase UID
-    const user = await prisma.user.findUnique({
-      where: { firebaseUid },
-    });
-
-    if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
-    }
+    const userId = await verifyAuth(request);
 
     const body = await request.json();
     const { name } = body;
@@ -84,7 +57,7 @@ export async function POST(request: NextRequest) {
     const board = await prisma.board.create({
       data: {
         name: name.trim(),
-        ownerId: user.id,
+        ownerId: userId,
       },
     });
 
@@ -104,6 +77,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ...board, columns }, { status: 201 });
   } catch (error) {
     console.error('Error creating board:', error);
+    if (error instanceof Error && error.message === 'Unauthorized') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     return NextResponse.json({ error: 'Failed to create board' }, { status: 500 });
   }
 }

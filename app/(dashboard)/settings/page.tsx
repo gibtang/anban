@@ -292,7 +292,7 @@ function SettingsContent() {
 
           <div>
             <label htmlFor="api-key" className="block text-sm font-medium text-gray-700">
-              API Key
+              API Key / Auth Token
             </label>
             <input
               type="password"
@@ -305,8 +305,11 @@ function SettingsContent() {
                 })
               }
               className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-              placeholder="your-api-key"
+              placeholder="Optional: Bearer token or auth=1454396ef3170429ff6833a412e6a291509e01b44ad087376f263107cb5844ef"
             />
+            <p className="mt-1 text-xs text-gray-500">
+              For Tailscale/remote connections, enter your auth token (e.g., from ws:// URL auth parameter). Leave blank if not required.
+            </p>
           </div>
 
           <div className="flex items-center">

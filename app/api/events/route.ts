@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { eventBus } from '@/lib/events/event-bus';
-import { verifyIdToken } from '@/lib/firebase/admin';
+import { verifyAuth } from '@/lib/auth/helpers';
 import { prisma } from '@/lib/db/prisma';
 
 export const runtime = 'nodejs';
@@ -8,13 +8,7 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   try {
-    const token = request.cookies.get('firebase-auth-token')?.value;
-    if (!token) {
-      return new Response('Unauthorized', { status: 401 });
-    }
-
-    const decodedToken = await verifyIdToken(token);
-    const firebaseUid = decodedToken.uid;
+    const userId = await verifyAuth(request);
 
     const { searchParams } = new URL(request.url);
     const boardId = searchParams.get('boardId');
@@ -23,20 +17,11 @@ export async function GET(request: NextRequest) {
       return new Response('boardId query parameter is required', { status: 400 });
     }
 
-    // Get user by Firebase UID
-    const user = await prisma.user.findUnique({
-      where: { firebaseUid },
-    });
-
-    if (!user) {
-      return new Response('User not found', { status: 404 });
-    }
-
     // Verify board ownership
     const board = await prisma.board.findFirst({
       where: {
         id: boardId,
-        ownerId: user.id,
+        ownerId: userId,
       },
     });
 
@@ -91,6 +76,9 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error in SSE endpoint:', error);
+    if (error instanceof Error && error.message === 'Unauthorized') {
+      return new Response('Unauthorized', { status: 401 });
+    }
     return new Response('Authentication failed', { status: 401 });
   }
 }

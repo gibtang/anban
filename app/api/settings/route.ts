@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
-import { verifyIdToken } from '@/lib/firebase/admin';
+import { verifyAuth } from '@/lib/auth/helpers';
 
 export const runtime = 'nodejs';
 
@@ -42,22 +42,7 @@ function maskSecret(value: string | null | undefined): string {
 
 export async function GET(request: NextRequest) {
   try {
-    const token = request.cookies.get('firebase-auth-token')?.value;
-    if (!token) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const decodedToken = await verifyIdToken(token);
-    const firebaseUid = decodedToken.uid;
-
-    // Get user by Firebase UID
-    const user = await prisma.user.findUnique({
-      where: { firebaseUid },
-    });
-
-    if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
-    }
+    const userId = await verifyAuth(request);
 
     const { searchParams } = new URL(request.url);
     const boardId = searchParams.get('boardId');
@@ -70,7 +55,7 @@ export async function GET(request: NextRequest) {
     const board = await prisma.board.findFirst({
       where: {
         id: boardId,
-        ownerId: user.id,
+        ownerId: userId,
       },
     });
 
@@ -117,28 +102,16 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(response);
   } catch (error) {
     console.error('Error fetching settings:', error);
+    if (error instanceof Error && error.message === 'Unauthorized') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     return NextResponse.json({ error: 'Failed to fetch settings' }, { status: 500 });
   }
 }
 
 export async function PUT(request: NextRequest) {
   try {
-    const token = request.cookies.get('firebase-auth-token')?.value;
-    if (!token) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const decodedToken = await verifyIdToken(token);
-    const firebaseUid = decodedToken.uid;
-
-    // Get user by Firebase UID
-    const user = await prisma.user.findUnique({
-      where: { firebaseUid },
-    });
-
-    if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
-    }
+    const userId = await verifyAuth(request);
 
     const body: SettingsRequest = await request.json();
     const { boardId, openClawConnection, telegramConfig } = body;
@@ -151,7 +124,7 @@ export async function PUT(request: NextRequest) {
     const board = await prisma.board.findFirst({
       where: {
         id: boardId,
-        ownerId: user.id,
+        ownerId: userId,
       },
     });
 
@@ -255,6 +228,9 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json(response);
   } catch (error) {
     console.error('Error updating settings:', error);
+    if (error instanceof Error && error.message === 'Unauthorized') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     return NextResponse.json({ error: 'Failed to update settings' }, { status: 500 });
   }
 }

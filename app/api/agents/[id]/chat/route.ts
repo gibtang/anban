@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
-import { verifyIdToken } from '@/lib/firebase/admin';
+import { verifyAuth } from '@/lib/auth/helpers';
 import { OpenClawHTTPAdapter } from '@/lib/openclaw/http-adapter';
 import { eventBus } from '@/lib/events/event-bus';
 import { logAuditEvent } from '@/lib/db/audit';
@@ -77,12 +77,7 @@ async function appendAgentResponseToCards(agentId: string, boardId: string, resp
 
 export async function POST(request: NextRequest, context: RouteContext) {
   try {
-    const token = request.cookies.get('firebase-auth-token')?.value;
-    if (!token) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    await verifyIdToken(token);
+    const userId = await verifyAuth(request);
 
     const { id: agentId } = await context.params;
     const body = await request.json() as ChatRequest;

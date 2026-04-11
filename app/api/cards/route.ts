@@ -1,28 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
-import { verifyIdToken } from '@/lib/firebase/admin';
+import { verifyAuth } from '@/lib/auth/helpers';
 import { logAuditEvent } from '@/lib/db/audit';
 
 export const runtime = 'nodejs';
 
 export async function GET(request: NextRequest) {
   try {
-    const token = request.cookies.get('firebase-auth-token')?.value;
-    if (!token) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const decodedToken = await verifyIdToken(token);
-    const firebaseUid = decodedToken.uid;
-
-    // Get user by Firebase UID
-    const user = await prisma.user.findUnique({
-      where: { firebaseUid },
-    });
-
-    if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
-    }
+    const userId = await verifyAuth(request);
 
     const { searchParams } = new URL(request.url);
     const boardId = searchParams.get('boardId');
@@ -39,7 +24,7 @@ export async function GET(request: NextRequest) {
       const board = await prisma.board.findFirst({
         where: {
           id: boardId,
-          ownerId: user.id,
+          ownerId: userId,
         },
       });
 
@@ -94,28 +79,16 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(cardsWithAssignees);
   } catch (error) {
     console.error('Error fetching cards:', error);
+    if (error instanceof Error && error.message === 'Unauthorized') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     return NextResponse.json({ error: 'Failed to fetch cards' }, { status: 500 });
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const token = request.cookies.get('firebase-auth-token')?.value;
-    if (!token) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const decodedToken = await verifyIdToken(token);
-    const firebaseUid = decodedToken.uid;
-
-    // Get user by Firebase UID
-    const user = await prisma.user.findUnique({
-      where: { firebaseUid },
-    });
-
-    if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
-    }
+    const userId = await verifyAuth(request);
 
     const body = await request.json();
     const { title, description, columnId, boardId, assigneeId, tags = [], agentId } = body;
@@ -137,7 +110,7 @@ export async function POST(request: NextRequest) {
     const board = await prisma.board.findFirst({
       where: {
         id: boardId,
-        ownerId: user.id,
+        ownerId: userId,
       },
     });
 
@@ -183,7 +156,7 @@ export async function POST(request: NextRequest) {
 
     // Log card creation
     await logAuditEvent({
-      userId: user.id,
+      userId,
       action: 'CREATE',
       entityType: 'Card',
       entityId: card.id,
@@ -202,6 +175,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(cardWithAssignee, { status: 201 });
   } catch (error) {
     console.error('Error creating card:', error);
+    if (error instanceof Error && error.message === 'Unauthorized') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     return NextResponse.json({ error: 'Failed to create card' }, { status: 500 });
   }
 }

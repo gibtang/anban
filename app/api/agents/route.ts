@@ -1,59 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
-import { verifyIdToken } from '@/lib/firebase/admin';
+import { verifyAuth } from '@/lib/auth/helpers';
 
 export const runtime = 'nodejs';
 
 export async function GET(request: NextRequest) {
   try {
-    const token = request.cookies.get('firebase-auth-token')?.value;
-    if (!token) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const decodedToken = await verifyIdToken(token);
-    const firebaseUid = decodedToken.uid;
-
-    // Get user by Firebase UID
-    const user = await prisma.user.findUnique({
-      where: { firebaseUid },
-    });
-
-    if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
-    }
+    const userId = await verifyAuth(request);
 
     // Get agent configs owned by this user
     const agents = await prisma.agentConfig.findMany({
-      where: { ownerId: user.id },
+      where: { ownerId: userId },
       orderBy: { name: 'asc' },
     });
 
     return NextResponse.json(agents);
   } catch (error) {
     console.error('Error fetching agents:', error);
+    if (error instanceof Error && error.message === 'Unauthorized') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     return NextResponse.json({ error: 'Failed to fetch agents' }, { status: 500 });
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const token = request.cookies.get('firebase-auth-token')?.value;
-    if (!token) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const decodedToken = await verifyIdToken(token);
-    const firebaseUid = decodedToken.uid;
-
-    // Get user by Firebase UID
-    const user = await prisma.user.findUnique({
-      where: { firebaseUid },
-    });
-
-    if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
-    }
+    const userId = await verifyAuth(request);
 
     const body = await request.json();
     const { name, openClawId, description, model } = body;
@@ -82,13 +55,16 @@ export async function POST(request: NextRequest) {
         openClawId: openClawId.trim(),
         description: description?.trim() || null,
         model: model?.trim() || null,
-        ownerId: user.id,
+        ownerId: userId,
       },
     });
 
     return NextResponse.json(agent, { status: 201 });
   } catch (error) {
     console.error('Error creating agent:', error);
+    if (error instanceof Error && error.message === 'Unauthorized') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     return NextResponse.json({ error: 'Failed to create agent' }, { status: 500 });
   }
 }

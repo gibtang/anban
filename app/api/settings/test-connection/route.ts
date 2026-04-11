@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyIdToken } from '@/lib/firebase/admin';
+import { verifyAuth } from '@/lib/auth/helpers';
 
 export const runtime = 'nodejs';
 
@@ -15,17 +15,7 @@ interface TestConnectionResponse {
 
 export async function POST(request: NextRequest) {
   try {
-    const token = request.cookies.get('firebase-auth-token')?.value;
-    if (!token) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const decodedToken = await verifyIdToken(token);
-    const firebaseUid = decodedToken.uid;
-
-    if (!firebaseUid) {
-      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
-    }
+    await verifyAuth(request);
 
     const body: TestConnectionRequest = await request.json();
     const { gatewayUrl, apiKey } = body;
@@ -103,6 +93,9 @@ export async function POST(request: NextRequest) {
     }
   } catch (error) {
     console.error('Error testing connection:', error);
+    if (error instanceof Error && error.message === 'Unauthorized') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     return NextResponse.json(
       {
         success: false,

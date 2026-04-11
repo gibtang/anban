@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
-import { verifyIdToken } from '@/lib/firebase/admin';
+import { verifyAuth } from '@/lib/auth/helpers';
 import { OpenClawHTTPAdapter } from '@/lib/openclaw/http-adapter';
 
 export const runtime = 'nodejs';
@@ -14,22 +14,7 @@ export async function POST(
   context: RouteContext
 ) {
   try {
-    const token = request.cookies.get('firebase-auth-token')?.value;
-    if (!token) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const decodedToken = await verifyIdToken(token);
-    const firebaseUid = decodedToken.uid;
-
-    // Verify user exists
-    const user = await prisma.user.findUnique({
-      where: { firebaseUid },
-    });
-
-    if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
-    }
+    const userId = await verifyAuth(request);
 
     const { id } = await context.params;
 
@@ -45,7 +30,7 @@ export async function POST(
     // Get the first board's OpenClaw connection for health check
     const board = await prisma.board.findFirst({
       where: {
-        ownerId: user.id,
+        ownerId: userId,
         openClawConnection: { isNot: null },
       },
       include: {
@@ -69,6 +54,9 @@ export async function POST(
     return NextResponse.json({ healthy: isHealthy });
   } catch (error) {
     console.error('Error checking agent health:', error);
+    if (error instanceof Error && error.message === 'Unauthorized') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     return NextResponse.json({ healthy: false });
   }
 }

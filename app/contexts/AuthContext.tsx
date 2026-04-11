@@ -72,7 +72,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     };
 
-    initFirebase();
+    // Check if auth is disabled
+    if (process.env.NEXT_PUBLIC_DISABLE_AUTH === 'true') {
+      // Create a mock user for development
+      const mockUser = {
+        uid: 'dev-user',
+        email: 'dev@localhost',
+        displayName: 'Dev User',
+        emailVerified: true,
+        isAnonymous: false,
+        providerId: 'dev',
+        phoneNumber: null,
+        photoURL: null,
+        providerData: [],
+        tenantId: null,
+        metadata: {},
+        refreshToken: 'dev-refresh-token',
+        delete: async () => {},
+        getIdToken: async () => 'dev-token',
+        getIdTokenResult: async () => ({ token: 'dev-token', signInProvider: 'dev', authTime: new Date().toISOString(), issuedAtTime: new Date().toISOString(), expirationTime: new Date().toISOString(), signInSecondFactor: null, claims: {} }),
+        reload: async () => {},
+        toJSON: () => ({}),
+      } as User;
+
+      setUser(mockUser);
+      setLoading(false);
+    } else {
+      initFirebase();
+    }
   }, []);
 
   const signIn = async (email: string, password: string) => {
