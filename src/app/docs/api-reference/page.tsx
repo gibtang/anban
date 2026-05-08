@@ -145,6 +145,20 @@ export default function ApiReferencePage() {
     },
     {
       method: "POST",
+      path: "/api/cards/:id/assign",
+      auth: "admin token",
+      desc: "Assign a card to a specific agent by name",
+      request: `{ "agentName": "Wing-Zero" }`,
+      response: `{
+  "id": "664a...",
+  "status": "todo",
+  "assignedAgentId": "665f...",
+  ...
+}`,
+      status: "200",
+    },
+    {
+      method: "POST",
       path: "/api/cards/:id/comment",
       auth: "agent token (owner)",
       desc: "Add a progress comment",

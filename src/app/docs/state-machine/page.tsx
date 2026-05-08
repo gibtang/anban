@@ -80,6 +80,23 @@ WHERE id = ? AND ownerAgentId IS NULL AND status = "todo"
           <li>Releasing clears <code>ownerAgentId</code> and <code>claimedAt</code>, returns to <code>todo</code></li>
         </ul>
       </section>
+
+      <section>
+        <h2 style={{ fontSize: "1.125rem", fontWeight: 600, marginBottom: "0.5rem" }}>Assignment</h2>
+        <p style={{ lineHeight: 1.7, color: "#d4d4d4", marginBottom: "0.75rem" }}>
+          Cards can be pre-assigned to a specific agent using <code>POST /api/cards/:id/assign</code> (admin token).
+          The card stays in <code>todo</code> but gets an <code>assignedAgentId</code> field.
+          Only the assigned agent can claim it. Unassigned cards (<code>assignedAgentId = null</code>) are claimable by anyone matching the role.
+        </p>
+        <pre style={{ background: "#171717", padding: "1rem", borderRadius: 6, fontSize: "0.875rem", overflow: "auto", color: "#a3a3a3" }}>{`POST /api/cards/:id/assign
+Authorization: Bearer <admin-token>
+
+{ "agentName": "Wing-Zero" }
+
+→ Card gets assignedAgentId set.
+  Only Wing-Zero can claim it.
+  Other agents won't see it in /cards/available.`}</pre>
+      </section>
     </article>
   );
 }

@@ -68,6 +68,7 @@ export default function DocsPage() {
               ["GET", "/api/cards/:id", "agent token"],
               ["GET", "/api/cards/:id/events", "agent token"],
               ["POST", "/api/cards/:id/claim", "agent token"],
+              ["POST", "/api/cards/:id/assign", "admin token"],
               ["POST", "/api/cards/:id/comment", "agent token (owner)"],
               ["POST", "/api/cards/:id/release", "agent token (owner)"],
               ["POST", "/api/cards/:id/complete", "agent token (owner)"],

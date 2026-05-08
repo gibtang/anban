@@ -47,7 +47,10 @@ export async function listAvailable(agent: Agent, role?: string) {
     where: {
       ownerAgentId: null,
       status: "todo",
-      OR: [{ requestedRole: null }, { requestedRole: filterRole }],
+      AND: [
+        { OR: [{ requestedRole: null }, { requestedRole: filterRole }] },
+        { OR: [{ assignedAgentId: null }, { assignedAgentId: agent.id }] },
+      ],
     },
     orderBy: [{ priority: "asc" }, { createdAt: "asc" }],
     take: 50,
@@ -70,7 +73,10 @@ export async function claimCard(agent: Agent, cardId: string) {
       id: cardId,
       ownerAgentId: null,
       status: "todo",
-      OR: [{ requestedRole: null }, { requestedRole: agent.role }],
+      AND: [
+        { OR: [{ requestedRole: null }, { requestedRole: agent.role }] },
+        { OR: [{ assignedAgentId: null }, { assignedAgentId: agent.id }] },
+      ],
     },
     data: {
       status: "in_progress",
@@ -149,6 +155,30 @@ export async function completeCard(agent: Agent, cardId: string, evidence: strin
   return getCard(cardId);
 }
 
+export async function assignCard(cardId: string, agentName: string) {
+  const targetAgent = await prisma.agent.findUnique({ where: { name: agentName } });
+  if (!targetAgent) throw new NotFoundError(`Agent "${agentName}" not found`);
+
+  const result = await prisma.card.updateMany({
+    where: { id: cardId, status: "todo", ownerAgentId: null },
+    data: { assignedAgentId: targetAgent.id },
+  });
+  if (result.count !== 1) {
+    const existing = await prisma.card.findUnique({ where: { id: cardId } });
+    if (!existing) throw new NotFoundError("Card not found");
+    throw new ConflictError("Card cannot be assigned (not in todo state or already claimed)");
+  }
+
+  await writeEvent({
+    cardId,
+    type: "card_assigned",
+    message: `Card assigned to ${agentName}.`,
+    metadata: { type: "card_assigned", assignedAgentId: targetAgent.id, assignedAgentName: agentName },
+  });
+
+  return getCard(cardId);
+}
+
 export async function forceReleaseCard(cardId: string, reason: string) {
   const result = await prisma.card.updateMany({
     where: { id: cardId, status: { in: ["todo", "in_progress"] } },
@@ -210,6 +240,7 @@ function formatCard(card: Card) {
     status: card.status,
     priority: card.priority,
     requestedRole: card.requestedRole,
+    assignedAgentId: card.assignedAgentId,
     ownerAgentId: card.ownerAgentId,
     acceptanceCriteria: card.acceptanceCriteria,
     createdByAgentId: card.createdByAgentId,

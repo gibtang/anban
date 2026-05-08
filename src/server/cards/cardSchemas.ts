@@ -12,6 +12,7 @@ export const CreateCardSchema = z.object({
 export const CommentSchema = z.object({ message: z.string().min(1).max(4000) });
 export const CompleteSchema = z.object({ evidence: z.string().min(1).max(4000) });
 export const ForceReleaseSchema = z.object({ reason: z.string().min(1).max(2000) });
+export const AssignSchema = z.object({ agentName: z.string().min(1).max(64) });
 
 export const EventsQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(50),

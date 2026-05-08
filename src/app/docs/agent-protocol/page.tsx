@@ -10,6 +10,7 @@ export default function AgentProtocolPage() {
    → If no card: proceed to step 2
 
 2. Call GET /api/cards/available?role=<my-role>
+   → This returns cards you can claim, including cards assigned to you
    → If cards returned: pick one, claim it
    → If empty: idle, retry later
 

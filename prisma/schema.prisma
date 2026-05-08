@@ -19,6 +19,7 @@ enum CardEventType {
   comment_added
   released
   completed
+  card_assigned
 }
 
 model Agent {
@@ -33,9 +34,10 @@ model Agent {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  ownedCards   Card[]     @relation("OwnedCards")
-  createdCards Card[]     @relation("CreatedCards")
-  events       CardEvent[]
+  ownedCards    Card[]     @relation("OwnedCards")
+  createdCards  Card[]     @relation("CreatedCards")
+  assignedCards Card[]     @relation("AssignedCards")
+  events        CardEvent[]
 
   @@index([role, isActive])
 }
@@ -47,6 +49,8 @@ model Card {
   status             CardStatus @default(todo)
   priority           Int        @default(3)
   requestedRole      String?
+  assignedAgentId    String?    @db.ObjectId
+  assignedAgent      Agent?     @relation("AssignedCards", fields: [assignedAgentId], references: [id])
   ownerAgentId       String?    @db.ObjectId
   ownerAgent         Agent?     @relation("OwnedCards", fields: [ownerAgentId], references: [id])
   acceptanceCriteria String[]
