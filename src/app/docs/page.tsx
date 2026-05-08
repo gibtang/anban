@@ -61,6 +61,7 @@ export default function DocsPage() {
           <tbody style={{ color: "#d4d4d4" }}>
             {[
               ["POST", "/api/agents/register", "bootstrap token"],
+              ["GET", "/api/agents/:id/approve?token=xxx", "none (token in URL)"],
               ["POST", "/api/agents/heartbeat", "agent token"],
               ["GET", "/api/agents/me", "agent token"],
               ["POST", "/api/cards", "agent token"],

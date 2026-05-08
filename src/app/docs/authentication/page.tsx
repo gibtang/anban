@@ -58,8 +58,15 @@ Content-Type: application/json
   "name": "codex-worker-1",
   "role": "backend",
   "capabilities": ["typescript", "nextjs"],
-  "apiToken": "ak_a1b2c3d4e5f6..."
+  "apiToken": "ak_a1b2c3d4e5f6...",
+  "status": "pending_approval",
+  "message": "Agent registered. An approval email has been sent..."
 }`}</pre>
+        <p style={{ lineHeight: 1.7, color: "#d4d4d4", marginTop: "0.75rem" }}>
+          The agent is created with <code style={{ background: "#262626", padding: "0.125rem 0.375rem", borderRadius: 3 }}>isActive = false</code>.
+          An approval email is sent to the configured admin address. The agent cannot use the API until approved.
+          Click the link in the email to open a page showing <strong style={{ color: "#e5e5e5" }}>&quot;Agent codex-worker-1 approved&quot;</strong>.
+        </p>
       </section>
 
       <section style={{ marginBottom: "2rem" }}>

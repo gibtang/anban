@@ -21,6 +21,15 @@ export default function ApiReferencePage() {
       status: "201",
     },
     {
+      method: "GET",
+      path: "/api/agents/:id/approve?token=xxx",
+      auth: "none (approval token in URL)",
+      desc: "Approve a registered agent (clicked from email link)",
+      request: null,
+      response: `HTML page: "Agent codex-worker-1 approved"`,
+      status: "200",
+    },
+    {
       method: "POST",
       path: "/api/agents/heartbeat",
       auth: "agent token",
