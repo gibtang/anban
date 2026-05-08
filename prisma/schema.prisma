@@ -1,0 +1,78 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+enum CardStatus {
+  todo
+  in_progress
+  done
+}
+
+enum CardEventType {
+  card_created
+  card_claimed
+  comment_added
+  released
+  completed
+}
+
+model Agent {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  name         String   @unique
+  role         String
+  capabilities String[]
+  tokenPrefix  String   @unique
+  tokenHash    String
+  isActive     Boolean  @default(true)
+  lastSeenAt   DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  ownedCards   Card[]     @relation("OwnedCards")
+  createdCards Card[]     @relation("CreatedCards")
+  events       CardEvent[]
+
+  @@index([role, isActive])
+}
+
+model Card {
+  id                 String     @id @default(auto()) @map("_id") @db.ObjectId
+  title              String
+  description        String
+  status             CardStatus @default(todo)
+  priority           Int        @default(3)
+  requestedRole      String?
+  ownerAgentId       String?    @db.ObjectId
+  ownerAgent         Agent?     @relation("OwnedCards", fields: [ownerAgentId], references: [id])
+  acceptanceCriteria String[]
+  createdByAgentId   String?    @db.ObjectId
+  createdByAgent     Agent?     @relation("CreatedCards", fields: [createdByAgentId], references: [id])
+  claimedAt          DateTime?
+  completedAt        DateTime?
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+
+  events CardEvent[]
+
+  @@index([status, requestedRole, priority, createdAt])
+  @@index([ownerAgentId, status])
+}
+
+model CardEvent {
+  id        String        @id @default(auto()) @map("_id") @db.ObjectId
+  cardId    String        @db.ObjectId
+  card      Card          @relation(fields: [cardId], references: [id])
+  agentId   String?       @db.ObjectId
+  agent     Agent?        @relation(fields: [agentId], references: [id])
+  type      CardEventType
+  message   String
+  metadata  Json?
+  createdAt DateTime      @default(now())
+
+  @@index([cardId, createdAt])
+}
