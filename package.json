@@ -1,6 +1,8 @@
 {
   "name": "anban-temp",
   "version": "0.1.0",
+  "author": "A2Z Soft <admin@a2z-soft.com>",
+  "license": "AGPL-3.0-only",
   "private": true,
   "scripts": {
     "dev": "next dev",
