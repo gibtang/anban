@@ -42,3 +42,40 @@ export async function verifyAuth(request: NextRequest): Promise<string> {
 
   return user.id;
 }
+
+export interface AgentAuthResult {
+  boardId: string;
+  agentName: string;
+}
+
+/**
+ * Verify agent token from Authorization header
+ * Returns boardId and agentName if valid
+ */
+export async function verifyAgentAuth(request: NextRequest): Promise<AgentAuthResult> {
+  const authHeader = request.headers.get('Authorization');
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    throw new Error('Unauthorized: Missing Bearer token');
+  }
+
+  const token = authHeader.slice(7);
+  if (!token) {
+    throw new Error('Unauthorized: Empty token');
+  }
+
+  const accessRequest = await prisma.boardAccess.findFirst({
+    where: {
+      agentToken: token,
+      status: 'approved',
+    },
+  });
+
+  if (!accessRequest) {
+    throw new Error('Unauthorized: Invalid or revoked token');
+  }
+
+  return {
+    boardId: accessRequest.boardId,
+    agentName: accessRequest.agentName,
+  };
+}

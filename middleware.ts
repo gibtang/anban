@@ -3,9 +3,13 @@ import type { NextRequest } from 'next/server';
 
 const publicRoutes = [
   '/login',
+  '/join',
+  '/approve',
   '/api/firebase-config',
   '/api/auth',
-  '/api/telegram/webhook'
+  '/api/telegram/webhook',
+  '/api/board-access/board',
+  '/api/board-access/request',
 ];
 
 export function middleware(request: NextRequest) {

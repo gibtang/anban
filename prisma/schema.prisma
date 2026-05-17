@@ -18,13 +18,28 @@ model User {
 }
 
 model Board {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  name      String
-  ownerId   String   @db.ObjectId
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  name       String
+  ownerId    String   @db.ObjectId
+  shareToken String?  @unique
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   @@index([ownerId])
+}
+
+model BoardAccess {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  boardId     String    @db.ObjectId
+  shareToken  String
+  agentName   String
+  agentToken  String?   @unique
+  status      String    @default("pending")
+  requestedAt DateTime  @default(now())
+  approvedAt  DateTime?
+
+  @@index([boardId])
+  @@index([shareToken])
 }
 
 model Column {

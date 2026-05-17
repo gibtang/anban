@@ -1,36 +1,133 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Anban
+
+Kanban board app with AI agent integration. Share boards with AI agents via a simple link — agents request access, you approve, they interact with your board via API.
+
+## Features
+
+- **Kanban boards** — drag-and-drop cards across columns
+- **AI agent onboarding** — share a board URL with any AI agent; it requests access, you tap to approve (no login required)
+- **Agent API** — agents read boards, create/move/update cards via Bearer token
+- **Telegram bot** — card creation and notifications from Telegram
+- **Real-time updates** — SSE-based event bus for live board updates
+- **Firebase Auth** — email/password + Google sign-in
+
+## Tech Stack
+
+- **Next.js 16** (App Router)
+- **Prisma + MongoDB**
+- **Firebase Auth** (cookie-based sessions for users)
+- **Grammy** (Telegram bot)
+- **Tailwind CSS 4**
+- **Deployed on Fly.io**
+
+## Agent Onboarding Flow
+
+```
+1. You share board URL in any channel (Telegram, Discord, WhatsApp):
+   "Hey agent, join: anban.app/join/a1b2c3d4"
+
+2. Agent opens URL → requests access → gets approval link
+
+3. Agent replies in your channel:
+   "I'd like access to board 'Marketing'. Tap to approve:
+    anban.app/approve/x9y8z7"
+
+4. You tap link → click Approve → done (no login needed, 3-min expiry)
+
+5. Agent receives API token → reads board, creates/moves cards
+```
+
+### Agent API Endpoints
+
+All agent endpoints use `Authorization: Bearer <token>` header.
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/agent/board` | Read board with columns and cards |
+| POST | `/api/agent/cards` | Create a card |
+| PUT | `/api/agent/cards/[id]` | Update/move a card |
 
 ## Getting Started
 
-First, run the development server:
-
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
+# Install dependencies
+bun install
+
+# Generate Prisma client
+npx prisma generate
+
+# Set up environment variables
+cp .env.example .env
+# Edit .env with your MongoDB connection string, Firebase config, etc.
+
+# Run development server
 bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Required Environment Variables
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```
+DATABASE_URL=mongodb+srv://...
+NEXT_PUBLIC_APP_URL=https://your-domain.com
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+# Firebase
+NEXT_PUBLIC_FIREBASE_API_KEY=
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=
+NEXT_PUBLIC_FIREBASE_APP_ID=
 
-## Learn More
+# Firebase Admin
+FIREBASE_PROJECT_ID=
+FIREBASE_CLIENT_EMAIL=
+FIREBASE_PRIVATE_KEY=
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Project Structure
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```
+app/
+  (auth)/login/          # Login page
+  (dashboard)/           # Board management UI
+    boards/[id]/         # Board detail with kanban
+  api/
+    agent/               # Agent API (Bearer token auth)
+      board/             # Read board
+      cards/             # CRUD cards
+    board-access/        # Agent onboarding flow
+      request/           # Submit access request
+      board/             # Look up board from share token
+      details/           # Request details for approval page
+      list/              # List/revoke access (owner)
+    boards/              # Board CRUD
+    cards/               # Card CRUD
+    telegram/webhook/    # Telegram bot webhook
+  approve/[id]/          # One-tap approval page (public, 3-min expiry)
+  join/[token]/          # Agent-facing join page (public)
+components/
+  board/                 # SharePanel, AccessRequests
+  kanban/                # KanbanBoard, KanbanCard, KanbanColumn, CardModal
+  toast/                 # Toast notifications
+lib/
+  auth/helpers.ts        # verifyAuth (user), verifyAgentAuth (agent)
+  db/prisma.ts           # Prisma client singleton
+  events/event-bus.ts    # SSE event bus
+  firebase/admin.ts      # Firebase Admin SDK
+  openclaw/              # OpenClaw integration
+  telegram/              # Telegram bot handlers
+prisma/
+  schema.prisma          # Board, Card, User, Agent, BoardAccess models
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Deployment
 
-## Deploy on Vercel
+Deployed on Fly.io. Commits to master trigger automatic deployment.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+fly deploy
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## License
+
+AGPL-3.0-only
