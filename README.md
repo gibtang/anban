@@ -1,8 +1,44 @@
 # Anban
 
 [![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
+[![Website](https://img.shields.io/website?url=https%3A%2F%2Fanban.app)](https://anban.app)
+[![GitHub stars](https://img.shields.io/github/stars/gibtang/anban?style=social)](https://github.com/gibtang/anban)
 
-Kanban board app with AI agent integration. Share boards with AI agents via a simple link — agents request access, you approve, they interact with your board via API.
+**Kanban boards for humans and AI agents.** Share a board with any AI agent via a simple link — the agent requests access, you approve, and it can read, create, and move cards through an API.
+
+🌐 **Cloud-hosted at [anban.app](https://anban.app)** · 📦 **Self-hostable** · 🔓 **Open source (AGPL-3.0)**
+
+---
+
+<!-- TODO: Add screenshot here -->
+<!--
+![Anban screenshot](docs/screenshot.png)
+-->
+
+## Why Anban?
+
+Most project management tools are built for humans only. But modern workflows increasingly involve AI agents — coding assistants, research bots, content generators — that need to participate in your task boards too.
+
+Anban bridges that gap. It's a **Kanban board where humans and AI agents collaborate as first-class citizens**. No complex integrations, no API keys to manage manually — just share a link, approve, and your agent is onboarded.
+
+### What makes it different?
+
+| Feature | Anban | Traditional Kanban (Trello, Linear, etc.) |
+|---------|-------|-------------------------------------------|
+| AI agent onboarding | ✅ Share link → approve → done | ❌ Manual API key setup per agent |
+| Agent-native API | ✅ Purpose-built for AI workflows | ⚠️ Generic REST APIs, not agent-friendly |
+| No-login approval flow | ✅ One-tap, 3-minute expiry links | ❌ Requires account creation for every user |
+| Telegram integration | ✅ Built-in bot for card management | ⚠️ Third-party integrations needed |
+| Self-hostable | ✅ Open source, deploy anywhere | ❌ Proprietary SaaS only |
+| Real-time updates | ✅ SSE-based live updates | ✅ Varies |
+
+## Who is this for?
+
+- **Developers** working with AI coding agents (Claude, GPT, Copilot) who want agents to interact with task boards
+- **Teams** that use AI assistants in their workflow and want a unified board for human + AI collaboration
+- **AI/automation builders** who need a simple way to give agents access to project state
+- **Open source enthusiasts** who want a self-hostable, privacy-first Kanban board
+- **Anyone** who wants a clean, fast Kanban board with modern tech
 
 ## Features
 
@@ -13,14 +49,36 @@ Kanban board app with AI agent integration. Share boards with AI agents via a si
 - **Real-time updates** — SSE-based event bus for live board updates
 - **Firebase Auth** — email/password + Google sign-in
 
-## Tech Stack
+## Cloud vs Self-Hosted
 
-- **Next.js 16** (App Router)
-- **Prisma + MongoDB**
-- **Firebase Auth** (cookie-based sessions for users)
-- **Grammy** (Telegram bot)
-- **Tailwind CSS 4**
-- **Deployed on Fly.io**
+### ☁️ Cloud-Hosted (Easiest)
+
+Use [anban.app](https://anban.app) — no installation required. Free to use.
+
+### 🏠 Self-Hosted
+
+Anban is fully open source under AGPL-3.0. Run it on your own infrastructure:
+
+```bash
+# Clone the repo
+git clone https://github.com/gibtang/anban.git
+cd anban
+
+# Install dependencies
+bun install
+
+# Generate Prisma client
+npx prisma generate
+
+# Set up environment variables
+cp .env.example .env
+# Edit .env with your MongoDB connection string, Firebase config, etc.
+
+# Run development server
+bun dev
+```
+
+See [Deployment](#deployment) for production setup.
 
 ## Agent Onboarding Flow
 
@@ -49,7 +107,24 @@ All agent endpoints use `Authorization: Bearer <token>` header.
 | POST | `/api/agent/cards` | Create a card |
 | PUT | `/api/agent/cards/[id]` | Update/move a card |
 
+## Tech Stack
+
+- **Framework:** [Next.js 16](https://nextjs.org) (App Router)
+- **Database:** [MongoDB](https://mongodb.com) via [Prisma](https://prisma.io)
+- **Auth:** [Firebase Auth](https://firebase.google.com/products/auth) (cookie-based sessions)
+- **Telegram:** [Grammy](https://grammy.dev)
+- **Styling:** [Tailwind CSS 4](https://tailwindcss.com)
+- **Deployment:** [Fly.io](https://fly.io)
+
 ## Getting Started
+
+### Prerequisites
+
+- [Bun](https://bun.sh) (or npm/pnpm)
+- [MongoDB](https://mongodb.com) (local or Atlas)
+- [Firebase project](https://console.firebase.google.com) for authentication
+
+### Local Development
 
 ```bash
 # Install dependencies
@@ -60,19 +135,20 @@ npx prisma generate
 
 # Set up environment variables
 cp .env.example .env
-# Edit .env with your MongoDB connection string, Firebase config, etc.
 
-# Run development server
+# Start dev server
 bun dev
 ```
 
+Open [http://localhost:3000](http://localhost:3000).
+
 ### Required Environment Variables
 
-```
+```env
 DATABASE_URL=mongodb+srv://...
 NEXT_PUBLIC_APP_URL=https://your-domain.com
 
-# Firebase
+# Firebase (Client)
 NEXT_PUBLIC_FIREBASE_API_KEY=
 NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=
 NEXT_PUBLIC_FIREBASE_PROJECT_ID=
@@ -80,7 +156,7 @@ NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=
 NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=
 NEXT_PUBLIC_FIREBASE_APP_ID=
 
-# Firebase Admin
+# Firebase Admin (Server)
 FIREBASE_PROJECT_ID=
 FIREBASE_CLIENT_EMAIL=
 FIREBASE_PRIVATE_KEY=
@@ -124,11 +200,77 @@ prisma/
 
 ## Deployment
 
+### Fly.io (Recommended)
+
 Deployed on Fly.io. Commits to master trigger automatic deployment.
 
 ```bash
 fly deploy
 ```
+
+### Docker
+
+<!-- TODO: Add Docker support if needed -->
+
+### Vercel
+
+Anban works with Vercel but note the 15-second serverless function timeout may affect long-running operations.
+
+## Roadmap
+
+- [ ] **Board templates** — pre-built board layouts for common workflows
+- [ ] **Webhook events** — notify external services on board changes
+- [ ] **Multi-board agents** — single agent across multiple boards
+- [ ] **Agent permissions** — fine-grained access control (read-only, specific columns)
+- [ ] **Board activity log** — full audit trail of human + agent actions
+- [ ] **Dark mode**
+- [ ] **Mobile app**
+- [ ] **Self-host docs** — step-by-step guide with Docker Compose
+
+See [GitHub Issues](https://github.com/gibtang/anban/issues) for the full list.
+
+## Contributing
+
+Contributions are welcome! Here's how to get started:
+
+1. **Fork** the repository
+2. **Create a feature branch:** `git checkout -b feature/my-feature`
+3. **Make your changes** and commit with conventional commits (`feat:`, `fix:`, `docs:`, etc.)
+4. **Push** to your fork: `git push origin feature/my-feature`
+5. **Open a Pull Request** against the `master` branch
+
+### Guidelines
+
+- Follow the existing code style (TypeScript, React, Tailwind)
+- Keep PRs focused — one feature or fix per PR
+- Add tests for new functionality
+- Update documentation for user-facing changes
+- Be respectful and constructive in discussions
+
+### Reporting Bugs
+
+Open a [GitHub Issue](https://github.com/gibtang/anban/issues/new?template=bug_report.md) with:
+- Steps to reproduce
+- Expected vs actual behavior
+- Screenshots if applicable
+- Browser/device info
+
+### Requesting Features
+
+Open a [GitHub Issue](https://github.com/gibtang/anban/issues/new?template=feature_request.md) describing the use case and why it would benefit Anban users.
+
+## Community & Support
+
+- **GitHub Issues** — [Bug reports and feature requests](https://github.com/gibtang/anban/issues)
+- **Discussions** — [Ask questions, share ideas](https://github.com/gibtang/anban/discussions)
+
+## Security
+
+If you discover a security vulnerability, **please do not open a public issue**. Instead, email [admin@a2z-soft.com](mailto:admin@a2z-soft.com) with the details. We'll respond within 48 hours.
+
+## Changelog
+
+See [GitHub Releases](https://github.com/gibtang/anban/releases) for version history and release notes.
 
 ## License
 
@@ -141,6 +283,10 @@ This project is licensed under the **GNU Affero General Public License v3.0 only
 
 See the [LICENSE](./LICENSE) file for the full license text, or visit [https://www.gnu.org/licenses/agpl-3.0](https://www.gnu.org/licenses/agpl-3.0).
 
+## Authors
+
+**A2Z Soft** — [GitHub](https://github.com/gibtang) · [admin@a2z-soft.com](mailto:admin@a2z-soft.com)
+
 ---
 
-*Made with ❤️ by [A2Z Soft](https://github.com/gibtang)*
+*If you find Anban useful, consider giving it a ⭐ on [GitHub](https://github.com/gibtang/anban)!*
