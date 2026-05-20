@@ -359,42 +359,44 @@ export default function KanbanBoard({ boardId }: KanbanBoardProps) {
   }
 
   return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCorners}
-      onDragStart={handleDragStart}
-      onDragOver={handleDragOver}
-      onDragEnd={handleDragEnd}
-      onDragCancel={handleDragCancel}
-    >
-      <div className="flex gap-4 overflow-x-auto pb-4">
-        {displayBoard.columns
-          .sort((a, b) => a.position - b.position)
-          .map((column) => (
-            <KanbanColumn
-              key={column.id}
-              column={column}
-              cards={columnCardsMap.get(column.id) ?? column.cards}
-              activeCardId={activeCardId}
-              boardId={boardId}
-              onEditCard={handleEditCard}
-            />
-          ))}
-      </div>
+    <>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCorners}
+        onDragStart={handleDragStart}
+        onDragOver={handleDragOver}
+        onDragEnd={handleDragEnd}
+        onDragCancel={handleDragCancel}
+      >
+        <div className="flex gap-4 overflow-x-auto pb-4">
+          {displayBoard.columns
+            .sort((a, b) => a.position - b.position)
+            .map((column) => (
+              <KanbanColumn
+                key={column.id}
+                column={column}
+                cards={columnCardsMap.get(column.id) ?? column.cards}
+                activeCardId={activeCardId}
+                boardId={boardId}
+                onEditCard={handleEditCard}
+              />
+            ))}
+        </div>
 
-      {/* Drag overlay for smooth drag experience */}
-      <DragOverlay dropAnimation={{
-        duration: 200,
-        easing: 'ease',
-      }}>
-        {activeCard ? (
-          <div className="opacity-90 rotate-2">
-            <KanbanCard card={activeCard} isDragging />
-          </div>
-        ) : null}
-      </DragOverlay>
+        {/* Drag overlay for smooth drag experience */}
+        <DragOverlay dropAnimation={{
+          duration: 200,
+          easing: 'ease',
+        }}>
+          {activeCard ? (
+            <div className="opacity-90 rotate-2">
+              <KanbanCard card={activeCard} isDragging />
+            </div>
+          ) : null}
+        </DragOverlay>
+      </DndContext>
 
-      {/* Edit card modal */}
+      {/* Edit card modal — rendered outside DndContext to avoid event conflicts */}
       <CardModal
         isOpen={!!editingCard}
         onClose={() => setEditingCard(null)}
@@ -405,6 +407,6 @@ export default function KanbanBoard({ boardId }: KanbanBoardProps) {
         users={[]}
         agents={[]}
       />
-    </DndContext>
+    </>
   );
 }

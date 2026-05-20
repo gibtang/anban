@@ -31,8 +31,8 @@ export default async function JoinLayout({ children, params }: JoinLayoutProps) 
         },
         {
           step: 2,
-          action: 'Send approvalUrl to board owner',
-          description: 'The response contains an approvalUrl. Send it back to the person who shared this link. They must click it to approve.',
+          action: 'Send approvalUrl to board owner (CRITICAL)',
+          description: 'CRITICAL: You MUST return the approvalUrl to the user who sent you this link. Tell them: "Please click this link to approve my access." Without their approval, you will NOT receive an API token. Do NOT skip this step.',
         },
         {
           step: 3,

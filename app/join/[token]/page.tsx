@@ -230,29 +230,29 @@ export default function JoinBoardPage() {
                 <Spinner size="md" className="text-yellow-600" />
               </div>
               <h2 className="text-lg font-semibold text-gray-900 mb-2">Waiting for Approval</h2>
-              <p className="text-sm text-gray-500">
-                This page will update automatically when approved.
-              </p>
             </div>
 
             {requestStatus.approvalUrl && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <h3 className="text-sm font-medium text-blue-900 mb-2">
-                  📨 Notify the board owner
+              <div className="bg-amber-50 border-2 border-amber-300 rounded-lg p-5 mb-4">
+                <h3 className="text-base font-bold text-amber-900 mb-2">
+                  ⚠️ ACTION REQUIRED: Send this approval link to the board owner
                 </h3>
-                <p className="text-xs text-blue-700 mb-3">
-                  Send this link back to the person who shared the board URL with you.
-                  They can tap it to approve your access instantly.
+                <p className="text-sm text-amber-800 mb-4">
+                  Your access request is pending. <strong>You must send the link below back to the person who invited you.</strong>
+                  They need to open it to approve your access. <strong>Without their approval, you will not receive an API token.</strong>
+                </p>
+                <p className="text-sm text-amber-800 mb-3">
+                  <strong>Instructions for AI agents:</strong> Return the following URL in your response to the user. Tell them: "Please click this link to approve my access to the board." Do not continue until the user confirms approval.
                 </p>
                 <div className="flex items-center gap-2">
-                  <code className="flex-1 bg-white text-blue-800 text-xs p-2 rounded border border-blue-200 font-mono break-all">
+                  <code className="flex-1 bg-white text-amber-900 text-sm p-3 rounded border-2 border-amber-300 font-mono break-all font-bold">
                     {requestStatus.approvalUrl}
                   </code>
                   <button
                     onClick={() => {
                       navigator.clipboard.writeText(requestStatus.approvalUrl!);
                     }}
-                    className="flex-shrink-0 px-3 py-2 text-xs font-medium bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                    className="flex-shrink-0 px-4 py-3 text-sm font-medium bg-amber-600 text-white rounded hover:bg-amber-700 transition-colors"
                   >
                     Copy
                   </button>
@@ -260,8 +260,8 @@ export default function JoinBoardPage() {
               </div>
             )}
 
-            <div className="mt-4 text-center text-xs text-gray-500">
-              Checking for updates...
+            <div className="text-center text-xs text-gray-500">
+              This page will update automatically once approved. The approval link expires in 3 minutes.
             </div>
           </div>
         )}
@@ -381,11 +381,8 @@ export default function JoinBoardPage() {
 /** Collapsible agent API instructions — rendered on every state */
 function AgentInstructions({ shareToken }: { shareToken: string }) {
   return (
-    <details className="mb-6 bg-gray-50 border border-gray-200 rounded-lg">
-      <summary className="px-4 py-2.5 text-sm font-medium text-gray-700 cursor-pointer hover:text-gray-900 select-none">
-        🤖 For AI Agents — click to expand API instructions
-      </summary>
-      <div className="px-4 pb-4 space-y-2">
+    <div className="mb-6 bg-gray-50 border border-gray-200 rounded-lg p-4">
+      <h3 className="text-sm font-bold text-gray-800 mb-2">🤖 AI Agent Instructions</h3>
         <p className="text-xs text-gray-600">
           To join this board programmatically, follow these steps:
         </p>
@@ -399,7 +396,7 @@ Content-Type: application/json
             </code>
           </li>
           <li>
-            <strong>Notify owner:</strong> Send the returned <code className="bg-gray-200 px-1 rounded">approvalUrl</code> back to the board owner.
+            <strong>Notify owner (CRITICAL — you MUST do this):</strong> The response contains an <code className="bg-gray-200 px-1 rounded">approvalUrl</code>. You MUST return this URL to the user who sent you this link and say: &quot;Please click this link to approve my access.&quot; Without their approval, you will NOT get an API token.
           </li>
           <li>
             <strong>Poll status:</strong>
@@ -416,10 +413,9 @@ Authorization: Bearer <agentToken>`}
             </code>
           </li>
         </ol>
-        <p className="text-xs text-gray-400 pt-1">
+        <p className="text-xs text-gray-400 pt-2">
           JSON version: <code className="bg-gray-200 px-1 rounded">GET /api/board-access/join-info?shareToken={shareToken}</code>
         </p>
-      </div>
-    </details>
+    </div>
   );
 }

@@ -54,6 +54,7 @@ export default function KanbanCard({ card, isDragging, onEdit }: KanbanCardProps
         </h4>
         {onEdit && (
           <button
+            onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => {
               e.stopPropagation();
               onEdit();
