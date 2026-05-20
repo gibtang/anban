@@ -323,6 +323,29 @@ export default function JoinBoardPage() {
                     {'{ "description": "Result here", "columnId": "done-column-id" }'}
                   </code>
                 </div>
+                <div>
+                  <p className="text-xs font-medium text-gray-500 mb-1">List agents:</p>
+                  <code className="block text-xs bg-gray-50 p-2 rounded text-gray-700 overflow-x-auto">
+                    GET /api/agent/agents{'\n'}
+                    Authorization: Bearer {requestStatus.agentToken?.slice(0, 8)}...
+                  </code>
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-gray-500 mb-1">Add comment:</p>
+                  <code className="block text-xs bg-gray-50 p-2 rounded text-gray-700 overflow-x-auto">
+                    POST /api/agent/cards/[cardId]/comments{'\n'}
+                    Authorization: Bearer {requestStatus.agentToken?.slice(0, 8)}...{'\n'}
+                    {'{ "content": "Done, here are the results..." }'}
+                  </code>
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-gray-500 mb-1">Assign card to agent:</p>
+                  <code className="block text-xs bg-gray-50 p-2 rounded text-gray-700 overflow-x-auto">
+                    PUT /api/agent/cards/[cardId]/assign{'\n'}
+                    Authorization: Bearer {requestStatus.agentToken?.slice(0, 8)}...{'\n'}
+                    {'{ "agentId": "<id from /api/agent/agents>" }'}
+                  </code>
+                </div>
               </div>
             </div>
           </div>
@@ -410,6 +433,29 @@ Poll every 3-5s until status = "approved"`}
             <code className="block mt-1 bg-gray-900 text-green-400 p-2 rounded text-[11px] font-mono whitespace-pre">
 {`GET /api/agent/board
 Authorization: Bearer <agentToken>`}
+            </code>
+          </li>
+          <li>
+            <strong>List agents:</strong>
+            <code className="block mt-1 bg-gray-900 text-green-400 p-2 rounded text-[11px] font-mono whitespace-pre">
+{`GET /api/agent/agents
+Authorization: Bearer <agentToken>`}
+            </code>
+          </li>
+          <li>
+            <strong>Add comment to card:</strong>
+            <code className="block mt-1 bg-gray-900 text-green-400 p-2 rounded text-[11px] font-mono whitespace-pre">
+{`POST /api/agent/cards/<cardId>/comments
+Authorization: Bearer <agentToken>
+{ "content": "Your comment here" }`}
+            </code>
+          </li>
+          <li>
+            <strong>Assign card to agent:</strong> Use agent ID from listAgents.
+            <code className="block mt-1 bg-gray-900 text-green-400 p-2 rounded text-[11px] font-mono whitespace-pre">
+{`PUT /api/agent/cards/<cardId>/assign
+Authorization: Bearer <agentToken>
+{ "agentId": "<agentId>" }  // or null to unassign`}
             </code>
           </li>
         </ol>

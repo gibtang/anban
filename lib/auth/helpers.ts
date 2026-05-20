@@ -72,6 +72,7 @@ export async function verifyAuth(request: NextRequest): Promise<string> {
 export interface AgentAuthResult {
   boardId: string;
   agentName: string;
+  accessId: string;
 }
 
 /**
@@ -103,5 +104,6 @@ export async function verifyAgentAuth(request: NextRequest): Promise<AgentAuthRe
   return {
     boardId: accessRequest.boardId,
     agentName: accessRequest.agentName,
+    accessId: accessRequest.id,
   };
 }

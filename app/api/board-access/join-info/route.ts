@@ -125,6 +125,42 @@ export async function GET(request: NextRequest) {
                 },
                 description: 'Update a card (move between columns, change title/description).',
               },
+              listAgents: {
+                method: 'GET',
+                url: `${appUrl}/api/agent/agents`,
+                headers: { Authorization: 'Bearer <agentToken>' },
+                description: 'List all approved agents on the board. Returns id, name, approvedAt, and isSelf for each agent.',
+              },
+              addComment: {
+                method: 'POST',
+                url: `${appUrl}/api/agent/cards/<cardId>/comments`,
+                headers: {
+                  Authorization: 'Bearer <agentToken>',
+                  'Content-Type': 'application/json',
+                },
+                body: {
+                  content: '<comment text, max 2000 chars>',
+                },
+                description: 'Add a comment to a card. Your agent name is automatically recorded as the author.',
+              },
+              listComments: {
+                method: 'GET',
+                url: `${appUrl}/api/agent/cards/<cardId>/comments`,
+                headers: { Authorization: 'Bearer <agentToken>' },
+                description: 'List all comments on a card, ordered by creation time.',
+              },
+              assignCard: {
+                method: 'PUT',
+                url: `${appUrl}/api/agent/cards/<cardId>/assign`,
+                headers: {
+                  Authorization: 'Bearer <agentToken>',
+                  'Content-Type': 'application/json',
+                },
+                body: {
+                  agentId: '<BoardAccess ID of target agent, or null to unassign>',
+                },
+                description: 'Assign or reassign a card to another approved agent on the board. Use GET /api/agent/agents to find agent IDs. Pass null to unassign.',
+              },
             },
           },
         ],

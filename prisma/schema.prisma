@@ -105,3 +105,17 @@ model AuditLog {
   @@index([entityType, entityId])
   @@index([timestamp])
 }
+
+model Comment {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  cardId    String   @db.ObjectId
+  boardId   String   @db.ObjectId
+  authorId  String   @db.ObjectId
+  authorName String
+  authorType String  @default("agent") // "agent" or "user"
+  content   String
+  createdAt DateTime @default(now())
+
+  @@index([cardId])
+  @@index([boardId])
+}
