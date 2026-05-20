@@ -43,7 +43,7 @@ export function CardModal({
       setTitle(card.title);
       setDescription(card.description || '');
       setTags(card.tags || []);
-      setAgentId(card.agentId || '');
+      setAgentId(card.agentId && agents.some(a => a.id === card.agentId) ? card.agentId : '');
     } else {
       setTitle('');
       setDescription('');
@@ -52,7 +52,7 @@ export function CardModal({
       setAgentId('');
     }
     setError('');
-  }, [card, isOpen]);
+  }, [card, isOpen, agents]);
 
   const handleAddTag = () => {
     const trimmedTag = tagInput.trim();

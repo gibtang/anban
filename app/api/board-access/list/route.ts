@@ -76,6 +76,12 @@ export async function DELETE(request: NextRequest) {
       where: { id: accessId },
     });
 
+    // Clear agentId on any cards that referenced this access
+    await prisma.card.updateMany({
+      where: { boardId: accessRequest.boardId, agentId: accessId },
+      data: { agentId: null },
+    });
+
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error revoking access:', error);
