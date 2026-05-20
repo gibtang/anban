@@ -2,8 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import type { Card, CreateCardRequest, UpdateCardRequest } from '@/types/card';
-import type { AgentConfig } from '@/types/agent';
 import { Spinner } from '@/components/ui/Spinner';
+
+interface AgentOption {
+  id: string;
+  name: string;
+}
 
 interface CardModalProps {
   isOpen: boolean;
@@ -12,7 +16,7 @@ interface CardModalProps {
   card?: Card;
   columnId: string;
   boardId: string;
-  agents: AgentConfig[];
+  agents: AgentOption[];
 }
 
 export function CardModal({

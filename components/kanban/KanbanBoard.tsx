@@ -38,6 +38,11 @@ interface BoardData {
   }>;
 }
 
+interface AgentOption {
+  id: string;
+  name: string;
+}
+
 const fetcher = async (url: string) => {
   try {
     const res = await fetchWithRetry(url);
@@ -63,6 +68,18 @@ export default function KanbanBoard({ boardId }: KanbanBoardProps) {
         toast.showToast('Failed to load board. Please try again.', 'error');
       },
     }
+  );
+
+  // Fetch approved agents for this board
+  const { data: accessList } = useSWR(
+    `/api/board-access/list?boardId=${boardId}`,
+    fetcher
+  );
+  const agents: AgentOption[] = useMemo(() =>
+    (accessList || [])
+      .filter((r: { status: string }) => r.status === 'approved')
+      .map((r: { id: string; agentName: string }) => ({ id: r.id, name: r.agentName })),
+    [accessList]
   );
 
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
@@ -421,7 +438,7 @@ export default function KanbanBoard({ boardId }: KanbanBoardProps) {
         card={modalState?.mode === 'edit' ? modalState.card : undefined}
         columnId={modalState?.mode === 'add' ? modalState.columnId : (modalState?.mode === 'edit' ? modalState.card.columnId : '')}
         boardId={boardId}
-        agents={[]}
+        agents={agents}
       />
     </>
   );
