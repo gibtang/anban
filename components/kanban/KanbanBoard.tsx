@@ -18,9 +18,10 @@ import {
   sortableKeyboardCoordinates,
   arrayMove,
 } from '@dnd-kit/sortable';
-import type { Card } from '@/types/card';
+import type { Card, CreateCardRequest, UpdateCardRequest } from '@/types/card';
 import KanbanColumn from './KanbanColumn';
 import KanbanCard from './KanbanCard';
+import { CardModal } from './CardModal';
 import { KanbanBoardSkeleton } from '@/components/skeletons/CardSkeleton';
 import { EmptyBoard } from '@/components/empty/EmptyBoard';
 import { useToast } from '@/components/toast/ToastProvider';
@@ -66,6 +67,8 @@ export default function KanbanBoard({ boardId }: KanbanBoardProps) {
 
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
   const [optimisticBoard, setOptimisticBoard] = useState<BoardData | null>(null);
+  const [editingCard, setEditingCard] = useState<Card | null>(null);
+  const [isSavingCard, setIsSavingCard] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -295,6 +298,33 @@ export default function KanbanBoard({ boardId }: KanbanBoardProps) {
     [displayBoard, findColumnForCard, boardId, optimisticBoard]
   );
 
+  const handleEditCard = useCallback((card: Card) => {
+    setEditingCard(card);
+  }, []);
+
+  const handleSaveCard = useCallback(async (cardData: CreateCardRequest | UpdateCardRequest) => {
+    if (!editingCard) return;
+    setIsSavingCard(true);
+    try {
+      const res = await fetchWithRetry(`/api/cards/${editingCard.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(cardData),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to update card');
+      }
+      mutate(`/api/boards/${boardId}`);
+      toast.showToast('Card updated', 'success');
+    } catch (err) {
+      toast.showToast(err instanceof Error ? err.message : 'Failed to update card', 'error');
+      throw err;
+    } finally {
+      setIsSavingCard(false);
+    }
+  }, [editingCard, boardId, toast]);
+
   const handleDragCancel = useCallback(() => {
     setActiveCardId(null);
     setOptimisticBoard(null);
@@ -347,6 +377,7 @@ export default function KanbanBoard({ boardId }: KanbanBoardProps) {
               cards={columnCardsMap.get(column.id) ?? column.cards}
               activeCardId={activeCardId}
               boardId={boardId}
+              onEditCard={handleEditCard}
             />
           ))}
       </div>
@@ -362,6 +393,18 @@ export default function KanbanBoard({ boardId }: KanbanBoardProps) {
           </div>
         ) : null}
       </DragOverlay>
+
+      {/* Edit card modal */}
+      <CardModal
+        isOpen={!!editingCard}
+        onClose={() => setEditingCard(null)}
+        onSave={handleSaveCard}
+        card={editingCard || undefined}
+        columnId={editingCard?.columnId || ''}
+        boardId={boardId}
+        users={[]}
+        agents={[]}
+      />
     </DndContext>
   );
 }

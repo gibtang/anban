@@ -7,9 +7,10 @@ import type { Card } from '@/types/card';
 interface KanbanCardProps {
   card: Card;
   isDragging?: boolean;
+  onEdit?: () => void;
 }
 
-export default function KanbanCard({ card, isDragging }: KanbanCardProps) {
+export default function KanbanCard({ card, isDragging, onEdit }: KanbanCardProps) {
   const {
     attributes,
     listeners,
@@ -46,10 +47,26 @@ export default function KanbanCard({ card, isDragging }: KanbanCardProps) {
         ${isDragActive ? 'opacity-50 shadow-lg ring-2 ring-indigo-400 z-50 scale-105' : 'opacity-100'}
       `}
     >
-      {/* Card title */}
-      <h4 className="text-sm font-medium text-gray-900 leading-snug mb-2">
-        {card.title}
-      </h4>
+      {/* Card header: title + edit button */}
+      <div className="flex items-start justify-between gap-1 mb-2">
+        <h4 className="text-sm font-medium text-gray-900 leading-snug flex-1">
+          {card.title}
+        </h4>
+        {onEdit && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit();
+            }}
+            className="flex-shrink-0 opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-indigo-600 transition-all"
+            title="Edit card"
+          >
+            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+            </svg>
+          </button>
+        )}
+      </div>
 
       {/* Card metadata row */}
       <div className="flex items-center justify-between gap-2">

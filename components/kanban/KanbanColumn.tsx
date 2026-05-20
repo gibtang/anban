@@ -24,6 +24,7 @@ interface KanbanColumnProps {
   cards: Card[];
   activeCardId: string | null;
   boardId: string;
+  onEditCard?: (card: Card) => void;
 }
 
 export default function KanbanColumn({
@@ -31,6 +32,7 @@ export default function KanbanColumn({
   cards,
   activeCardId,
   boardId,
+  onEditCard,
 }: KanbanColumnProps) {
   const toast = useToast();
   const { setNodeRef, isOver } = useDroppable({
@@ -123,6 +125,7 @@ export default function KanbanColumn({
               key={card.id}
               card={card}
               isDragging={activeCardId === card.id}
+              onEdit={() => onEditCard?.(card)}
             />
           ))}
         </SortableContext>
