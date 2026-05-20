@@ -72,18 +72,6 @@ export default function KanbanCard({ card, isDragging, onEdit }: KanbanCardProps
       {/* Card metadata row */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-1.5 flex-wrap">
-          {/* Assignee avatar */}
-          {card.assigneeId && (
-            <div
-              className="flex-shrink-0 w-6 h-6 rounded-full bg-indigo-500 flex items-center justify-center"
-              title={card.assigneeId}
-            >
-              <span className="text-[10px] font-medium text-white">
-                {card.assigneeId.slice(0, 1).toUpperCase()}
-              </span>
-            </div>
-          )}
-
           {/* Agent badge */}
           {card.agentId && (
             <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-100 text-emerald-800">

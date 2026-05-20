@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import type { Card, CreateCardRequest, UpdateCardRequest } from '@/types/card';
-import type { User } from '@/types/user';
 import type { AgentConfig } from '@/types/agent';
 import { Spinner } from '@/components/ui/Spinner';
 
@@ -13,7 +12,6 @@ interface CardModalProps {
   card?: Card;
   columnId: string;
   boardId: string;
-  users: User[];
   agents: AgentConfig[];
 }
 
@@ -24,14 +22,12 @@ export function CardModal({
   card,
   columnId,
   boardId,
-  users,
   agents,
 }: CardModalProps) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
-  const [assigneeId, setAssigneeId] = useState<string>('');
   const [agentId, setAgentId] = useState<string>('');
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
@@ -43,14 +39,12 @@ export function CardModal({
       setTitle(card.title);
       setDescription(card.description || '');
       setTags(card.tags || []);
-      setAssigneeId(card.assigneeId || '');
       setAgentId(card.agentId || '');
     } else {
       setTitle('');
       setDescription('');
       setTags([]);
       setTagInput('');
-      setAssigneeId('');
       setAgentId('');
     }
     setError('');
@@ -92,7 +86,6 @@ export function CardModal({
             title: title.trim(),
             description: description.trim() || undefined,
             tags,
-            assigneeId: assigneeId || undefined,
             agentId: agentId || undefined,
           }
         : ({
@@ -101,7 +94,6 @@ export function CardModal({
             columnId,
             boardId,
             tags,
-            assigneeId: assigneeId || undefined,
             agentId: agentId || undefined,
           } as CreateCardRequest);
 
@@ -244,29 +236,6 @@ export function CardModal({
                           ))}
                         </div>
                       )}
-                    </div>
-
-                    {/* Assignee */}
-                    <div>
-                      <label
-                        htmlFor="card-assignee"
-                        className="block text-sm font-medium text-gray-700"
-                      >
-                        Assignee
-                      </label>
-                      <select
-                        id="card-assignee"
-                        value={assigneeId}
-                        onChange={(e) => setAssigneeId(e.target.value)}
-                        className="mt-1 block w-full pl-3 pr-10 py-2 text-base text-gray-900 border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
-                      >
-                        <option value="">Unassigned</option>
-                        {users.map((user) => (
-                          <option key={user.id} value={user.id}>
-                            {user.firebaseUid}
-                          </option>
-                        ))}
-                      </select>
                     </div>
 
                     {/* Agent */}

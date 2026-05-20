@@ -404,7 +404,6 @@ export default function KanbanBoard({ boardId }: KanbanBoardProps) {
         card={editingCard || undefined}
         columnId={editingCard?.columnId || ''}
         boardId={boardId}
-        users={[]}
         agents={[]}
       />
     </>
