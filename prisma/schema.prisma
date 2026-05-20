@@ -13,7 +13,7 @@ datasource db {
 model User {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   firebaseUid String   @unique
-  telegramId  String?  @unique
+  email       String?
   createdAt   DateTime @default(now())
 }
 
@@ -89,18 +89,6 @@ model OpenClawConnection {
   apiKey     String?
   enabled    Boolean  @default(true)
   boardId    String   @unique @db.ObjectId
-}
-
-model TelegramConfig {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  botToken  String
-  username  String?
-  chatId    String?
-  enabled   Boolean  @default(true)
-  boardId   String   @unique @db.ObjectId
-  boardName String?  // Denormalized board name for easier lookup
-
-  @@index([boardName])
 }
 
 model AuditLog {

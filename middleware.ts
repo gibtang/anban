@@ -3,11 +3,11 @@ import type { NextRequest } from 'next/server';
 
 const publicRoutes = [
   '/login',
+  '/signup',
   '/join',
   '/approve',
   '/api/firebase-config',
   '/api/auth',
-  '/api/telegram/webhook',
   '/api/board-access/board',
   '/api/board-access/request',
 ];

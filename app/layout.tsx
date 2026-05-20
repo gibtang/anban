@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Anban - OpenClaw Agent Kanban Board",
-  description: "Web-based Kanban board for OpenClaw agents with Telegram bot integration",
+  description: "Web-based Kanban board for OpenClaw agents",
 };
 
 export default function RootLayout({

@@ -37,13 +37,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setAuth(firebaseAuth);
 
         if (firebaseAuth) {
-          const unsubscribe = onAuthStateChanged(firebaseAuth, async (user) => {
-            setUser(user);
-
-            // Set or clear cookie based on auth state
-            if (user) {
+          const unsubscribe = onAuthStateChanged(firebaseAuth, async (firebaseUser) => {
+            // Set or clear cookie BEFORE setting user state
+            // This ensures middleware can verify the cookie when the page redirects
+            if (firebaseUser) {
               try {
-                const idTokenResult: IdTokenResult = await user.getIdTokenResult(true);
+                const idTokenResult: IdTokenResult = await firebaseUser.getIdTokenResult(true);
                 await fetch('/api/auth/set-cookie', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
@@ -61,6 +60,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               });
             }
 
+            setUser(firebaseUser);
             setLoading(false);
           });
 

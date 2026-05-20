@@ -1,18 +1,92 @@
 'use client';
 
+import { useState, useRef, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import useSWR, { mutate } from 'swr';
 import { useEventSource } from '@/lib/hooks/useEventSource';
-import { mutate } from 'swr';
 import KanbanBoard from '@/components/kanban/KanbanBoard';
 import SharePanel from '@/components/board/SharePanel';
 import AccessRequests from '@/components/board/AccessRequests';
+import { useToast } from '@/components/toast/ToastProvider';
+import { fetchWithRetry } from '@/lib/utils/retry';
+
+interface BoardData {
+  id: string;
+  name: string;
+}
+
+const boardFetcher = async (url: string) => {
+  const res = await fetchWithRetry(url);
+  return res.json();
+};
 
 export default function BoardDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const toast = useToast();
   const boardId = params.id as string;
 
   const { event, connected } = useEventSource(boardId);
+
+  // Fetch board name (full board data is fetched separately in KanbanBoard)
+  const { data: board } = useSWR<BoardData>(`/api/boards/${boardId}`, boardFetcher);
+
+  // Inline rename state
+  const [isEditing, setIsEditing] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (isEditing && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, [isEditing]);
+
+  const handleStartRename = () => {
+    if (!board?.name) return;
+    setEditName(board.name);
+    setIsEditing(true);
+  };
+
+  const handleSaveRename = async () => {
+    const trimmed = editName.trim();
+    if (!trimmed || trimmed === board?.name) {
+      setIsEditing(false);
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const res = await fetchWithRetry(`/api/boards/${boardId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: trimmed }),
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to rename board');
+      }
+
+      await mutate(`/api/boards/${boardId}`);
+      toast.showToast('Board renamed', 'success');
+    } catch {
+      toast.showToast('Failed to rename board', 'error');
+    } finally {
+      setIsSaving(false);
+      setIsEditing(false);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSaveRename();
+    } else if (e.key === 'Escape') {
+      setIsEditing(false);
+    }
+  };
 
   // Handle real-time updates by revalidating the board data
   if (
@@ -48,6 +122,42 @@ export default function BoardDetailPage() {
               />
             </svg>
           </button>
+
+          {/* Board Name — inline editable */}
+          {isEditing ? (
+            <input
+              ref={inputRef}
+              type="text"
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+              onBlur={handleSaveRename}
+              onKeyDown={handleKeyDown}
+              disabled={isSaving}
+              className="text-xl font-bold text-gray-900 border-b-2 border-indigo-500 bg-transparent outline-none py-0.5 min-w-[120px]"
+            />
+          ) : (
+            <button
+              onClick={handleStartRename}
+              className="text-xl font-bold text-gray-900 hover:text-indigo-600 transition-colors group flex items-center gap-1.5"
+              title="Click to rename"
+            >
+              {board?.name || '...'}
+              <svg
+                className="h-4 w-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                />
+              </svg>
+            </button>
+          )}
+
           <div className="flex items-center space-x-2">
             <div
               className={`h-2 w-2 rounded-full ${

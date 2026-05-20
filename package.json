@@ -18,7 +18,6 @@
     "@prisma/client": "^6.19.3",
     "firebase": "^12.12.0",
     "firebase-admin": "^13.8.0",
-    "grammy": "^1.42.0",
     "mongodb": "^6.21.0",
     "next": "16.2.3",
     "prisma": "^6.19.3",

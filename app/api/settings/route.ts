@@ -11,12 +11,6 @@ interface SettingsRequest {
     apiKey?: string;
     enabled?: boolean;
   };
-  telegramConfig?: {
-    botToken: string;
-    username?: string;
-    chatId?: string;
-    enabled?: boolean;
-  };
 }
 
 interface SettingsResponse {
@@ -24,12 +18,6 @@ interface SettingsResponse {
   openClawConnection?: {
     gatewayUrl: string;
     apiKey: string;
-    enabled: boolean;
-  } | null;
-  telegramConfig?: {
-    botToken: string;
-    username: string | null;
-    chatId: string | null;
     enabled: boolean;
   } | null;
 }
@@ -63,15 +51,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Board not found' }, { status: 404 });
     }
 
-    // Manually fetch connections
-    const [openClawConnection, telegramConfig] = await Promise.all([
-      prisma.openClawConnection.findUnique({
-        where: { boardId },
-      }),
-      prisma.telegramConfig.findUnique({
-        where: { boardId },
-      }),
-    ]);
+    const openClawConnection = await prisma.openClawConnection.findUnique({
+      where: { boardId },
+    });
 
     // Mask sensitive fields in response
     const response: SettingsResponse = {
@@ -86,17 +68,6 @@ export async function GET(request: NextRequest) {
       };
     } else {
       response.openClawConnection = null;
-    }
-
-    if (telegramConfig) {
-      response.telegramConfig = {
-        botToken: maskSecret(telegramConfig.botToken),
-        username: telegramConfig.username,
-        chatId: telegramConfig.chatId,
-        enabled: telegramConfig.enabled,
-      };
-    } else {
-      response.telegramConfig = null;
     }
 
     return NextResponse.json(response);
@@ -114,7 +85,7 @@ export async function PUT(request: NextRequest) {
     const userId = await verifyAuth(request);
 
     const body: SettingsRequest = await request.json();
-    const { boardId, openClawConnection, telegramConfig } = body;
+    const { boardId, openClawConnection } = body;
 
     if (!boardId || typeof boardId !== 'string') {
       return NextResponse.json({ error: 'boardId is required' }, { status: 400 });
@@ -163,41 +134,10 @@ export async function PUT(request: NextRequest) {
       });
     }
 
-    // Update Telegram config if provided
-    if (telegramConfig) {
-      const { botToken, username, chatId, enabled } = telegramConfig;
-
-      if (!botToken || typeof botToken !== 'string' || botToken.trim().length === 0) {
-        return NextResponse.json({ error: 'botToken is required for Telegram config' }, { status: 400 });
-      }
-
-      await prisma.telegramConfig.upsert({
-        where: { boardId },
-        create: {
-          boardId,
-          botToken: botToken.trim(),
-          username: username?.trim() || null,
-          chatId: chatId?.trim() || null,
-          enabled: enabled !== undefined ? enabled : true,
-        },
-        update: {
-          botToken: botToken.trim(),
-          ...(username !== undefined && { username: username.trim() || null }),
-          ...(chatId !== undefined && { chatId: chatId.trim() || null }),
-          ...(enabled !== undefined && { enabled }),
-        },
-      });
-    }
-
     // Fetch updated settings
-    const [updatedOpenClawConnection, updatedTelegramConfig] = await Promise.all([
-      prisma.openClawConnection.findUnique({
-        where: { boardId },
-      }),
-      prisma.telegramConfig.findUnique({
-        where: { boardId },
-      }),
-    ]);
+    const updatedOpenClawConnection = await prisma.openClawConnection.findUnique({
+      where: { boardId },
+    });
 
     // Mask sensitive fields in response
     const response: SettingsResponse = {
@@ -212,17 +152,6 @@ export async function PUT(request: NextRequest) {
       };
     } else {
       response.openClawConnection = null;
-    }
-
-    if (updatedTelegramConfig) {
-      response.telegramConfig = {
-        botToken: maskSecret(updatedTelegramConfig.botToken),
-        username: updatedTelegramConfig.username,
-        chatId: updatedTelegramConfig.chatId,
-        enabled: updatedTelegramConfig.enabled,
-      };
-    } else {
-      response.telegramConfig = null;
     }
 
     return NextResponse.json(response);

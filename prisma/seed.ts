@@ -95,13 +95,6 @@ async function main() {
         tags: ['api', 'backend'],
       },
       {
-        title: 'Add Telegram bot integration',
-        description: 'Connect Telegram bot for notifications and commands',
-        columnId: createdColumns[3].id, // Review
-        boardId: defaultBoard.id,
-        tags: ['telegram', 'bot'],
-      },
-      {
         title: 'Setup deployment pipeline',
         description: 'Configure Fly.io deployment with proper env variables',
         columnId: createdColumns[4].id, // Done
@@ -158,17 +151,6 @@ async function main() {
       },
     });
     console.log('✅ Created sample OpenClaw connection');
-
-    // Create sample Telegram config
-    await prisma.telegramConfig.create({
-      data: {
-        botToken: 'sample-telegram-bot-token',
-        chatId: '-1234567890',
-        enabled: true,
-        boardId: defaultBoard.id,
-      },
-    });
-    console.log('✅ Created sample Telegram config');
 
     console.log('🎉 Database seeding completed successfully!');
   } catch (error) {

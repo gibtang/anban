@@ -10,16 +10,8 @@ interface OpenClawConfig {
   enabled: boolean;
 }
 
-interface TelegramConfig {
-  botToken: string;
-  username: string;
-  chatId: string;
-  enabled: boolean;
-}
-
 interface SettingsData {
   openClaw: OpenClawConfig;
-  telegram: TelegramConfig;
 }
 
 function SettingsContent() {
@@ -32,22 +24,10 @@ function SettingsContent() {
       apiKey: '',
       enabled: true,
     },
-    telegram: {
-      botToken: '',
-      username: '',
-      chatId: '',
-      enabled: true,
-    },
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isTestingConnection, setIsTestingConnection] = useState(false);
-  const [isLookingUpBot, setIsLookingUpBot] = useState(false);
-  const [botLookupResult, setBotLookupResult] = useState<{
-    success: boolean;
-    message: string;
-  } | null>(null);
-  const [botUsernameInput, setBotUsernameInput] = useState('');
   const [connectionTestResult, setConnectionTestResult] = useState<{
     success: boolean;
     message: string;
@@ -133,69 +113,6 @@ function SettingsContent() {
       });
     } finally {
       setIsTestingConnection(false);
-    }
-  };
-
-  const handleLookupBot = async () => {
-    if (!botUsernameInput.trim()) {
-      setBotLookupResult({
-        success: false,
-        message: 'Please enter a bot username',
-      });
-      return;
-    }
-
-    setIsLookingUpBot(true);
-    setBotLookupResult(null);
-    setError('');
-
-    try {
-      const response = await fetch('/api/telegram/lookup-bot', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          username: botUsernameInput.trim(),
-        }),
-      });
-
-      const result = await response.json();
-
-      if (result.success && result.data) {
-        // Auto-populate settings with found configuration
-        if (result.data.openClawConfig) {
-          setSettings({
-            ...settings,
-            openClaw: {
-              gatewayUrl: result.data.openClawConfig.gatewayUrl,
-              apiKey: result.data.openClawConfig.apiKey,
-              enabled: result.data.openClawConfig.enabled,
-            },
-            telegram: {
-              ...settings.telegram,
-              username: result.data.botName,
-            },
-          });
-        }
-
-        setBotLookupResult({
-          success: true,
-          message: result.data.status === 'linked'
-            ? `Bot ${result.data.botName} found and linked to OpenClaw agent. Configuration loaded.`
-            : `Bot ${result.data.botName} found but not linked to OpenClaw agent. Telegram config loaded.`,
-        });
-      } else {
-        setBotLookupResult({
-          success: false,
-          message: result.error || 'Failed to look up bot configuration',
-        });
-      }
-    } catch (err) {
-      setBotLookupResult({
-        success: false,
-        message: err instanceof Error ? err.message : 'Bot lookup failed',
-      });
-    } finally {
-      setIsLookingUpBot(false);
     }
   };
 
@@ -374,172 +291,6 @@ function SettingsContent() {
                 {connectionTestResult.message}
               </div>
             )}
-          </div>
-        </div>
-      </div>
-
-      {/* Telegram Bot Section */}
-      <div className="mt-8 bg-white shadow overflow-hidden sm:rounded-lg">
-        <div className="px-4 py-5 sm:px-6">
-          <h3 className="text-lg leading-6 font-medium text-gray-900">Telegram Bot</h3>
-          <p className="mt-1 max-w-2xl text-sm text-gray-500">
-            Configure Telegram bot for board notifications and updates
-          </p>
-        </div>
-        <div className="border-t border-gray-200 px-4 py-5 sm:px-6 space-y-4">
-          {/* Bot Username Lookup */}
-          <div>
-            <label htmlFor="bot-username-lookup" className="block text-sm font-medium text-gray-700">
-              Bot Username Lookup
-            </label>
-            <div className="mt-1 flex space-x-2">
-              <input
-                type="text"
-                id="bot-username-lookup"
-                value={botUsernameInput}
-                onChange={(e) => setBotUsernameInput(e.target.value)}
-                className="flex-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                placeholder="@gibtang_bot"
-                onKeyDown={(e) => e.key === 'Enter' && handleLookupBot()}
-              />
-              <button
-                type="button"
-                onClick={handleLookupBot}
-                disabled={isLookingUpBot || !botUsernameInput.trim()}
-                className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isLookingUpBot ? (
-                  <>
-                    <svg
-                      className="animate-spin -ml-1 mr-2 h-4 w-4 text-gray-700"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      ></circle>
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      ></path>
-                    </svg>
-                    Looking up...
-                  </>
-                ) : (
-                  'Auto-Configure'
-                )}
-              </button>
-            </div>
-            {botLookupResult && (
-              <div
-                className={`mt-2 text-sm ${
-                  botLookupResult.success ? 'text-green-600' : 'text-red-600'
-                }`}
-              >
-                {botLookupResult.message}
-              </div>
-            )}
-            <p className="mt-1 text-xs text-gray-500">
-              Enter your bot username to automatically look up and configure OpenClaw settings
-            </p>
-          </div>
-
-          <div className="border-t border-gray-200 pt-4">
-            <label htmlFor="bot-username" className="block text-sm font-medium text-gray-700">
-              Bot Username
-            </label>
-            <input
-              type="text"
-              id="bot-username"
-              value={settings.telegram.username}
-              onChange={(e) =>
-                setSettings({
-                  ...settings,
-                  telegram: { ...settings.telegram, username: e.target.value },
-                })
-              }
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-              placeholder="@gibtang_bot"
-            />
-            <p className="mt-1 text-xs text-gray-500">
-              Your bot username for identification
-            </p>
-          </div>
-
-          <div>
-            <label htmlFor="bot-token" className="block text-sm font-medium text-gray-700">
-              Bot Token
-            </label>
-            <input
-              type="password"
-              id="bot-token"
-              value={settings.telegram.botToken}
-              onChange={(e) =>
-                setSettings({
-                  ...settings,
-                  telegram: { ...settings.telegram, botToken: e.target.value },
-                })
-              }
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-              placeholder="123456789:ABCdefGHIjklMNOpqrsTUVwxyz"
-            />
-            <p className="mt-1 text-xs text-gray-500">
-              Get your bot token from{' '}
-              <a
-                href="https://core.telegram.org/bots#botfather"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-indigo-600 hover:text-indigo-500"
-              >
-                BotFather
-              </a>
-            </p>
-          </div>
-
-          <div>
-            <label htmlFor="chat-id" className="block text-sm font-medium text-gray-700">
-              Chat ID
-            </label>
-            <input
-              type="text"
-              id="chat-id"
-              value={settings.telegram.chatId}
-              onChange={(e) =>
-                setSettings({
-                  ...settings,
-                  telegram: { ...settings.telegram, chatId: e.target.value },
-                })
-              }
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-              placeholder="-1001234567890"
-            />
-            <p className="mt-1 text-xs text-gray-500">
-              The chat ID where notifications will be sent
-            </p>
-          </div>
-
-          <div className="flex items-center">
-            <input
-              type="checkbox"
-              id="telegram-enabled"
-              checked={settings.telegram.enabled}
-              onChange={(e) =>
-                setSettings({
-                  ...settings,
-                  telegram: { ...settings.telegram, enabled: e.target.checked },
-                })
-              }
-              className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-            />
-            <label htmlFor="telegram-enabled" className="ml-2 block text-sm text-gray-900">
-              Enable Telegram notifications
-            </label>
           </div>
         </div>
       </div>

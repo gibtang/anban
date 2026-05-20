@@ -146,10 +146,6 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
       prisma.openClawConnection.deleteMany({
         where: { boardId: id },
       }),
-      // Delete Telegram config
-      prisma.telegramConfig.deleteMany({
-        where: { boardId: id },
-      }),
     ]);
 
     // Delete board

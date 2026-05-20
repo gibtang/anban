@@ -346,6 +346,7 @@ export default function KanbanBoard({ boardId }: KanbanBoardProps) {
               column={column}
               cards={columnCardsMap.get(column.id) ?? column.cards}
               activeCardId={activeCardId}
+              boardId={boardId}
             />
           ))}
       </div>
