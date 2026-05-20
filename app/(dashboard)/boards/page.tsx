@@ -8,7 +8,6 @@ import type { Board } from '@/types/board';
 import { BoardListSkeleton } from '@/components/skeletons/BoardSkeleton';
 import { EmptyBoards } from '@/components/empty/EmptyBoards';
 import { Spinner } from '@/components/ui/Spinner';
-import { Spinner } from '@/components/ui/Spinner';
 import { useToast } from '@/components/toast/ToastProvider';
 import { fetchWithRetry } from '@/lib/utils/retry';
 
