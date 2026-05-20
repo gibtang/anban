@@ -29,7 +29,7 @@ export function middleware(request: NextRequest) {
       const prefix = route.slice(0, -1);
       return pathname.startsWith(prefix);
     }
-    return pathname === route;
+    return pathname === route || pathname.startsWith(route + '/');
   });
 
   // Public routes pass through
