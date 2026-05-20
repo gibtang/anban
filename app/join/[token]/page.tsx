@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
+import { Spinner } from '@/components/ui/Spinner';
 
 interface BoardInfo {
   boardName: string;
@@ -142,7 +143,7 @@ export default function JoinBoardPage() {
   if (!boardInfo) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
+        <Spinner size="lg" className="text-indigo-600" />
       </div>
     );
   }
@@ -176,7 +177,7 @@ export default function JoinBoardPage() {
                   id="agentName"
                   value={agentName}
                   onChange={(e) => setAgentName(e.target.value)}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                   placeholder="e.g. Research Bot"
                   required
                   autoFocus
@@ -197,7 +198,14 @@ export default function JoinBoardPage() {
                 disabled={isSubmitting || !agentName.trim()}
                 className="w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isSubmitting ? 'Sending request...' : 'Request Access'}
+                {isSubmitting ? (
+                  <>
+                    <Spinner size="sm" className="mr-2" />
+                    Sending request...
+                  </>
+                ) : (
+                  'Request Access'
+                )}
               </button>
             </div>
           </form>
@@ -208,7 +216,7 @@ export default function JoinBoardPage() {
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <div className="text-center mb-6">
               <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-yellow-100 flex items-center justify-center">
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-yellow-600" />
+                <Spinner size="md" className="text-yellow-600" />
               </div>
               <h2 className="text-lg font-semibold text-gray-900 mb-2">Waiting for Approval</h2>
               <p className="text-sm text-gray-500">
@@ -328,7 +336,7 @@ export default function JoinBoardPage() {
         {requestStatus?.status === 'expired' && (
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 text-center">
             <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-yellow-100 flex items-center justify-center">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-yellow-600" />
+              <Spinner size="md" className="text-yellow-600" />
             </div>
             <h2 className="text-lg font-semibold text-gray-900 mb-2">Link Expired</h2>
             <p className="text-sm text-gray-500 mb-3">

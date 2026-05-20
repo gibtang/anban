@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
+import { Spinner } from '@/components/ui/Spinner';
 
 export default function ApprovePage() {
   const params = useParams();
@@ -76,7 +77,7 @@ export default function ApprovePage() {
   if (status === 'loading') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
+        <Spinner size="lg" className="text-indigo-600" />
       </div>
     );
   }
@@ -199,14 +200,28 @@ export default function ApprovePage() {
               disabled={isActing}
               className="flex-1 py-2.5 px-4 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 transition-colors"
             >
-              Deny
+              {isActing ? (
+                <>
+                  <Spinner size="xs" className="mr-1.5" />
+                  Denying...
+                </>
+              ) : (
+                'Deny'
+              )}
             </button>
             <button
               onClick={() => handleAction('approve')}
               disabled={isActing}
               className="flex-1 py-2.5 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 disabled:opacity-50 transition-colors"
             >
-              {isActing ? 'Processing...' : 'Approve'}
+              {isActing ? (
+                <>
+                  <Spinner size="xs" className="mr-1.5" />
+                  Approving...
+                </>
+              ) : (
+                'Approve'
+              )}
             </button>
           </div>
         </div>

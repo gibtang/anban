@@ -7,6 +7,8 @@ import { useRouter } from 'next/navigation';
 import type { Board } from '@/types/board';
 import { BoardListSkeleton } from '@/components/skeletons/BoardSkeleton';
 import { EmptyBoards } from '@/components/empty/EmptyBoards';
+import { Spinner } from '@/components/ui/Spinner';
+import { Spinner } from '@/components/ui/Spinner';
 import { useToast } from '@/components/toast/ToastProvider';
 import { fetchWithRetry } from '@/lib/utils/retry';
 
@@ -136,7 +138,7 @@ export default function BoardsPage() {
                 >
                   {isRetrying ? (
                     <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600 mr-2" />
+                      <Spinner size="xs" className="mr-2 text-red-600" />
                       Retrying...
                     </>
                   ) : (
@@ -213,7 +215,7 @@ export default function BoardsPage() {
                           id="board-name"
                           value={boardName}
                           onChange={(e) => setBoardName(e.target.value)}
-                          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                           placeholder="My Board"
                           autoFocus
                           required
@@ -231,7 +233,14 @@ export default function BoardsPage() {
                     disabled={isCreating || !boardName.trim()}
                     className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {isCreating ? 'Creating...' : 'Create Board'}
+                    {isCreating ? (
+                      <>
+                        <Spinner size="sm" className="mr-2" />
+                        Creating...
+                      </>
+                    ) : (
+                      'Create Board'
+                    )}
                   </button>
                   <button
                     type="button"

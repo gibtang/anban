@@ -11,6 +11,7 @@ import type { Card } from '@/types/card';
 import KanbanCard from './KanbanCard';
 import { useToast } from '@/components/toast/ToastProvider';
 import { fetchWithRetry } from '@/lib/utils/retry';
+import { Spinner } from '@/components/ui/Spinner';
 
 interface Column {
   id: string;
@@ -143,7 +144,7 @@ export default function KanbanColumn({
               onChange={(e) => setNewCardTitle(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Enter card title..."
-              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              className="w-full px-3 py-2 text-sm text-gray-900 placeholder-gray-500 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               rows={2}
               autoFocus
               disabled={isCreating}
@@ -154,7 +155,14 @@ export default function KanbanColumn({
                 disabled={!newCardTitle.trim() || isCreating}
                 className="px-3 py-1.5 text-xs font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                {isCreating ? 'Adding...' : 'Add Card'}
+                {isCreating ? (
+                  <>
+                    <Spinner size="xs" className="mr-1" />
+                    Adding...
+                  </>
+                ) : (
+                  'Add Card'
+                )}
               </button>
               <button
                 onClick={() => {

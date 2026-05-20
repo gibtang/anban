@@ -4,6 +4,7 @@ import { useState } from 'react';
 import useSWR, { mutate } from 'swr';
 import { AgentListSkeleton } from '@/components/skeletons/AgentSkeleton';
 import { EmptyAgents } from '@/components/empty/EmptyAgents';
+import { Spinner } from '@/components/ui/Spinner';
 import { useToast } from '@/components/toast/ToastProvider';
 import { fetchWithRetry } from '@/lib/utils/retry';
 
@@ -171,7 +172,7 @@ export default function AgentsPage() {
               >
                 {isRetrying ? (
                   <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600 mr-2" />
+                    <Spinner size="xs" className="mr-2 text-red-600" />
                     Retrying...
                   </>
                 ) : (
@@ -224,7 +225,7 @@ export default function AgentsPage() {
                 required
                 value={formData.name}
                 onChange={handleInputChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2 text-gray-900 placeholder-gray-500"
                 placeholder="My Agent"
               />
             </div>
@@ -240,7 +241,7 @@ export default function AgentsPage() {
                 required
                 value={formData.openClawId}
                 onChange={handleInputChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2 text-gray-900 placeholder-gray-500"
                 placeholder="agent-abc123"
               />
             </div>
@@ -255,7 +256,7 @@ export default function AgentsPage() {
                 id="model"
                 value={formData.model}
                 onChange={handleInputChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2 text-gray-900 placeholder-gray-500"
                 placeholder="gpt-4"
               />
             </div>
@@ -270,7 +271,7 @@ export default function AgentsPage() {
                 rows={3}
                 value={formData.description}
                 onChange={handleInputChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2 text-gray-900 placeholder-gray-500"
                 placeholder="Agent description..."
               />
             </div>
@@ -345,7 +346,7 @@ export default function AgentsPage() {
                     >
                       {testingAgentId === agent.id ? (
                         <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-indigo-600 mr-2" />
+                          <Spinner size="xs" className="mr-2 text-indigo-600" />
                           Testing...
                         </>
                       ) : (
@@ -359,7 +360,7 @@ export default function AgentsPage() {
                     >
                       {deletingAgentId === agent.id ? (
                         <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600 mr-2" />
+                          <Spinner size="xs" className="mr-2 text-red-600" />
                           Deleting...
                         </>
                       ) : (

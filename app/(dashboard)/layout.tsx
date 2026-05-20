@@ -4,13 +4,16 @@ import { ReactNode, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/app/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
+import { Spinner } from '@/components/ui/Spinner';
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const { user, logout } = useAuth();
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const handleLogout = async () => {
+    setIsLoggingOut(true);
     await logout();
     router.push('/login');
   };
@@ -113,9 +116,17 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
               </div>
               <button
                 onClick={handleLogout}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 transition-colors"
+                disabled={isLoggingOut}
               >
-                Logout
+                {isLoggingOut ? (
+                  <>
+                    <Spinner size="xs" className="mr-2" />
+                    Logging out...
+                  </>
+                ) : (
+                  'Logout'
+                )}
               </button>
             </div>
           </div>

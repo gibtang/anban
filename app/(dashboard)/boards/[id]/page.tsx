@@ -8,6 +8,7 @@ import KanbanBoard from '@/components/kanban/KanbanBoard';
 import SharePanel from '@/components/board/SharePanel';
 import AccessRequests from '@/components/board/AccessRequests';
 import { useToast } from '@/components/toast/ToastProvider';
+import { Spinner } from '@/components/ui/Spinner';
 import { fetchWithRetry } from '@/lib/utils/retry';
 
 interface BoardData {
@@ -125,16 +126,19 @@ export default function BoardDetailPage() {
 
           {/* Board Name — inline editable */}
           {isEditing ? (
-            <input
-              ref={inputRef}
-              type="text"
-              value={editName}
-              onChange={(e) => setEditName(e.target.value)}
-              onBlur={handleSaveRename}
-              onKeyDown={handleKeyDown}
-              disabled={isSaving}
-              className="text-xl font-bold text-gray-900 border-b-2 border-indigo-500 bg-transparent outline-none py-0.5 min-w-[120px]"
-            />
+            <div className="flex items-center gap-2">
+              <input
+                ref={inputRef}
+                type="text"
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                onBlur={handleSaveRename}
+                onKeyDown={handleKeyDown}
+                disabled={isSaving}
+                className="text-xl font-bold border-b-2 border-indigo-500 bg-transparent outline-none py-0.5 min-w-[120px] text-gray-900"
+              />
+              {isSaving && <Spinner size="sm" className="text-indigo-600" />}
+            </div>
           ) : (
             <button
               onClick={handleStartRename}

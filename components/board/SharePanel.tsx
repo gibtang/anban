@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useToast } from '@/components/toast/ToastProvider';
+import { Spinner } from '@/components/ui/Spinner';
 
 interface SharePanelProps {
   boardId: string;
@@ -59,7 +60,7 @@ export default function SharePanel({ boardId }: SharePanelProps) {
       >
         {isLoading ? (
           <>
-            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 mr-2" />
+            <Spinner size="xs" className="mr-1.5" />
             Generating...
           </>
         ) : (
@@ -83,7 +84,7 @@ export default function SharePanel({ boardId }: SharePanelProps) {
               type="text"
               readOnly
               value={shareUrl}
-              className="flex-1 text-xs bg-gray-50 border border-gray-200 rounded px-2 py-1.5 font-mono text-gray-700"
+              className="flex-1 text-xs bg-gray-50 border border-gray-200 rounded px-2 py-1.5 font-mono text-gray-900"
             />
             <button
               onClick={handleCopy}

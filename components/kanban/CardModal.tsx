@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import type { Card, CreateCardRequest, UpdateCardRequest } from '@/types/card';
 import type { User } from '@/types/user';
 import type { AgentConfig } from '@/types/agent';
+import { Spinner } from '@/components/ui/Spinner';
 
 interface CardModalProps {
   isOpen: boolean;
@@ -161,7 +162,7 @@ export function CardModal({
                         id="card-title"
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
-                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                         placeholder="Card title"
                         autoFocus
                         required
@@ -181,7 +182,7 @@ export function CardModal({
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
                         rows={3}
-                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                         placeholder="Add a description..."
                       />
                     </div>
@@ -201,7 +202,7 @@ export function CardModal({
                           value={tagInput}
                           onChange={(e) => setTagInput(e.target.value)}
                           onKeyDown={handleTagInputKeyDown}
-                          className="flex-1 min-w-0 block w-full px-3 py-2 rounded-none rounded-l-md border border-gray-300 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                          className="flex-1 min-w-0 block w-full px-3 py-2 rounded-none rounded-l-md border border-gray-300 text-gray-900 placeholder-gray-500 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                           placeholder="Add tag and press Enter"
                         />
                         <button
@@ -257,7 +258,7 @@ export function CardModal({
                         id="card-assignee"
                         value={assigneeId}
                         onChange={(e) => setAssigneeId(e.target.value)}
-                        className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+                        className="mt-1 block w-full pl-3 pr-10 py-2 text-base text-gray-900 border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
                       >
                         <option value="">Unassigned</option>
                         {users.map((user) => (
@@ -280,7 +281,7 @@ export function CardModal({
                         id="card-agent"
                         value={agentId}
                         onChange={(e) => setAgentId(e.target.value)}
-                        className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+                        className="mt-1 block w-full pl-3 pr-10 py-2 text-base text-gray-900 border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
                       >
                         <option value="">No Agent</option>
                         {agents.map((agent) => (
@@ -306,7 +307,16 @@ export function CardModal({
                 disabled={isSaving || !title.trim()}
                 className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isSaving ? 'Saving...' : isEditMode ? 'Update Card' : 'Create Card'}
+                {isSaving ? (
+                  <>
+                    <Spinner size="sm" className="mr-2 text-white" />
+                    Saving...
+                  </>
+                ) : isEditMode ? (
+                  'Update Card'
+                ) : (
+                  'Create Card'
+                )}
               </button>
               <button
                 type="button"

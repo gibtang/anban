@@ -4,6 +4,7 @@ import { useState } from 'react';
 import useSWR from 'swr';
 import { useToast } from '@/components/toast/ToastProvider';
 import { fetchWithRetry } from '@/lib/utils/retry';
+import { Spinner } from '@/components/ui/Spinner';
 
 interface AccessRequest {
   id: string;
@@ -98,9 +99,16 @@ export default function AccessRequests({ boardId }: AccessRequestsProps) {
                   <button
                     onClick={() => handleRevoke(req.id, req.agentName)}
                     disabled={revokingId === req.id}
-                    className="mt-2 text-xs text-red-600 hover:text-red-800 disabled:opacity-50 transition-colors"
+                    className="mt-2 text-xs text-red-600 hover:text-red-800 disabled:opacity-50 transition-colors inline-flex items-center gap-1"
                   >
-                    Revoke access
+                    {revokingId === req.id ? (
+                      <>
+                        <Spinner size="xs" className="text-red-600" />
+                        Revoking...
+                      </>
+                    ) : (
+                      'Revoke access'
+                    )}
                   </button>
                 )}
               </div>

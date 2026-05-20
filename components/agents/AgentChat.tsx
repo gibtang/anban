@@ -214,7 +214,7 @@ export function AgentChat({ agentId, agentName, boardId }: AgentChatProps) {
             placeholder="Type your message... (Press Enter to send, Shift+Enter for new line)"
             rows={1}
             disabled={isLoading}
-            className="flex-1 resize-none rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 resize-none rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
             style={{ minHeight: '40px', maxHeight: '120px' }}
             onInput={(e) => {
               const target = e.target as HTMLTextAreaElement;
