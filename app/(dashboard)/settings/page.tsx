@@ -130,7 +130,7 @@ function SettingsContent() {
             <div className="ml-3">
               <h3 className="text-sm font-medium text-yellow-800">Board ID Required</h3>
               <div className="mt-2 text-sm text-yellow-700">
-                <p>Please access settings from a specific board. Go to <a href="/dashboard/boards" className="underline font-medium">Boards</a> and select a board to configure its settings.</p>
+                <p>Please access settings from a specific board. Go to <a href="/boards" className="underline font-medium">Boards</a> and select a board to configure its settings.</p>
               </div>
             </div>
           </div>

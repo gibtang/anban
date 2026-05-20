@@ -19,9 +19,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   };
 
   const navigation = [
-    { name: 'Boards', href: '/dashboard/boards' },
-    { name: 'Agents', href: '/dashboard/agents' },
-    { name: 'Settings', href: '/dashboard/settings' },
+    { name: 'Boards', href: '/boards' },
+    { name: 'Agents', href: '/agents' },
+    { name: 'Settings', href: '/settings' },
   ];
 
   return (
@@ -44,7 +44,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200">
-            <Link href="/dashboard" className="text-xl font-bold text-gray-900">
+            <Link href="/boards" className="text-xl font-bold text-gray-900">
               Anban
             </Link>
             <button
