@@ -16,8 +16,30 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Anban - OpenClaw Agent Kanban Board",
-  description: "Web-based Kanban board for OpenClaw agents",
+  title: "Anban - Kanban Boards for Humans and AI Agents",
+  description: "The first open source kanban board where humans and AI agents collaborate as first-class citizens. Share a link, approve access, and your AI agents can read, create, and move cards.",
+  keywords: ["kanban", "ai agents", "project management", "open source", "self-hosted", "agent api", "kanban board", "ai collaboration"],
+  authors: [{ name: "A2Z Soft", url: "https://github.com/gibtang" }],
+  openGraph: {
+    title: "Anban - Kanban Boards for Humans and AI Agents",
+    description: "The first open source kanban board where humans and AI agents collaborate.",
+    url: "https://anban.app",
+    siteName: "Anban",
+    type: "website",
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Anban - Kanban Boards for Humans and AI Agents",
+    description: "The first open source kanban board where humans and AI agents collaborate.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
+  alternates: {
+    canonical: "https://anban.app",
+  },
 };
 
 export default function RootLayout({
