@@ -67,8 +67,11 @@ export default function KanbanBoard({ boardId }: KanbanBoardProps) {
 
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
   const [optimisticBoard, setOptimisticBoard] = useState<BoardData | null>(null);
-  const [editingCard, setEditingCard] = useState<Card | null>(null);
-  const [isSavingCard, setIsSavingCard] = useState(false);
+  const [modalState, setModalState] = useState<
+    { mode: 'edit'; card: Card } |
+    { mode: 'add'; columnId: string } |
+    null
+  >(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -299,31 +302,44 @@ export default function KanbanBoard({ boardId }: KanbanBoardProps) {
   );
 
   const handleEditCard = useCallback((card: Card) => {
-    setEditingCard(card);
+    setModalState({ mode: 'edit', card });
+  }, []);
+
+  const handleAddCard = useCallback((columnId: string) => {
+    setModalState({ mode: 'add', columnId });
   }, []);
 
   const handleSaveCard = useCallback(async (cardData: CreateCardRequest | UpdateCardRequest) => {
-    if (!editingCard) return;
-    setIsSavingCard(true);
     try {
-      const res = await fetchWithRetry(`/api/cards/${editingCard.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(cardData),
-      });
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Failed to update card');
+      if (modalState?.mode === 'edit') {
+        const res = await fetchWithRetry(`/api/cards/${modalState.card.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(cardData),
+        });
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || 'Failed to update card');
+        }
+        toast.showToast('Card updated', 'success');
+      } else if (modalState?.mode === 'add') {
+        const res = await fetchWithRetry('/api/cards', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(cardData),
+        });
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || 'Failed to create card');
+        }
+        toast.showToast('Card created', 'success');
       }
       mutate(`/api/boards/${boardId}`);
-      toast.showToast('Card updated', 'success');
     } catch (err) {
-      toast.showToast(err instanceof Error ? err.message : 'Failed to update card', 'error');
+      toast.showToast(err instanceof Error ? err.message : 'Failed to save card', 'error');
       throw err;
-    } finally {
-      setIsSavingCard(false);
     }
-  }, [editingCard, boardId, toast]);
+  }, [modalState, boardId, toast]);
 
   const handleDragCancel = useCallback(() => {
     setActiveCardId(null);
@@ -379,6 +395,7 @@ export default function KanbanBoard({ boardId }: KanbanBoardProps) {
                 activeCardId={activeCardId}
                 boardId={boardId}
                 onEditCard={handleEditCard}
+                onAddCard={handleAddCard}
               />
             ))}
         </div>
@@ -396,13 +413,13 @@ export default function KanbanBoard({ boardId }: KanbanBoardProps) {
         </DragOverlay>
       </DndContext>
 
-      {/* Edit card modal — rendered outside DndContext to avoid event conflicts */}
+      {/* Card modal (add/edit) — rendered outside DndContext to avoid event conflicts */}
       <CardModal
-        isOpen={!!editingCard}
-        onClose={() => setEditingCard(null)}
+        isOpen={!!modalState}
+        onClose={() => setModalState(null)}
         onSave={handleSaveCard}
-        card={editingCard || undefined}
-        columnId={editingCard?.columnId || ''}
+        card={modalState?.mode === 'edit' ? modalState.card : undefined}
+        columnId={modalState?.mode === 'add' ? modalState.columnId : (modalState?.mode === 'edit' ? modalState.card.columnId : '')}
         boardId={boardId}
         agents={[]}
       />
