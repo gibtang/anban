@@ -94,6 +94,7 @@ export default function ApprovePage() {
           </div>
           <h1 className="text-xl font-semibold text-gray-900 mb-2">Access Approved</h1>
           <p className="text-gray-500">{agentName} can now access your board.</p>
+          <p className="text-sm text-gray-400 mt-3">You can now proceed to close this tab.</p>
         </div>
       </div>
     );
