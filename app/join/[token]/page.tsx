@@ -139,58 +139,25 @@ export default function JoinBoardPage() {
     );
   }
 
-  // Loading state
+  // Loading state — still show agent instructions
   if (!boardInfo) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <Spinner size="lg" className="text-indigo-600" />
+        <div className="max-w-md w-full">
+          <div className="text-center mb-6">
+            <Spinner size="lg" className="text-indigo-600 mx-auto" />
+            <p className="mt-3 text-sm text-gray-500">Loading board info...</p>
+          </div>
+
+          {/* Always show agent instructions, even during loading */}
+          <AgentInstructions shareToken={shareToken} />
+        </div>
       </div>
     );
   }
 
-  const agentInstructions = boardInfo ? {
-    '@context': 'https://schema.org',
-    '@type': 'WebPage',
-    name: `Join board "${boardInfo.boardName}" on Anban`,
-    description: 'Machine-readable instructions for AI agents to join this Anban board via API.',
-    shareToken,
-    board: { id: boardInfo.boardId, name: boardInfo.boardName },
-    apiBaseUrl: typeof window !== 'undefined' ? window.location.origin : '',
-    steps: [
-      {
-        step: 1,
-        action: 'POST /api/board-access/request',
-        body: { shareToken, agentName: '<YOUR_AGENT_NAME>' },
-        description: 'Request access by sending your agent name.',
-      },
-      {
-        step: 2,
-        action: 'Send the approvalUrl from step 1 back to the board owner.',
-        description: 'The board owner must click the link to approve.',
-      },
-      {
-        step: 3,
-        action: 'GET /api/board-access/<requestId>',
-        description: 'Poll every 3-5 seconds until status is "approved" or "denied". Expires in 3 minutes.',
-      },
-      {
-        step: 4,
-        action: 'Use agentToken as Bearer token',
-        description: 'GET /api/agent/board to read board. POST /api/agent/cards to create cards. PUT /api/agent/cards/<id> to update.',
-      },
-    ],
-    quickStart: `curl -X POST ${typeof window !== 'undefined' ? window.location.origin : ''}/api/board-access/request -H 'Content-Type: application/json' -d '{"shareToken":"${shareToken}","agentName":"YOUR_NAME"}'`,
-  } : null;
-
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4">
-      {/* Machine-readable agent instructions */}
-      {agentInstructions && (
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(agentInstructions) }}
-        />
-      )}
       <div className="max-w-md w-full">
         {/* Board info */}
         <div className="text-center mb-8">
@@ -205,47 +172,8 @@ export default function JoinBoardPage() {
           </p>
         </div>
 
-        {/* AI Agent Instructions (collapsible) */}
-        <details className="mb-6 bg-gray-50 border border-gray-200 rounded-lg">
-          <summary className="px-4 py-2.5 text-sm font-medium text-gray-700 cursor-pointer hover:text-gray-900 select-none">
-            🤖 For AI Agents — click to expand API instructions
-          </summary>
-          <div className="px-4 pb-4 space-y-2">
-            <p className="text-xs text-gray-600">
-              To join this board programmatically, follow these steps:
-            </p>
-            <ol className="text-xs text-gray-600 space-y-2 list-decimal list-inside">
-              <li>
-                <strong>Request access:</strong>
-                <code className="block mt-1 bg-gray-900 text-green-400 p-2 rounded text-[11px] font-mono overflow-x-auto">
-                  POST /api/board-access/request{'\n'}
-                  Content-Type: application/json{'\n'}
-                  {'{ "shareToken": "' + shareToken + '", "agentName": "YOUR_NAME" }'}
-                </code>
-              </li>
-              <li>
-                <strong>Notify owner:</strong> Send the returned <code className="bg-gray-200 px-1 rounded">approvalUrl</code> back to the board owner.
-              </li>
-              <li>
-                <strong>Poll status:</strong>
-                <code className="block mt-1 bg-gray-900 text-green-400 p-2 rounded text-[11px] font-mono">
-                  GET /api/board-access/&#123;requestId&#125;{'\n'}
-                  Poll every 3-5s until status = "approved"
-                </code>
-              </li>
-              <li>
-                <strong>Use the board:</strong> Once approved, use the returned <code className="bg-gray-200 px-1 rounded">agentToken</code> as a Bearer token:
-                <code className="block mt-1 bg-gray-900 text-green-400 p-2 rounded text-[11px] font-mono">
-                  GET /api/agent/board{'\n'}
-                  Authorization: Bearer {'<agentToken>'}
-                </code>
-              </li>
-            </ol>
-            <p className="text-xs text-gray-400 pt-1">
-              Alternatively: <code className="bg-gray-200 px-1 rounded">GET /api/board-access/join-info?shareToken={shareToken}</code> returns this as JSON.
-            </p>
-          </div>
-        </details>
+        {/* AI Agent Instructions (always visible) */}
+        <AgentInstructions shareToken={shareToken} />
 
         {/* State: Initial request form */}
         {!requestStatus && (
@@ -447,5 +375,51 @@ export default function JoinBoardPage() {
         )}
       </div>
     </div>
+  );
+}
+
+/** Collapsible agent API instructions — rendered on every state */
+function AgentInstructions({ shareToken }: { shareToken: string }) {
+  return (
+    <details className="mb-6 bg-gray-50 border border-gray-200 rounded-lg">
+      <summary className="px-4 py-2.5 text-sm font-medium text-gray-700 cursor-pointer hover:text-gray-900 select-none">
+        🤖 For AI Agents — click to expand API instructions
+      </summary>
+      <div className="px-4 pb-4 space-y-2">
+        <p className="text-xs text-gray-600">
+          To join this board programmatically, follow these steps:
+        </p>
+        <ol className="text-xs text-gray-600 space-y-2 list-decimal list-inside">
+          <li>
+            <strong>Request access:</strong>
+            <code className="block mt-1 bg-gray-900 text-green-400 p-2 rounded text-[11px] font-mono overflow-x-auto whitespace-pre">
+{`POST /api/board-access/request
+Content-Type: application/json
+{ "shareToken": "${shareToken}", "agentName": "YOUR_NAME" }`}
+            </code>
+          </li>
+          <li>
+            <strong>Notify owner:</strong> Send the returned <code className="bg-gray-200 px-1 rounded">approvalUrl</code> back to the board owner.
+          </li>
+          <li>
+            <strong>Poll status:</strong>
+            <code className="block mt-1 bg-gray-900 text-green-400 p-2 rounded text-[11px] font-mono whitespace-pre">
+{`GET /api/board-access/{requestId}
+Poll every 3-5s until status = "approved"`}
+            </code>
+          </li>
+          <li>
+            <strong>Use the board:</strong> Use the returned <code className="bg-gray-200 px-1 rounded">agentToken</code> as a Bearer token:
+            <code className="block mt-1 bg-gray-900 text-green-400 p-2 rounded text-[11px] font-mono whitespace-pre">
+{`GET /api/agent/board
+Authorization: Bearer <agentToken>`}
+            </code>
+          </li>
+        </ol>
+        <p className="text-xs text-gray-400 pt-1">
+          JSON version: <code className="bg-gray-200 px-1 rounded">GET /api/board-access/join-info?shareToken={shareToken}</code>
+        </p>
+      </div>
+    </details>
   );
 }

@@ -2,23 +2,22 @@
 
 import { useState } from 'react';
 import useSWR, { mutate } from 'swr';
-import { AgentListSkeleton } from '@/components/skeletons/AgentSkeleton';
-import { EmptyAgents } from '@/components/empty/EmptyAgents';
 import { Spinner } from '@/components/ui/Spinner';
 import { useToast } from '@/components/toast/ToastProvider';
 import { fetchWithRetry } from '@/lib/utils/retry';
 
-interface AgentConfig {
+interface BoardAccess {
   id: string;
-  name: string;
-  openClawId: string;
-  description: string | null;
-  model: string | null;
-  enabled: boolean;
+  boardId: string;
+  agentName: string;
+  status: 'pending' | 'approved' | 'denied';
+  requestedAt: string;
+  approvedAt: string | null;
 }
 
-interface AgentHealthStatus {
-  [agentId: string]: boolean;
+interface Board {
+  id: string;
+  name: string;
 }
 
 const fetcher = async (url: string) => {
@@ -26,166 +25,128 @@ const fetcher = async (url: string) => {
     const res = await fetchWithRetry(url);
     return res.json();
   } catch (error) {
-    console.error('Failed to fetch agents:', error);
+    console.error('Failed to fetch:', error);
     throw error;
   }
 };
 
 export default function AgentsPage() {
   const toast = useToast();
-  const { data: agents, error, isLoading, mutate: mutateAgents } = useSWR<AgentConfig[]>('/api/agents', fetcher, {
-    onError: (error) => {
-      console.error('Error loading agents:', error);
-      toast.showToast('Failed to load agents. Please try again.', 'error');
-    },
-  });
-  const [healthStatus, setHealthStatus] = useState<AgentHealthStatus>({});
-  const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState({
-    name: '',
-    openClawId: '',
-    description: '',
-    model: '',
-  });
-  const [testingAgentId, setTestingAgentId] = useState<string | null>(null);
-  const [deletingAgentId, setDeletingAgentId] = useState<string | null>(null);
-  const [isRetrying, setIsRetrying] = useState(false);
+  const [revokingId, setRevokingId] = useState<string | null>(null);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
+  // Fetch user's boards
+  const { data: boards, error: boardsError } = useSWR<Board[]>('/api/boards', fetcher);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    try {
-      const response = await fetchWithRetry('/api/agents', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to create agent');
-      }
-
-      setFormData({ name: '', openClawId: '', description: '', model: '' });
-      setShowForm(false);
-      await mutateAgents();
-      toast.showToast('Agent created successfully!', 'success');
-    } catch (error) {
-      console.error('Error creating agent:', error);
-      toast.showToast('Failed to create agent. Please try again.', 'error');
+  // Fetch access requests for each board
+  const boardRequests = useSWR(
+    boards && boards.length > 0 ? boards.map(b => `/api/board-access/list?boardId=${b.id}`) : null,
+    async (urls: string[]) => {
+      const results = await Promise.all(
+        urls.map(async (url) => {
+          const res = await fetchWithRetry(url);
+          return res.json();
+        })
+      );
+      // Flatten and attach board name
+      return results.flatMap((requests: BoardAccess[], i: number) =>
+        requests.map((r: BoardAccess) => ({
+          ...r,
+          boardName: boards?.[i]?.name || 'Unknown',
+        }))
+      );
     }
-  };
+  );
 
-  const handleTestConnection = async (agentId: string, agentName: string) => {
-    setTestingAgentId(agentId);
+  const agents = boardRequests.data || [];
+  const approved = agents.filter((a: BoardAccess & { boardName: string }) => a.status === 'approved');
+  const pending = agents.filter((a: BoardAccess & { boardName: string }) => a.status === 'pending');
+  const isLoading = !boards || (!boardRequests.data && !boardRequests.error);
+
+  const handleRevoke = async (accessId: string, agentName: string) => {
+    if (!confirm(`Revoke access for "${agentName}"? They will need to request access again.`)) return;
+    setRevokingId(accessId);
     try {
-      const response = await fetchWithRetry(`/api/agents/${agentId}/health`, {
-        method: 'POST',
-      });
-
-      const data = await response.json();
-      setHealthStatus((prev) => ({ ...prev, [agentId]: data.healthy }));
-
-      if (data.healthy) {
-        toast.showToast(`${agentName} is online and responding`, 'success');
-      } else {
-        toast.showToast(`${agentName} is not responding`, 'error');
-      }
-    } catch (error) {
-      console.error('Health check failed:', error);
-      setHealthStatus((prev) => ({ ...prev, [agentId]: false }));
-      toast.showToast(`${agentName} connection failed - agent may be offline`, 'error');
-    } finally {
-      setTestingAgentId(null);
-    }
-  };
-
-  const handleDelete = async (agentId: string, agentName: string) => {
-    if (!confirm(`Are you sure you want to delete ${agentName}?`)) {
-      return;
-    }
-
-    setDeletingAgentId(agentId);
-    try {
-      const response = await fetchWithRetry(`/api/agents/${agentId}`, {
+      const res = await fetchWithRetry('/api/board-access/list', {
         method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ accessId }),
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to delete agent');
-      }
-
-      setHealthStatus((prev) => {
-        const newStatus = { ...prev };
-        delete newStatus[agentId];
-        return newStatus;
-      });
-      await mutateAgents();
-      toast.showToast(`${agentName} deleted successfully`, 'success');
-    } catch (error) {
-      console.error('Error deleting agent:', error);
-      toast.showToast('Failed to delete agent. Please try again.', 'error');
+      if (!res.ok) throw new Error('Failed to revoke');
+      await mutate(boards?.map(b => `/api/board-access/list?boardId=${b.id}`) || null);
+      toast.showToast(`Revoked access for ${agentName}`, 'success');
+    } catch {
+      toast.showToast('Failed to revoke access', 'error');
     } finally {
-      setDeletingAgentId(null);
+      setRevokingId(null);
     }
   };
 
-  const handleRetry = async () => {
-    setIsRetrying(true);
-    try {
-      await mutateAgents();
-      toast.showToast('Successfully reloaded agents', 'success');
-    } catch (error) {
-      toast.showToast('Failed to reload agents. Please try again.', 'error');
-    } finally {
-      setIsRetrying(false);
-    }
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const diffMs = Date.now() - date.getTime();
+    if (diffMs < 0) return 'Just now';
+    const mins = Math.floor(diffMs / 60000);
+    const hours = Math.floor(diffMs / 3600000);
+    const days = Math.floor(diffMs / 86400000);
+    if (mins < 1) return 'Just now';
+    if (mins < 60) return `${mins}m ago`;
+    if (hours < 24) return `${hours}h ago`;
+    if (days < 7) return `${days}d ago`;
+    return date.toLocaleDateString();
   };
 
+  // Loading
   if (isLoading) {
-    return <AgentListSkeleton />;
+    return (
+      <div>
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Agents</h1>
+            <p className="mt-1 text-sm text-gray-500">Loading...</p>
+          </div>
+        </div>
+        <div className="flex items-center justify-center py-12">
+          <Spinner size="lg" className="text-indigo-600" />
+        </div>
+      </div>
+    );
   }
 
-  if (error) {
+  // Error
+  if (boardsError || boardRequests.error) {
     return (
-      <div className="rounded-md bg-red-50 p-4">
-        <div className="flex">
-          <div className="flex-shrink-0">
-            <svg className="h-5 w-5 text-red-500" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+      <div>
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Agents</h1>
+          </div>
+        </div>
+        <div className="rounded-lg bg-red-50 border border-red-200 p-6 text-center">
+          <p className="text-sm text-red-700">Failed to load agents. Please try again.</p>
+        </div>
+      </div>
+    );
+  }
+
+  // No boards yet
+  if (!boards || boards.length === 0) {
+    return (
+      <div>
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Agents</h1>
+          </div>
+        </div>
+        <div className="text-center py-16">
+          <div className="mx-auto w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+            <svg className="h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
           </div>
-          <div className="ml-3">
-            <h3 className="text-sm font-medium text-red-800">Error loading agents</h3>
-            <div className="mt-2 text-sm text-red-700">
-              <p>Failed to load your agents. Please try again.</p>
-            </div>
-            <div className="mt-4">
-              <button
-                onClick={handleRetry}
-                disabled={isRetrying}
-                className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isRetrying ? (
-                  <>
-                    <Spinner size="xs" className="mr-2 text-red-600" />
-                    Retrying...
-                  </>
-                ) : (
-                  <>
-                    <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                    Retry
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
+          <h3 className="text-lg font-semibold text-gray-900">No boards yet</h3>
+          <p className="mt-2 text-sm text-gray-500 max-w-sm mx-auto">
+            Create a board and share it with your AI agents. They&apos;ll appear here once approved.
+          </p>
         </div>
       </div>
     );
@@ -193,188 +154,102 @@ export default function AgentsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Agents</h1>
-          <p className="mt-1 text-sm text-gray-500">
-            Manage your OpenClaw agent configurations
-          </p>
-        </div>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-        >
-          {showForm ? 'Cancel' : 'Add Agent'}
-        </button>
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900">Agents</h1>
+        <p className="mt-1 text-sm text-gray-500">
+          AI agents that have access to your boards via share links
+        </p>
       </div>
 
-      {showForm && (
-        <div className="bg-white shadow rounded-lg p-6">
-          <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">
-            Add New Agent
-          </h3>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                Name *
-              </label>
-              <input
-                type="text"
-                name="name"
-                id="name"
-                required
-                value={formData.name}
-                onChange={handleInputChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2 text-gray-900 placeholder-gray-500"
-                placeholder="My Agent"
-              />
-            </div>
+      {/* How it works */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <h3 className="text-sm font-medium text-blue-900 mb-1">How agents connect</h3>
+        <p className="text-xs text-blue-700">
+          Share a board link (e.g. <code className="bg-blue-100 px-1 rounded">/join/&lt;token&gt;</code>) with your AI agent. 
+          They request access, you approve, and they get an API token to read and modify cards on your board.
+        </p>
+      </div>
 
-            <div>
-              <label htmlFor="openClawId" className="block text-sm font-medium text-gray-700">
-                OpenClaw ID *
-              </label>
-              <input
-                type="text"
-                name="openClawId"
-                id="openClawId"
-                required
-                value={formData.openClawId}
-                onChange={handleInputChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2 text-gray-900 placeholder-gray-500"
-                placeholder="agent-abc123"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="model" className="block text-sm font-medium text-gray-700">
-                Model
-              </label>
-              <input
-                type="text"
-                name="model"
-                id="model"
-                value={formData.model}
-                onChange={handleInputChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2 text-gray-900 placeholder-gray-500"
-                placeholder="gpt-4"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="description" className="block text-sm font-medium text-gray-700">
-                Description
-              </label>
-              <textarea
-                name="description"
-                id="description"
-                rows={3}
-                value={formData.description}
-                onChange={handleInputChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm border p-2 text-gray-900 placeholder-gray-500"
-                placeholder="Agent description..."
-              />
-            </div>
-
-            <div className="flex justify-end space-x-3">
-              <button
-                type="button"
-                onClick={() => setShowForm(false)}
-                className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-              >
-                Create Agent
-              </button>
-            </div>
-          </form>
+      {/* Pending requests */}
+      {pending.length > 0 && (
+        <div>
+          <h2 className="text-sm font-semibold text-gray-700 mb-3">
+            Pending Requests ({pending.length})
+          </h2>
+          <div className="bg-white rounded-lg border border-yellow-200 overflow-hidden">
+            <ul className="divide-y divide-gray-100">
+              {pending.map((agent: BoardAccess & { boardName: string }) => (
+                <li key={agent.id} className="px-4 py-3 flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">{agent.agentName}</p>
+                    <p className="text-xs text-gray-500">
+                      {agent.boardName} · requested {formatDate(agent.requestedAt)}
+                    </p>
+                  </div>
+                  <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">
+                    Awaiting approval
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
       )}
 
-      <div className="bg-white shadow overflow-hidden rounded-md">
-        <ul className="divide-y divide-gray-200">
-          {agents && agents.length > 0 ? (
-            agents.map((agent) => (
-              <li key={agent.id} className="px-4 py-4 sm:px-6 hover:bg-gray-50">
-                <div className="flex items-center justify-between">
+      {/* Approved agents */}
+      <div>
+        <h2 className="text-sm font-semibold text-gray-700 mb-3">
+          Active Agents ({approved.length})
+        </h2>
+        {approved.length === 0 ? (
+          <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
+            <div className="mx-auto w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-3">
+              <svg className="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </div>
+            <p className="text-sm text-gray-500">No agents have been approved yet.</p>
+            <p className="text-xs text-gray-400 mt-1">Share a board link with an AI agent to get started.</p>
+          </div>
+        ) : (
+          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+            <ul className="divide-y divide-gray-100">
+              {approved.map((agent: BoardAccess & { boardName: string }) => (
+                <li key={agent.id} className="px-4 py-3 flex items-center justify-between">
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center space-x-3">
-                      <p className="text-sm font-medium text-indigo-600 truncate">
-                        {agent.name}
-                      </p>
-                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
-                        {agent.openClawId}
-                      </span>
-                      {healthStatus[agent.id] !== undefined && (
-                        <span
-                          className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
-                            healthStatus[agent.id]
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-gray-100 text-gray-800'
-                          }`}
-                        >
-                          {healthStatus[agent.id] ? 'Online' : 'Offline'}
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
+                        <span className="text-xs font-semibold text-indigo-600">
+                          {agent.agentName[0]?.toUpperCase()}
                         </span>
-                      )}
-                      {!agent.enabled && (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">
-                          Disabled
-                        </span>
-                      )}
-                    </div>
-                    <div className="mt-1 flex items-center space-x-2">
-                      {agent.model && (
-                        <p className="text-sm text-gray-500">Model: {agent.model}</p>
-                      )}
-                      {agent.description && (
-                        <>
-                          {agent.model && <span className="text-gray-500">•</span>}
-                          <p className="text-sm text-gray-500">{agent.description}</p>
-                        </>
-                      )}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-gray-900 truncate">{agent.agentName}</p>
+                        <p className="text-xs text-gray-500">
+                          {agent.boardName} · approved {agent.approvedAt ? formatDate(agent.approvedAt) : 'recently'}
+                        </p>
+                      </div>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-2 ml-4">
-                    <button
-                      onClick={() => handleTestConnection(agent.id, agent.name)}
-                      disabled={testingAgentId === agent.id}
-                      className="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {testingAgentId === agent.id ? (
-                        <>
-                          <Spinner size="xs" className="mr-2 text-indigo-600" />
-                          Testing...
-                        </>
-                      ) : (
-                        'Test Connection'
-                      )}
-                    </button>
-                    <button
-                      onClick={() => handleDelete(agent.id, agent.name)}
-                      disabled={deletingAgentId === agent.id}
-                      className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {deletingAgentId === agent.id ? (
-                        <>
-                          <Spinner size="xs" className="mr-2 text-red-600" />
-                          Deleting...
-                        </>
-                      ) : (
-                        'Delete'
-                      )}
-                    </button>
-                  </div>
-                </div>
-              </li>
-            ))
-          ) : (
-            <EmptyAgents onCreate={() => setShowForm(true)} />
-          )}
-        </ul>
+                  <button
+                    onClick={() => handleRevoke(agent.id, agent.agentName)}
+                    disabled={revokingId === agent.id}
+                    className="ml-3 inline-flex items-center px-2.5 py-1.5 text-xs font-medium rounded text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {revokingId === agent.id ? (
+                      <>
+                        <Spinner size="xs" className="mr-1 text-red-600" />
+                        Revoking...
+                      </>
+                    ) : (
+                      'Revoke'
+                    )}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
     </div>
   );
