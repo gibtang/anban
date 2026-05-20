@@ -57,7 +57,7 @@ export class ErrorBoundary extends Component<Props, State> {
               {this.state.error?.message || 'An unexpected error occurred'}
             </p>
             <div className="bg-gray-50 rounded p-3 mb-4">
-              <p className="text-xs text-gray-500 font-mono">
+              <p className="text-xs text-gray-600 font-mono">
                 {this.state.error?.stack?.split('\n').slice(0, 3).join('\n')}
               </p>
             </div>

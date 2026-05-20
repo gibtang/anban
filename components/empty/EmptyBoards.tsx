@@ -6,7 +6,7 @@ export function EmptyBoards({ onCreate }: EmptyBoardsProps) {
   return (
     <div className="text-center py-12">
       <svg
-        className="mx-auto h-12 w-12 text-gray-400"
+        className="mx-auto h-12 w-12 text-gray-500"
         fill="none"
         viewBox="0 0 24 24"
         stroke="currentColor"

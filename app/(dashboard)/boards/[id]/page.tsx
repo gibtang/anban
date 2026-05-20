@@ -106,7 +106,7 @@ export default function BoardDetailPage() {
         <div className="flex items-center space-x-4">
           <button
             onClick={() => router.push('/boards')}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-gray-500 hover:text-gray-700 transition-colors"
           >
             <svg
               className="h-6 w-6"
@@ -143,7 +143,7 @@ export default function BoardDetailPage() {
             >
               {board?.name || '...'}
               <svg
-                className="h-4 w-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                className="h-4 w-4 text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -161,7 +161,7 @@ export default function BoardDetailPage() {
           <div className="flex items-center space-x-2">
             <div
               className={`h-2 w-2 rounded-full ${
-                connected ? 'bg-green-500' : 'bg-gray-400'
+                connected ? 'bg-green-500' : 'bg-gray-500'
               }`}
             />
             <p className="text-sm text-gray-500">

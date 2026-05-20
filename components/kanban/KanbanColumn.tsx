@@ -128,7 +128,7 @@ export default function KanbanColumn({
 
         {/* Empty state / drop target when column is empty */}
         {cards.length === 0 && !isAdding && (
-          <div className="flex items-center justify-center py-8 text-sm text-gray-400 border-2 border-dashed border-gray-200 rounded-lg">
+          <div className="flex items-center justify-center py-8 text-sm text-gray-500 border-2 border-dashed border-gray-200 rounded-lg">
             No cards
           </div>
         )}

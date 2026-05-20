@@ -207,7 +207,7 @@ export function CardModal({
                         <button
                           type="button"
                           onClick={handleAddTag}
-                          className="inline-flex items-center px-3 rounded-r-md border border-l-0 border-gray-300 bg-gray-50 text-gray-500 text-sm hover:bg-gray-100"
+                          className="inline-flex items-center px-3 rounded-r-md border border-l-0 border-gray-300 bg-gray-50 text-gray-600 text-sm hover:bg-gray-100"
                         >
                           Add
                         </button>

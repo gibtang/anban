@@ -7,7 +7,7 @@ export function EmptyBoard({ boardName }: EmptyBoardProps) {
     <div className="flex items-center justify-center h-full">
       <div className="text-center">
         <svg
-          className="mx-auto h-12 w-12 text-gray-400"
+          className="mx-auto h-12 w-12 text-gray-500"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"

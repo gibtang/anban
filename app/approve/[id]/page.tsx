@@ -129,7 +129,7 @@ export default function ApprovePage() {
           <p className="text-gray-500 mb-4">
             This approval link expired after 3 minutes.
           </p>
-          <p className="text-sm text-gray-400">
+          <p className="text-sm text-gray-600">
             Ask {agentName || 'the agent'} to send a new link.
           </p>
         </div>

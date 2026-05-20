@@ -6,7 +6,7 @@ export function EmptyAgents({ onCreate }: EmptyAgentsProps) {
   return (
     <li className="px-4 py-8 text-center">
       <svg
-        className="mx-auto h-12 w-12 text-gray-400"
+        className="mx-auto h-12 w-12 text-gray-500"
         fill="none"
         viewBox="0 0 24 24"
         stroke="currentColor"

@@ -83,17 +83,17 @@ interface ToastItemProps {
 
 function ToastItem({ toast, onRemove }: ToastItemProps) {
   const bgColor = {
-    success: 'bg-green-50 border-green-400',
-    error: 'bg-red-50 border-red-400',
-    warning: 'bg-yellow-50 border-yellow-400',
-    info: 'bg-blue-50 border-blue-400',
+    success: 'bg-green-50 border-green-500',
+    error: 'bg-red-50 border-red-500',
+    warning: 'bg-yellow-50 border-yellow-500',
+    info: 'bg-blue-50 border-blue-500',
   }[toast.type];
 
   const iconColor = {
-    success: 'text-green-400',
-    error: 'text-red-400',
-    warning: 'text-yellow-400',
-    info: 'text-blue-400',
+    success: 'text-green-600',
+    error: 'text-red-600',
+    warning: 'text-yellow-600',
+    info: 'text-blue-600',
   }[toast.type];
 
   const textColor = {

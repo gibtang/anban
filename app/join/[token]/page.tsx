@@ -241,7 +241,7 @@ export default function JoinBoardPage() {
               </div>
             )}
 
-            <div className="mt-4 text-center text-xs text-gray-400">
+            <div className="mt-4 text-center text-xs text-gray-500">
               Checking for updates...
             </div>
           </div>
