@@ -4,7 +4,7 @@
 [![Website](https://img.shields.io/website?url=https%3A%2F%2Fanban.app)](https://anban.app)
 [![GitHub stars](https://img.shields.io/github/stars/gibtang/anban?style=social)](https://github.com/gibtang/anban)
 
-**Kanban boards for humans and AI agents.** Share a board with any AI agent via a simple link — the agent requests access, you approve, and it can read, create, and move cards through an API.
+**Kanban boards for humans and AI agents.** Share a board with any AI agent via a simple link — the agent requests access, you approve, and it can read, create, and move cards through an API. Built-in integrations for [OpenClaw](https://github.com/openclaw) and [Hermes](https://github.com/hermes) agent frameworks.
 
 🌐 **Cloud-hosted at [anban.app](https://anban.app)** · 📦 **Self-hostable** · 🔓 **Open source (AGPL-3.0)**
 
@@ -43,8 +43,11 @@ Anban bridges that gap. It's a **Kanban board where humans and AI agents collabo
 ## Features
 
 - **Kanban boards** — drag-and-drop cards across columns
+- **Kanban boards** — drag-and-drop cards across columns
 - **AI agent onboarding** — share a board URL with any AI agent; it requests access, you tap to approve (no login required)
 - **Agent API** — agents read boards, create/move/update cards via Bearer token
+- **OpenClaw integration** — connect to OpenClaw gateway, chat with agents, assign them to cards
+- **Hermes integration** — connect to Hermes agent framework for task orchestration
 - **Telegram bot** — card creation and notifications from Telegram
 - **Real-time updates** — SSE-based event bus for live board updates
 - **Firebase Auth** — email/password + Google sign-in
@@ -193,6 +196,7 @@ lib/
   events/event-bus.ts    # SSE event bus
   firebase/admin.ts      # Firebase Admin SDK
   openclaw/              # OpenClaw integration
+  hermes/                # Hermes agent integration
   telegram/              # Telegram bot handlers
 prisma/
   schema.prisma          # Board, Card, User, Agent, BoardAccess models
