@@ -23,6 +23,7 @@ export default function AccessRequests({ boardId }: AccessRequestsProps) {
   const toast = useToast();
   const [showPanel, setShowPanel] = useState(false);
   const [revokingId, setRevokingId] = useState<string | null>(null);
+  const [confirmRevoke, setConfirmRevoke] = useState<{ id: string; name: string } | null>(null);
 
   const { data: requests, mutate: mutateRequests } = useSWR<AccessRequest[]>(
     `/api/board-access/list?boardId=${boardId}`,
@@ -34,6 +35,7 @@ export default function AccessRequests({ boardId }: AccessRequestsProps) {
 
   const handleRevoke = async (accessId: string, agentName: string) => {
     setRevokingId(accessId);
+    setConfirmRevoke(null);
     try {
       const res = await fetchWithRetry('/api/board-access/list', {
         method: 'DELETE',
@@ -69,6 +71,59 @@ export default function AccessRequests({ boardId }: AccessRequestsProps) {
         )}
       </button>
 
+      {/* Confirmation modal */}
+      {confirmRevoke && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen px-4">
+            <div
+              className="fixed inset-0 bg-black/50 transition-opacity"
+              onClick={() => setConfirmRevoke(null)}
+            />
+            <div className="relative bg-white rounded-lg shadow-xl max-w-sm w-full p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
+                  <svg className="w-5 h-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-base font-semibold text-gray-900">Revoke Access</h3>
+                  <p className="text-sm text-gray-500">This action cannot be undone.</p>
+                </div>
+              </div>
+              <div className="bg-gray-50 rounded-lg p-3 mb-5">
+                <p className="text-sm text-gray-700">
+                  Remove <strong>{confirmRevoke.name}</strong>&apos;s access to this board?
+                  They will need to request access again via the share link.
+                </p>
+              </div>
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={() => setConfirmRevoke(null)}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => handleRevoke(confirmRevoke.id, confirmRevoke.name)}
+                  disabled={revokingId === confirmRevoke.id}
+                  className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {revokingId === confirmRevoke.id ? (
+                    <>
+                      <Spinner size="xs" className="mr-2 text-white" />
+                      Revoking...
+                    </>
+                  ) : (
+                    'Revoke Access'
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showPanel && (
         <div className="absolute right-0 top-full mt-2 w-72 max-h-80 overflow-y-auto bg-white rounded-lg shadow-lg border border-gray-200 z-50">
           <div className="p-3 border-b border-gray-100">
@@ -95,9 +150,9 @@ export default function AccessRequests({ boardId }: AccessRequestsProps) {
                   </span>
                 </div>
 
-                {req.status === 'approved' && (
+                {(req.status === 'approved' || req.status === 'pending') && (
                   <button
-                    onClick={() => handleRevoke(req.id, req.agentName)}
+                    onClick={() => setConfirmRevoke({ id: req.id, name: req.agentName })}
                     disabled={revokingId === req.id}
                     className="mt-2 text-xs text-red-600 hover:text-red-800 disabled:opacity-50 transition-colors inline-flex items-center gap-1"
                   >
