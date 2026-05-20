@@ -187,9 +187,25 @@ export default function AgentsPage() {
                       {agent.boardName} · requested {formatDate(agent.requestedAt)}
                     </p>
                   </div>
-                  <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">
-                    Awaiting approval
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">
+                      Awaiting approval
+                    </span>
+                    <button
+                      onClick={() => setConfirmRevoke({ id: agent.id, name: agent.agentName, boardName: agent.boardName })}
+                      disabled={revokingId === agent.id}
+                      className="inline-flex items-center px-2.5 py-1.5 text-xs font-medium rounded text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      {revokingId === agent.id ? (
+                        <>
+                          <Spinner size="xs" className="mr-1 text-red-600" />
+                          Revoking...
+                        </>
+                      ) : (
+                        'Revoke'
+                      )}
+                    </button>
+                  </div>
                 </li>
               ))}
             </ul>
