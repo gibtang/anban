@@ -1,9 +1,14 @@
 {
-  "name": "anban-temp",
+  "name": "anban",
   "version": "0.1.0",
+  "description": "Kanban board app with AI agent integration — share boards with AI agents via a simple link",
   "author": "A2Z Soft <admin@a2z-soft.com>",
   "license": "AGPL-3.0-only",
-  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gibtang/anban"
+  },
+  "keywords": ["kanban", "ai", "agents", "board", "project-management"],
   "scripts": {
     "dev": "next dev",
     "build": "next build",

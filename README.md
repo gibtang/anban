@@ -1,5 +1,7 @@
 # Anban
 
+[![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
+
 Kanban board app with AI agent integration. Share boards with AI agents via a simple link — agents request access, you approve, they interact with your board via API.
 
 ## Features
@@ -130,4 +132,15 @@ fly deploy
 
 ## License
 
-AGPL-3.0-only
+This project is licensed under the **GNU Affero General Public License v3.0 only** (`AGPL-3.0-only`).
+
+- ✅ You can use, study, modify, and distribute this software
+- ✅ Network use constitutes distribution — if you run a modified version on a server, you must make the source code available to users
+- ✅ All derivative works must be licensed under the same terms
+- ❌ You cannot use this code in proprietary/closed-source software
+
+See the [LICENSE](./LICENSE) file for the full license text, or visit [https://www.gnu.org/licenses/agpl-3.0](https://www.gnu.org/licenses/agpl-3.0).
+
+---
+
+*Made with ❤️ by [A2Z Soft](https://github.com/gibtang)*
