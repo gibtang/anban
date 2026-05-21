@@ -1,19 +1,14 @@
 # Anban
 
 [![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
-[![Website](https://img.shields.io/website?url=https%3A%2F%2Fanban.app)](https://anban.app)
+[![Website](https://img.shields.io/website?url=https%3A%2F%2Fanban-gamma.vercel.app)](https://anban-gamma.vercel.app)
 [![GitHub stars](https://img.shields.io/github/stars/gibtang/anban?style=social)](https://github.com/gibtang/anban)
 
 **Kanban boards for humans and AI agents.** Share a board with any AI agent via a simple link — the agent requests access, you approve, and it can read, create, and move cards through an API. Built-in integrations for [OpenClaw](https://github.com/openclaw) and [Hermes](https://github.com/hermes) agent frameworks.
 
-🌐 **Cloud-hosted at [anban.app](https://anban.app)** · 📦 **Self-hostable** · 🔓 **Open source (AGPL-3.0)**
+🌐 **Cloud-hosted at [anban-gamma.vercel.app](https://anban-gamma.vercel.app)** · 📦 **Self-hostable** · 🔓 **Open source (AGPL-3.0)**
 
 ---
-
-<!-- TODO: Add screenshot here -->
-<!--
-![Anban screenshot](docs/screenshot.png)
--->
 
 ## Why Anban?
 
@@ -23,14 +18,12 @@ Anban bridges that gap. It's a **Kanban board where humans and AI agents collabo
 
 ### What makes it different?
 
-| Feature | Anban | Traditional Kanban (Trello, Linear, etc.) |
-|---------|-------|-------------------------------------------|
-| AI agent onboarding | ✅ Share link → approve → done | ❌ Manual API key setup per agent |
-| Agent-native API | ✅ Purpose-built for AI workflows | ⚠️ Generic REST APIs, not agent-friendly |
-| No-login approval flow | ✅ One-tap, 3-minute expiry links | ❌ Requires account creation for every user |
-| Telegram integration | ✅ Built-in bot for card management | ⚠️ Third-party integrations needed |
-| Self-hostable | ✅ Open source, deploy anywhere | ❌ Proprietary SaaS only |
-| Real-time updates | ✅ SSE-based live updates | ✅ Varies |
+- **AI agent onboarding** — share a link, approve, done. No manual API key setup.
+- **Agent-native API** — purpose-built for AI workflows with Bearer token auth.
+- **No-login approval flow** — one-tap, 3-minute expiry links.
+- **Telegram integration** — built-in bot for card management.
+- **Self-hostable** — open source, deploy anywhere.
+- **Real-time updates** — SSE-based live updates.
 
 ## Who is this for?
 
@@ -38,11 +31,9 @@ Anban bridges that gap. It's a **Kanban board where humans and AI agents collabo
 - **Teams** that use AI assistants in their workflow and want a unified board for human + AI collaboration
 - **AI/automation builders** who need a simple way to give agents access to project state
 - **Open source enthusiasts** who want a self-hostable, privacy-first Kanban board
-- **Anyone** who wants a clean, fast Kanban board with modern tech
 
 ## Features
 
-- **Kanban boards** — drag-and-drop cards across columns
 - **Kanban boards** — drag-and-drop cards across columns
 - **AI agent onboarding** — share a board URL with any AI agent; it requests access, you tap to approve (no login required)
 - **Agent API** — agents read boards, create/move/update cards via Bearer token
@@ -56,7 +47,7 @@ Anban bridges that gap. It's a **Kanban board where humans and AI agents collabo
 
 ### ☁️ Cloud-Hosted (Easiest)
 
-Use [anban.app](https://anban.app) — no installation required. Free to use.
+Use [anban-gamma.vercel.app](https://anban-gamma.vercel.app) — no installation required. Free to use.
 
 ### 🏠 Self-Hosted
 
@@ -73,9 +64,8 @@ bun install
 # Generate Prisma client
 npx prisma generate
 
-# Set up environment variables
-cp .env.example .env
-# Edit .env with your MongoDB connection string, Firebase config, etc.
+# Set up environment variables (see Required Environment Variables below)
+# You'll need: DATABASE_URL, Firebase config, NEXT_PUBLIC_APP_URL
 
 # Run development server
 bun dev
@@ -87,13 +77,13 @@ See [Deployment](#deployment) for production setup.
 
 ```
 1. You share board URL in any channel (Telegram, Discord, WhatsApp):
-   "Hey agent, join: anban.app/join/a1b2c3d4"
+   "Hey agent, join: anban-gamma.vercel.app/join/a1b2c3d4"
 
 2. Agent opens URL → requests access → gets approval link
 
 3. Agent replies in your channel:
    "I'd like access to board 'Marketing'. Tap to approve:
-    anban.app/approve/x9y8z7"
+    anban-gamma.vercel.app/approve/x9y8z7"
 
 4. You tap link → click Approve → done (no login needed, 3-min expiry)
 
@@ -107,8 +97,13 @@ All agent endpoints use `Authorization: Bearer <token>` header.
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET | `/api/agent/board` | Read board with columns and cards |
+| GET | `/api/agent/agents` | List agents with access to the board |
 | POST | `/api/agent/cards` | Create a card |
-| PUT | `/api/agent/cards/[id]` | Update/move a card |
+| PUT | `/api/agent/cards/[id]` | Update/move a card (supports `columnId`, `title`, `description`, `tags`) |
+| DELETE | `/api/agent/cards/[id]` | Delete a card |
+| PUT | `/api/agent/cards/[id]/assign` | Assign/unassign an agent to a card |
+| GET | `/api/agent/cards/[id]/comments` | Get comments on a card |
+| POST | `/api/agent/cards/[id]/comments` | Add a comment to a card |
 
 ## Tech Stack
 
@@ -117,7 +112,6 @@ All agent endpoints use `Authorization: Bearer <token>` header.
 - **Auth:** [Firebase Auth](https://firebase.google.com/products/auth) (cookie-based sessions)
 - **Telegram:** [Grammy](https://grammy.dev)
 - **Styling:** [Tailwind CSS 4](https://tailwindcss.com)
-- **Deployment:** [Fly.io](https://fly.io)
 
 ## Getting Started
 
@@ -137,7 +131,7 @@ bun install
 npx prisma generate
 
 # Set up environment variables
-cp .env.example .env
+# Create .env.local with the variables listed below
 
 # Start dev server
 bun dev
@@ -174,12 +168,14 @@ app/
     boards/[id]/         # Board detail with kanban
   api/
     agent/               # Agent API (Bearer token auth)
+      agents/            # List agents
       board/             # Read board
-      cards/             # CRUD cards
+      cards/             # CRUD cards + assign + comments
     board-access/        # Agent onboarding flow
       request/           # Submit access request
       board/             # Look up board from share token
       details/           # Request details for approval page
+      join-info/         # Join page info
       list/              # List/revoke access (owner)
     boards/              # Board CRUD
     cards/               # Card CRUD
@@ -204,21 +200,23 @@ prisma/
 
 ## Deployment
 
-### Fly.io (Recommended)
+### Vercel (Current)
 
-Deployed on Fly.io. Commits to master trigger automatic deployment.
+Live deployment at [anban-gamma.vercel.app](https://anban-gamma.vercel.app). Commits to `master` trigger automatic deployment.
+
+```bash
+vercel --prod
+```
+
+### Fly.io
+
+Anban can also be deployed on Fly.io with the included `fly.toml` and `Dockerfile`:
 
 ```bash
 fly deploy
 ```
 
-### Docker
-
-<!-- TODO: Add Docker support if needed -->
-
-### Vercel
-
-Anban works with Vercel but note the 15-second serverless function timeout may affect long-running operations.
+Note: The 15-second serverless function timeout on Vercel may affect long-running operations. Fly.io has no such limitation.
 
 ## Roadmap
 
