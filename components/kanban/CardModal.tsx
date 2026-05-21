@@ -13,6 +13,7 @@ interface CardModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (cardData: CreateCardRequest | UpdateCardRequest) => Promise<void>;
+  onDelete?: (cardId: string) => Promise<void>;
   card?: Card;
   columnId: string;
   boardId: string;
@@ -23,6 +24,7 @@ export function CardModal({
   isOpen,
   onClose,
   onSave,
+  onDelete,
   card,
   columnId,
   boardId,
@@ -34,6 +36,8 @@ export function CardModal({
   const [tagInput, setTagInput] = useState('');
   const [agentId, setAgentId] = useState<string>('');
   const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [error, setError] = useState('');
 
   const isEditMode = !!card;
@@ -52,6 +56,7 @@ export function CardModal({
       setAgentId('');
     }
     setError('');
+    setShowDeleteConfirm(false);
   }, [card, isOpen, agents]);
 
   const handleAddTag = () => {
@@ -114,6 +119,21 @@ export function CardModal({
       setError(errorMessage);
       // Keep modal open on error
       setIsSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!card || !onDelete) return;
+    setIsDeleting(true);
+    setError('');
+    try {
+      await onDelete(card.id);
+      onClose();
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to delete card';
+      setError(errorMessage);
+      setShowDeleteConfirm(false);
+      setIsDeleting(false);
     }
   };
 
@@ -282,32 +302,74 @@ export function CardModal({
               </div>
             </div>
             <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-              <button
-                type="submit"
-                disabled={isSaving || !title.trim()}
-                className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isSaving ? (
-                  <>
-                    <Spinner size="sm" className="mr-2 text-white" />
-                    Saving...
-                  </>
-                ) : isEditMode ? (
-                  'Update Card'
-                ) : (
-                  'Create Card'
-                )}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  onClose();
-                  setError('');
-                }}
-                className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
-              >
-                Cancel
-              </button>
+              {showDeleteConfirm ? (
+                <>
+                  <span className="text-sm text-red-700 self-center mr-auto">
+                    Delete this card permanently?
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleDelete}
+                    disabled={isDeleting}
+                    className="inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isDeleting ? (
+                      <>
+                        <Spinner size="sm" className="mr-2 text-white" />
+                        Deleting...
+                      </>
+                    ) : (
+                      'Confirm Delete'
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowDeleteConfirm(false)}
+                    disabled={isDeleting}
+                    className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    type="submit"
+                    disabled={isSaving || !title.trim()}
+                    className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isSaving ? (
+                      <>
+                        <Spinner size="sm" className="mr-2 text-white" />
+                        Saving...
+                      </>
+                    ) : isEditMode ? (
+                      'Update Card'
+                    ) : (
+                      'Create Card'
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onClose();
+                      setError('');
+                    }}
+                    className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                  >
+                    Cancel
+                  </button>
+                  {isEditMode && onDelete && (
+                    <button
+                      type="button"
+                      onClick={() => setShowDeleteConfirm(true)}
+                      className="mt-3 w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-white text-base font-medium text-red-600 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                    >
+                      Delete
+                    </button>
+                  )}
+                </>
+              )}
             </div>
           </form>
         </div>

@@ -358,6 +358,39 @@ export default function KanbanBoard({ boardId }: KanbanBoardProps) {
     }
   }, [modalState, boardId, toast]);
 
+  const handleDeleteCard = useCallback(async (cardId: string) => {
+    // Optimistic: remove card from board state
+    setOptimisticBoard((prev) => {
+      const base = prev ?? displayBoard;
+      if (!base) return prev;
+      return {
+        ...base,
+        columns: base.columns.map((col) => ({
+          ...col,
+          cards: col.cards.filter((c) => c.id !== cardId),
+        })),
+      };
+    });
+
+    try {
+      const res = await fetchWithRetry(`/api/cards/${cardId}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to delete card');
+      }
+      toast.showToast('Card deleted', 'success');
+      setOptimisticBoard(null);
+      mutate(`/api/boards/${boardId}`);
+    } catch (err) {
+      toast.showToast(err instanceof Error ? err.message : 'Failed to delete card', 'error');
+      setOptimisticBoard(null);
+      mutate(`/api/boards/${boardId}`);
+      throw err;
+    }
+  }, [displayBoard, boardId, toast]);
+
   const handleDragCancel = useCallback(() => {
     setActiveCardId(null);
     setOptimisticBoard(null);
@@ -435,6 +468,7 @@ export default function KanbanBoard({ boardId }: KanbanBoardProps) {
         isOpen={!!modalState}
         onClose={() => setModalState(null)}
         onSave={handleSaveCard}
+        onDelete={handleDeleteCard}
         card={modalState?.mode === 'edit' ? modalState.card : undefined}
         columnId={modalState?.mode === 'add' ? modalState.columnId : (modalState?.mode === 'edit' ? modalState.card.columnId : '')}
         boardId={boardId}
