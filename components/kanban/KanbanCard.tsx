@@ -59,7 +59,7 @@ export default function KanbanCard({ card, isDragging, onEdit }: KanbanCardProps
               e.stopPropagation();
               onEdit();
             }}
-            className="flex-shrink-0 sm:opacity-0 sm:group-hover:opacity-100 p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-indigo-600 transition-all"
+            className="flex-shrink-0 p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-indigo-600 transition-all"
             title="Edit card"
           >
             <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
