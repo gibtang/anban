@@ -263,6 +263,17 @@ Open a [GitHub Issue](https://github.com/gibtang/anban/issues/new?template=bug_r
 
 Open a [GitHub Issue](https://github.com/gibtang/anban/issues/new?template=feature_request.md) describing the use case and why it would benefit Anban users.
 
+## Contributor License Agreement (CLA)
+
+By contributing to Anban, you agree that:
+
+1. **You own the contribution** — You have the right to submit the work, or it is in the public domain.
+2. **You grant a license** — You grant A2Z Soft a perpetual, worldwide, non-exclusive, royalty-free license to use, modify, and distribute your contribution as part of the Anban project under the AGPL-3.0 license.
+3. **The contribution is AGPL-3.0** — Your contribution will be distributed under the same AGPL-3.0 license as the rest of the project.
+4. **You confirm it's original** — The contribution is your original work, or you have clearly attributed third-party code with compatible licensing.
+
+This CLA ensures the project maintainer can continue to distribute Anban under AGPL-3.0 without licensing ambiguity. No separate signature is needed — submitting a PR constitutes agreement.
+
 ## Community & Support
 
 - **GitHub Issues** — [Bug reports and feature requests](https://github.com/gibtang/anban/issues)
