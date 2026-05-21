@@ -10,6 +10,7 @@ interface BoardAccess {
   id: string;
   boardId: string;
   agentName: string;
+  agentToken: string | null;
   status: 'pending' | 'approved' | 'denied';
   requestedAt: string;
   approvedAt: string | null;
@@ -33,6 +34,7 @@ const fetcher = async (url: string) => {
 export default function AgentsPage() {
   const toast = useToast();
   const [revokingId, setRevokingId] = useState<string | null>(null);
+  const [copyingTokenId, setCopyingTokenId] = useState<string | null>(null);
   const [confirmRevoke, setConfirmRevoke] = useState<{ id: string; name: string; boardName: string } | null>(null);
 
   // Fetch user's boards
@@ -245,6 +247,32 @@ export default function AgentsPage() {
                         <p className="text-xs text-gray-500">
                           {agent.boardName} · approved {agent.approvedAt ? formatDate(agent.approvedAt) : 'recently'}
                         </p>
+                        {agent.agentToken && (
+                          <div className="flex items-center gap-1.5 mt-1">
+                            <code className="text-[11px] font-mono text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">
+                              {agent.agentToken.slice(0, 5)}{'*'.repeat(Math.min(agent.agentToken.length - 5, 20))}
+                            </code>
+                            <button
+                              onClick={() => {
+                                navigator.clipboard.writeText(agent.agentToken!);
+                                setCopyingTokenId(agent.id);
+                                setTimeout(() => setCopyingTokenId(null), 2000);
+                              }}
+                              className="text-gray-400 hover:text-gray-600 transition-colors"
+                              title="Copy token"
+                            >
+                              {copyingTokenId === agent.id ? (
+                                <svg className="w-3.5 h-3.5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
+                              ) : (
+                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                </svg>
+                              )}
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
