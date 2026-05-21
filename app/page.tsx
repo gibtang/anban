@@ -8,6 +8,7 @@ import { ProblemSolution } from '@/components/landing/ProblemSolution';
 import { HowItWorks } from '@/components/landing/HowItWorks';
 import { Features } from '@/components/landing/Features';
 import { Integrations } from '@/components/landing/Integrations';
+import { SkillMd } from '@/components/landing/SkillMd';
 import { OpenSource } from '@/components/landing/OpenSource';
 import { CTASection } from '@/components/landing/CTASection';
 import { Footer } from '@/components/landing/Footer';
@@ -43,6 +44,7 @@ export default function HomePage() {
         <HowItWorks />
         <Features />
         <Integrations />
+        <SkillMd />
         <OpenSource stars={stars} />
         <CTASection cloudHref={cloudHref} />
       </main>
