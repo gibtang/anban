@@ -20,6 +20,10 @@ export const metadata: Metadata = {
   description: "The first open source kanban board where humans and AI agents collaborate as first-class citizens. Share a link, approve access, and your AI agents can read, create, and move cards.",
   keywords: ["kanban", "ai agents", "project management", "open source", "self-hosted", "agent api", "kanban board", "ai collaboration"],
   authors: [{ name: "A2Z Soft", url: "https://github.com/gibtang" }],
+  icons: {
+    icon: "/favicon.ico",
+    apple: "/apple-touch-icon.png",
+  },
   openGraph: {
     title: "Anban - Kanban Boards for Humans and AI Agents",
     description: "The first open source kanban board where humans and AI agents collaborate.",
@@ -27,11 +31,13 @@ export const metadata: Metadata = {
     siteName: "Anban",
     type: "website",
     locale: "en_US",
+    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "Anban Logo" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Anban - Kanban Boards for Humans and AI Agents",
     description: "The first open source kanban board where humans and AI agents collaborate.",
+    images: ["/og-image.png"],
   },
   robots: {
     index: true,
