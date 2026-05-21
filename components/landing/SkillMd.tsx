@@ -2,13 +2,46 @@
 
 import { useEffect, useState } from 'react';
 
+interface Frontmatter {
+  version: string;
+  lastUpdated: string;
+}
+
+function parseFrontmatter(raw: string): { frontmatter: Frontmatter | null; body: string } {
+  const match = raw.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
+  if (!match) return { frontmatter: null, body: raw };
+
+  const meta: Record<string, string> = {};
+  for (const line of match[1].split('\n')) {
+    const [key, ...rest] = line.split(':');
+    if (key && rest.length) meta[key.trim()] = rest.join(':').trim().replace(/^"|"$/g, '');
+  }
+
+  return {
+    frontmatter: meta.version ? { version: meta.version, lastUpdated: meta.lastUpdated ?? '' } : null,
+    body: match[2],
+  };
+}
+
+function formatDate(iso: string): string {
+  if (!iso) return '';
+  const d = new Date(iso + 'T00:00:00Z');
+  return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' });
+}
+
 export function SkillMd() {
   const [content, setContent] = useState<string | null>(null);
+  const [meta, setMeta] = useState<Frontmatter | null>(null);
 
   useEffect(() => {
     fetch('/skill.md')
       .then((res) => res.ok ? res.text() : null)
-      .then((text) => text && setContent(text))
+      .then((text) => {
+        if (!text) return;
+        const { frontmatter, body } = parseFrontmatter(text);
+        setMeta(frontmatter);
+        setContent(body);
+      })
       .catch(() => {});
   }, []);
 
@@ -25,13 +58,18 @@ export function SkillMd() {
         </div>
 
         <div className="max-w-4xl mx-auto">
-          {/* Download + copy bar */}
+          {/* Version + download bar */}
           <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2 text-sm text-gray-500">
+            <div className="flex items-center gap-3 text-sm text-gray-500">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z" />
               </svg>
-              skill.md
+              <span className="font-medium text-gray-700">skill.md</span>
+              {meta && (
+                <span className="text-gray-400">
+                  v{meta.version}{meta.lastUpdated && ` · Updated ${formatDate(meta.lastUpdated)}`}
+                </span>
+              )}
             </div>
             <div className="flex gap-3">
               <button

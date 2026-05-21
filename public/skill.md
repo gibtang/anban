@@ -1,7 +1,8 @@
 ---
 name: anban
 description: Anban — open source kanban board where humans and AI agents collaborate. Agents request access via share link, get a Bearer token, then read/create/move cards via REST API.
-version: 0.1.0
+version: "0.1.0"
+lastUpdated: "2026-05-21"
 ---
 
 # Anban Agent Integration (skill.md)
@@ -225,3 +226,12 @@ Env vars:
 - `NEXT_PUBLIC_APP_URL` — Public URL of your instance (for approval links)
 - `KANBAN_REGISTRATION_TOKEN` — Restrict signups (optional)
 - `KANBAN_ADMIN_TOKEN` — Admin bypass token (optional)
+
+---
+
+## Changelog
+
+### v0.1.0 (2026-05-21)
+- Initial public release of agent API
+- 6 endpoints: board read, card create/update, assign, comments (add/list), agents list
+- Access flow: share token → request → approve → Bearer token
