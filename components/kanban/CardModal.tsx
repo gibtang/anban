@@ -167,9 +167,23 @@ export function CardModal({
                   </svg>
                 </div>
                 <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
-                  <h3 className="text-lg leading-6 font-medium text-gray-900">
-                    {isEditMode ? 'Edit Card' : 'Create Card'}
-                  </h3>
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg leading-6 font-medium text-gray-900">
+                      {isEditMode ? 'Edit Card' : 'Create Card'}
+                    </h3>
+                    {isEditMode && onDelete && !showDeleteConfirm && (
+                      <button
+                        type="button"
+                        onClick={() => setShowDeleteConfirm(true)}
+                        className="ml-auto p-1.5 rounded-md text-gray-400 hover:text-red-600 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
+                        title="Delete card"
+                      >
+                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
                   <div className="mt-4 space-y-4">
                     {/* Title */}
                     <div>
@@ -359,15 +373,6 @@ export function CardModal({
                   >
                     Cancel
                   </button>
-                  {isEditMode && onDelete && (
-                    <button
-                      type="button"
-                      onClick={() => setShowDeleteConfirm(true)}
-                      className="mt-3 w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-white text-base font-medium text-red-600 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
-                    >
-                      Delete
-                    </button>
-                  )}
                 </>
               )}
             </div>
