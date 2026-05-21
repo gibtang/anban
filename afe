@@ -1,0 +1,73 @@
+[33mcommit bb5c8fbd5be9663cac308613bcadad35268d4dfd[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmaster[m[33m, [m[1;31morigin/master[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: Gibson Tang <gibtang@gmail.com>
+Date:   Sun May 17 23:52:16 2026 +0800
+
+    feat: AI agent onboarding with share link, approval flow, and agent API
+    
+    - Add BoardAccess model to Prisma schema with share token + agent token
+    - Board owner can share board via /join/<token> URL
+    - Agent requests access, gets approval URL to send back to owner
+    - Owner taps approval link (no login, 3-min expiry) to approve/deny
+    - Approval link auto-expires; agent re-requests and sends new link
+    - Agent receives Bearer token on approval for API access
+    - Agent API: GET /api/agent/board, POST/PUT /api/agent/cards
+    - Add verifyAgentAuth() for Bearer token auth on agent routes
+    - Public routes: /join, /approve, /api/board-access/*
+    - SharePanel component: generate/revoke share link
+    - AccessRequests component: view connected agents, revoke access
+    - Updated README with project details and onboarding flow docs
+
+[33mcommit d1f8fd5a6c7c63f5f2dcde4c3b22772f6ce8430d[m
+Author: Gibson Tang <gibtang@gmail.com>
+Date:   Wed May 13 00:39:04 2026 +0800
+
+    build: add prisma generate to postinstall for Vercel
+
+[33mcommit ecb8574b1304684ff427360526b44e8c7d2df6fe[m
+Author: Gibson Tang <gibtang@gmail.com>
+Date:   Tue May 12 21:25:31 2026 +0800
+
+    chore: add AGPL-3.0 license and author
+
+[33mcommit 1d6600b03990336926c36f4a0e61ccabbe708911[m
+Author: Gibson Tang <gibtang@gmail.com>
+Date:   Sat Apr 11 17:45:26 2026 +0800
+
+    feat: Add DISABLE_AUTH option for local development
+    
+    - Add DISABLE_AUTH env var to skip Firebase authentication
+    - Create verifyAuth helper that respects auth disable flag
+    - Update all API routes to use centralized verifyAuth helper
+    - Add mock user support in AuthContext for development
+    - Update OpenClaw HTTP adapter to support auth tokens
+    - Add Tailscale remote connection setup guide
+    - Update settings page with auth token placeholder
+    
+    Benefits:
+    - Skip Firebase setup for local testing
+    - Easy Tailscale/remote connection support
+    - Reduced code duplication across API routes
+    
+    Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
+
+[33mcommit efe661015eb422f4123cb77e6567ba2cf622a4f5[m
+Author: Gibson Tang <gibtang@gmail.com>
+Date:   Sat Apr 11 16:55:35 2026 +0800
+
+    feat: Anban v1 - OpenClaw Agent Kanban Board
+    
+    Complete production-ready Kanban board for OpenClaw agents with:
+    - Firebase Auth (email/password + Google) with cookie middleware
+    - Drag-and-drop Kanban board with SSE real-time updates
+    - OpenClaw HTTP adapter for agent chat integration
+    - Agent auto-updates cards with their responses
+    - Settings page for OpenClaw & Telegram configuration
+    - Telegram bot framework (deferred to v2)
+    - PostgreSQL + Prisma ORM with audit logging
+    - Fly.io deployment config (max 1 machine)
+    - Comprehensive error handling, loading states, and toasts
+    
+    Tech Stack: Next.js 16 + React 19 + TypeScript + Tailwind 4
+    Build Status: ✅ 17 routes, 0 TypeScript errors
+    
+    Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>

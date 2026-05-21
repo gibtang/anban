@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
-  "lastScanned": 1775897718855,
-  "projectRoot": "/Users/gibsontang/code/anban",
+  "lastScanned": 1779114208263,
+  "projectRoot": "/home/gibson/my-files/anban",
   "techStack": {
     "languages": [
       {
@@ -51,7 +51,8 @@
       "build": "next build",
       "start": "next start",
       "lint": "eslint",
-      "db:seed": "bun ./prisma/seed.ts"
+      "db:seed": "bun ./prisma/seed.ts",
+      "postinstall": "prisma generate"
     }
   },
   "conventions": {
@@ -66,10 +67,14 @@
     "mainDirectories": [
       "app",
       "components",
+      "docs",
       "lib",
       "public"
     ],
-    "gitBranches": null
+    "gitBranches": {
+      "defaultBranch": "master",
+      "branchingStrategy": null
+    }
   },
   "customNotes": [],
   "directoryMap": {
@@ -77,7 +82,7 @@
       "path": "app",
       "purpose": "Application code",
       "fileCount": 5,
-      "lastAccessed": 1775897718838,
+      "lastAccessed": 1779114208231,
       "keyFiles": [
         "favicon.ico",
         "firebase.ts",
@@ -90,23 +95,32 @@
       "path": "components",
       "purpose": "UI components",
       "fileCount": 1,
-      "lastAccessed": 1775897718838,
+      "lastAccessed": 1779114208249,
       "keyFiles": [
         "ErrorBoundary.tsx"
+      ]
+    },
+    "docs": {
+      "path": "docs",
+      "purpose": "Documentation",
+      "fileCount": 1,
+      "lastAccessed": 1779114208250,
+      "keyFiles": [
+        "TAILSCALE_SETUP.md"
       ]
     },
     "lib": {
       "path": "lib",
       "purpose": "Library code",
       "fileCount": 0,
-      "lastAccessed": 1775897718838,
+      "lastAccessed": 1779114208252,
       "keyFiles": []
     },
     "prisma": {
       "path": "prisma",
       "purpose": null,
       "fileCount": 2,
-      "lastAccessed": 1775897718838,
+      "lastAccessed": 1779114208253,
       "keyFiles": [
         "schema.prisma",
         "seed.ts"
@@ -116,7 +130,7 @@
       "path": "public",
       "purpose": "Public files",
       "fileCount": 5,
-      "lastAccessed": 1775897718839,
+      "lastAccessed": 1779114208255,
       "keyFiles": [
         "file.svg",
         "globe.svg",
@@ -125,18 +139,11 @@
         "window.svg"
       ]
     },
-    "qa-logs": {
-      "path": "qa-logs",
-      "purpose": null,
-      "fileCount": 0,
-      "lastAccessed": 1775897718839,
-      "keyFiles": []
-    },
     "types": {
       "path": "types",
       "purpose": "Type definitions",
       "fileCount": 4,
-      "lastAccessed": 1775897718839,
+      "lastAccessed": 1779114208255,
       "keyFiles": [
         "agent.ts",
         "board.ts",
@@ -148,14 +155,14 @@
       "path": "app/api",
       "purpose": "API routes",
       "fileCount": 0,
-      "lastAccessed": 1775897718840,
+      "lastAccessed": 1779114208256,
       "keyFiles": []
     },
     "lib/utils": {
       "path": "lib/utils",
       "purpose": "Utility functions",
       "fileCount": 1,
-      "lastAccessed": 1775897718840,
+      "lastAccessed": 1779114208258,
       "keyFiles": [
         "retry.ts"
       ]
@@ -163,117 +170,21 @@
   },
   "hotPaths": [
     {
-      "path": "app/api/boards/[id]/route.ts",
-      "accessCount": 8,
-      "lastAccessed": 1775900531204,
-      "type": "file"
-    },
-    {
-      "path": "app/api/cards/[id]/route.ts",
-      "accessCount": 8,
-      "lastAccessed": 1775900539387,
-      "type": "file"
-    },
-    {
-      "path": "app/api/agents/[id]/route.ts",
-      "accessCount": 7,
-      "lastAccessed": 1775900515239,
-      "type": "file"
-    },
-    {
-      "path": "app/api/cards/route.ts",
-      "accessCount": 7,
-      "lastAccessed": 1775900551552,
-      "type": "file"
-    },
-    {
-      "path": "app/api/settings/route.ts",
-      "accessCount": 6,
-      "lastAccessed": 1775900559700,
-      "type": "file"
-    },
-    {
-      "path": "app/api/agents/[id]/health/route.ts",
-      "accessCount": 5,
-      "lastAccessed": 1775900507689,
-      "type": "file"
-    },
-    {
-      "path": "app/api/agents/route.ts",
-      "accessCount": 5,
-      "lastAccessed": 1775900522720,
-      "type": "file"
-    },
-    {
-      "path": "app/contexts/AuthContext.tsx",
-      "accessCount": 5,
-      "lastAccessed": 1775900693514,
-      "type": "file"
-    },
-    {
-      "path": "app/api/events/route.ts",
-      "accessCount": 4,
-      "lastAccessed": 1775900559380,
-      "type": "file"
-    },
-    {
-      "path": "lib/openclaw/http-adapter.ts",
-      "accessCount": 3,
-      "lastAccessed": 1775900108730,
-      "type": "file"
-    },
-    {
-      "path": "app/api/agents/[id]/chat/route.ts",
-      "accessCount": 3,
-      "lastAccessed": 1775900507349,
-      "type": "file"
-    },
-    {
-      "path": "app/api/settings/test-connection/route.ts",
-      "accessCount": 3,
-      "lastAccessed": 1775900562888,
-      "type": "file"
-    },
-    {
-      "path": "app/(dashboard)/settings/page.tsx",
-      "accessCount": 2,
-      "lastAccessed": 1775900121618,
-      "type": "file"
-    },
-    {
-      "path": "middleware.ts",
-      "accessCount": 2,
-      "lastAccessed": 1775900452687,
-      "type": "file"
-    },
-    {
-      "path": "app/api/boards/route.ts",
-      "accessCount": 2,
-      "lastAccessed": 1775900485762,
-      "type": "file"
-    },
-    {
-      "path": "lib/auth/helpers.ts",
-      "accessCount": 2,
-      "lastAccessed": 1775900495508,
-      "type": "file"
-    },
-    {
-      "path": "docs/TAILSCALE_SETUP.md",
-      "accessCount": 2,
-      "lastAccessed": 1775900722343,
-      "type": "file"
-    },
-    {
-      "path": ".env.local",
+      "path": "lib/telegram/handlers.ts",
       "accessCount": 1,
-      "lastAccessed": 1775900467326,
+      "lastAccessed": 1779114543709,
       "type": "file"
     },
     {
-      "path": ".env.example",
+      "path": "lib/telegram/notifications.ts",
       "accessCount": 1,
-      "lastAccessed": 1775900470403,
+      "lastAccessed": 1779114543761,
+      "type": "file"
+    },
+    {
+      "path": "lib/telegram/bot.ts",
+      "accessCount": 1,
+      "lastAccessed": 1779114543816,
       "type": "file"
     }
   ],
