@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Batch-fetch unique assignees in a single query
-    const uniqueAssigneeIds = Array.from(new Set(cards.filter(c => c.assigneeId).map(c => c.assigneeId!)));
+    const uniqueAssigneeIds = Array.from(new Set(cards.filter((c: { assigneeId: string | null }) => c.assigneeId).map((c: { assigneeId: string | null }) => c.assigneeId!)));
     const assigneeMap = new Map<string, { id: string; firebaseUid: string }>();
 
     if (uniqueAssigneeIds.length > 0) {
@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const cardsWithAssignees = cards.map(card => ({
+    const cardsWithAssignees = cards.map((card: { assigneeId: string | null; [key: string]: unknown }) => ({
       ...card,
       assignee: card.assigneeId ? (assigneeMap.get(card.assigneeId) ?? null) : null,
     }));

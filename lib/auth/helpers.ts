@@ -40,30 +40,35 @@ export async function verifyAuth(request: NextRequest): Promise<string> {
     },
   });
 
-  // Auto-create default board for new users
-  const existingBoards = await prisma.board.count({
-    where: { ownerId: user.id },
-  });
+  // Auto-create default board only for brand-new users
+  // Use createdAt to detect if user was just created (within last 5 seconds)
+  const justCreated = Date.now() - user.createdAt.getTime() < 5000;
 
-  if (existingBoards === 0) {
-    const board = await prisma.board.create({
-      data: {
-        name: 'My Board',
-        ownerId: user.id,
-      },
+  if (justCreated) {
+    const existingBoards = await prisma.board.count({
+      where: { ownerId: user.id },
     });
 
-    await Promise.all([
-      prisma.column.create({
-        data: { name: 'To Do', position: 0, boardId: board.id },
-      }),
-      prisma.column.create({
-        data: { name: 'In Progress', position: 1, boardId: board.id },
-      }),
-      prisma.column.create({
-        data: { name: 'Done', position: 2, boardId: board.id },
-      }),
-    ]);
+    if (existingBoards === 0) {
+      const board = await prisma.board.create({
+        data: {
+          name: 'My Board',
+          ownerId: user.id,
+        },
+      });
+
+      await Promise.all([
+        prisma.column.create({
+          data: { name: 'To Do', position: 0, boardId: board.id },
+        }),
+        prisma.column.create({
+          data: { name: 'In Progress', position: 1, boardId: board.id },
+        }),
+        prisma.column.create({
+          data: { name: 'Done', position: 2, boardId: board.id },
+        }),
+      ]);
+    }
   }
 
   return user.id;
