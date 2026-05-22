@@ -25,6 +25,9 @@ model Board {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
+  columns    Column[]
+  cards      Card[]
+
   @@index([ownerId])
 }
 
@@ -49,6 +52,9 @@ model Column {
   boardId   String   @db.ObjectId
   createdAt DateTime @default(now())
 
+  board     Board    @relation(fields: [boardId], references: [id])
+  cards     Card[]
+
   @@index([boardId])
 }
 
@@ -64,6 +70,9 @@ model Card {
   agentId     String?  @db.ObjectId
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+
+  board       Board     @relation(fields: [boardId], references: [id])
+  column      Column    @relation(fields: [columnId], references: [id])
 
   @@index([boardId])
   @@index([columnId])
