@@ -39,18 +39,6 @@ export default function SharePanel({ boardId }: SharePanelProps) {
     }
   };
 
-  const handleRevoke = async () => {
-    try {
-      const res = await fetch(`/api/boards/${boardId}/share`, { method: 'DELETE' });
-      if (!res.ok) throw new Error('Failed to revoke');
-      setShareUrl(null);
-      setShowPanel(false);
-      toast.showToast('Share link revoked', 'success');
-    } catch {
-      toast.showToast('Failed to revoke share link', 'error');
-    }
-  };
-
   return (
     <div className="relative">
       <button
@@ -75,11 +63,23 @@ export default function SharePanel({ boardId }: SharePanelProps) {
 
       {showPanel && shareUrl && (
         <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 p-4 z-50">
-          <h3 className="text-sm font-medium text-gray-900 mb-3">Share Board</h3>
+          {/* Header with title + close X */}
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-medium text-gray-900">Share Board</h3>
+            <button
+              onClick={() => setShowPanel(false)}
+              className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+              aria-label="Close"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
           <p className="text-xs text-gray-500 mb-3">
             Send this link to an agent to request access to your board.
           </p>
-          <div className="flex items-center gap-2 mb-3">
+          <div className="flex items-center gap-2">
             <input
               type="text"
               readOnly
@@ -93,12 +93,6 @@ export default function SharePanel({ boardId }: SharePanelProps) {
               {copied ? '✓' : 'Copy'}
             </button>
           </div>
-          <button
-            onClick={handleRevoke}
-            className="text-xs text-red-600 hover:text-red-800 transition-colors"
-          >
-            Revoke link
-          </button>
         </div>
       )}
     </div>

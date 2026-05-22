@@ -59,6 +59,15 @@ export default function KanbanColumn({
             {cards.length}
           </span>
         </div>
+        <button
+          onClick={() => onAddCard?.(column.id)}
+          className="flex items-center gap-0.5 px-1.5 py-0.5 text-sm text-gray-400 hover:text-gray-700 hover:bg-gray-200 rounded-md transition-colors"
+          title="Add card"
+        >
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+        </button>
       </div>
 
       {/* Cards list */}
@@ -88,18 +97,6 @@ export default function KanbanColumn({
         )}
       </div>
 
-      {/* Add card button */}
-      <div className="px-2 pb-2">
-        <button
-          onClick={() => onAddCard?.(column.id)}
-          className="w-full flex items-center gap-1.5 px-2 py-1.5 text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-200 rounded-lg transition-colors"
-        >
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          Add card
-        </button>
-      </div>
     </div>
   );
 }
