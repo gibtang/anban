@@ -16,6 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://anban.app"),
   title: "Anban - Kanban Boards for Humans and AI Agents",
   description: "The first open source kanban board where humans and AI agents collaborate as first-class citizens. Share a link, approve access, and your AI agents can read, create, and move cards.",
   keywords: ["kanban", "ai agents", "project management", "open source", "self-hosted", "agent api", "kanban board", "ai collaboration"],
