@@ -18,6 +18,7 @@ interface CardModalProps {
   columnId: string;
   boardId: string;
   agents: AgentOption[];
+  agentTokensMap?: Record<string, string>;
 }
 
 export function CardModal({
@@ -29,6 +30,7 @@ export function CardModal({
   columnId,
   boardId,
   agents,
+  agentTokensMap,
 }: CardModalProps) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -39,6 +41,7 @@ export function CardModal({
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [error, setError] = useState('');
+  const [copiedLink, setCopiedLink] = useState(false);
 
   const isEditMode = !!card;
 
@@ -138,6 +141,18 @@ export function CardModal({
     }
   };
 
+  const handleCopyLink = () => {
+    if (!card?.agentId || !agentTokensMap) return;
+    const token = agentTokensMap[card.agentId];
+    if (!token) return;
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const url = `${appUrl}/card/${card.id}?token=${token}`;
+    navigator.clipboard.writeText(url).then(() => {
+      setCopiedLink(true);
+      setTimeout(() => setCopiedLink(false), 2000);
+    });
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -172,18 +187,39 @@ export function CardModal({
                     <h3 className="text-lg leading-6 font-medium text-gray-900">
                       {isEditMode ? 'Edit Card' : 'Create Card'}
                     </h3>
-                    {isEditMode && onDelete && !showDeleteConfirm && (
-                      <button
-                        type="button"
-                        onClick={() => setShowDeleteConfirm(true)}
-                        className="ml-auto p-1.5 rounded-md text-gray-400 hover:text-red-600 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
-                        title="Delete card"
-                      >
-                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                      </button>
-                    )}
+                    <div className="flex items-center gap-1">
+                      {/* Copy card URL button — only in edit mode when agent is assigned */}
+                      {isEditMode && card?.agentId && agentTokensMap?.[card.agentId] && (
+                        <button
+                          type="button"
+                          onClick={handleCopyLink}
+                          className="p-1.5 rounded-md text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+                          title={copiedLink ? 'Copied!' : 'Copy card URL'}
+                        >
+                          {copiedLink ? (
+                            <svg className="h-5 w-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                          ) : (
+                            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                            </svg>
+                          )}
+                        </button>
+                      )}
+                      {isEditMode && onDelete && !showDeleteConfirm && (
+                        <button
+                          type="button"
+                          onClick={() => setShowDeleteConfirm(true)}
+                          className="p-1.5 rounded-md text-gray-400 hover:text-red-600 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
+                          title="Delete card"
+                        >
+                          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      )}
+                    </div>
                   </div>
                   <div className="mt-4 space-y-4">
                     {/* Title */}

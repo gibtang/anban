@@ -41,6 +41,7 @@ interface BoardData {
 interface AgentOption {
   id: string;
   name: string;
+  agentToken: string | null;
 }
 
 const fetcher = async (url: string) => {
@@ -78,7 +79,7 @@ export default function KanbanBoard({ boardId }: KanbanBoardProps) {
   const agents: AgentOption[] = useMemo(() =>
     (accessList || [])
       .filter((r: { status: string }) => r.status === 'approved')
-      .map((r: { id: string; agentName: string }) => ({ id: r.id, name: r.agentName })),
+      .map((r: { id: string; agentName: string; agentToken: string | null }) => ({ id: r.id, name: r.agentName, agentToken: r.agentToken })),
     [accessList]
   );
 
@@ -86,6 +87,16 @@ export default function KanbanBoard({ boardId }: KanbanBoardProps) {
     const map: Record<string, string> = {};
     for (const agent of agents) {
       map[agent.id] = agent.name;
+    }
+    return map;
+  }, [agents]);
+
+  const agentTokensMap: Record<string, string> = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const agent of agents) {
+      if (agent.agentToken) {
+        map[agent.id] = agent.agentToken;
+      }
     }
     return map;
   }, [agents]);
@@ -453,6 +464,7 @@ export default function KanbanBoard({ boardId }: KanbanBoardProps) {
                 activeCardId={activeCardId}
                 boardId={boardId}
                 agentNames={agentNames}
+                agentTokensMap={agentTokensMap}
                 defaultCollapsed={column.name === 'Done'}
                 onEditCard={handleEditCard}
                 onAddCard={handleAddCard}
@@ -471,6 +483,7 @@ export default function KanbanBoard({ boardId }: KanbanBoardProps) {
                 card={activeCard}
                 isDragging
                 agentName={activeCard.agentId ? (agentNames[activeCard.agentId] || null) : null}
+                agentToken={activeCard.agentId ? (agentTokensMap[activeCard.agentId] || null) : null}
               />
             </div>
           ) : null}
@@ -487,6 +500,7 @@ export default function KanbanBoard({ boardId }: KanbanBoardProps) {
         columnId={modalState?.mode === 'add' ? modalState.columnId : (modalState?.mode === 'edit' ? modalState.card.columnId : '')}
         boardId={boardId}
         agents={agents}
+        agentTokensMap={agentTokensMap}
       />
     </>
   );

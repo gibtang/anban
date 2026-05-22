@@ -21,6 +21,7 @@ interface KanbanColumnProps {
   activeCardId: string | null;
   boardId: string;
   agentNames: Record<string, string>;
+  agentTokensMap: Record<string, string>;
   defaultCollapsed?: boolean;
   onEditCard?: (card: Card) => void;
   onAddCard?: (columnId: string) => void;
@@ -32,6 +33,7 @@ export default function KanbanColumn({
   activeCardId,
   boardId,
   agentNames,
+  agentTokensMap,
   defaultCollapsed = false,
   onEditCard,
   onAddCard,
@@ -112,15 +114,17 @@ export default function KanbanColumn({
             {cards.length}
           </span>
         </div>
-        <button
-          onClick={() => onAddCard?.(column.id)}
-          className="flex items-center gap-0.5 px-1.5 py-0.5 text-sm text-gray-400 hover:text-gray-700 hover:bg-gray-200 rounded-md transition-colors"
-          title="Add card"
-        >
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-        </button>
+        {column.name === 'To Do' && (
+          <button
+            onClick={() => onAddCard?.(column.id)}
+            className="flex items-center gap-0.5 px-1.5 py-0.5 text-sm text-gray-400 hover:text-gray-700 hover:bg-gray-200 rounded-md transition-colors"
+            title="Add card"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+          </button>
+        )}
       </div>
 
       {/* Cards list */}
@@ -139,6 +143,7 @@ export default function KanbanColumn({
               isDragging={activeCardId === card.id}
               onEdit={() => onEditCard?.(card)}
               agentName={card.agentId ? (agentNames[card.agentId] || null) : null}
+              agentToken={card.agentId ? (agentTokensMap[card.agentId] || null) : null}
             />
           ))}
         </SortableContext>
