@@ -16,6 +16,19 @@ const publicRoutes = [
 export function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
+  // Content negotiation for /join/[token]: return JSON for curl/AI agents
+  const joinMatch = pathname.match(/^\/join\/([^/]+)$/);
+  if (joinMatch) {
+    const accept = request.headers.get('accept') || '';
+    if (!accept.includes('text/html')) {
+      const token = joinMatch[1];
+      const url = request.nextUrl.clone();
+      url.pathname = '/api/board-access/join-info';
+      url.searchParams.set('shareToken', token);
+      return NextResponse.rewrite(url);
+    }
+  }
+
   // Check if auth is disabled via environment variable
   const authDisabled = process.env.DISABLE_AUTH === 'true';
 
