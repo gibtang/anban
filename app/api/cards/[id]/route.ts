@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { verifyAuth } from '@/lib/auth/helpers';
 import { logAuditEvent } from '@/lib/db/audit';
+import { logActivity } from '@/lib/db/activity';
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -128,6 +129,63 @@ export async function PUT(request: NextRequest, context: RouteContext) {
         agentId: card.agentId,
       },
     });
+
+    // Log activity — determine type from what changed
+    const activityPromises: Promise<void>[] = [];
+
+    if (updateData.columnId && existingCard.columnId !== updateData.columnId) {
+      // Card moved between columns
+      const fromCol = await prisma.column.findUnique({ where: { id: existingCard.columnId } });
+      const toCol = await prisma.column.findUnique({ where: { id: updateData.columnId } });
+      activityPromises.push(
+        logActivity({
+          cardId: card.id,
+          boardId: card.boardId,
+          type: 'moved',
+          authorId: userId,
+          authorName: 'You',
+          authorType: 'user',
+          details: {
+            fromColumn: fromCol?.name ?? existingCard.columnId,
+            toColumn: toCol?.name ?? updateData.columnId,
+          },
+        })
+      );
+    }
+
+    if (updateData.agentId !== undefined && existingCard.agentId !== updateData.agentId) {
+      activityPromises.push(
+        logActivity({
+          cardId: card.id,
+          boardId: card.boardId,
+          type: updateData.agentId ? 'assigned' : 'unassigned',
+          authorId: userId,
+          authorName: 'You',
+          authorType: 'user',
+        })
+      );
+    }
+
+    // Check if title/description/tags changed (not just move or assign)
+    const fieldsChanged: string[] = [];
+    if (updateData.title && existingCard.title !== updateData.title) fieldsChanged.push('title');
+    if (updateData.description !== undefined && existingCard.description !== updateData.description) fieldsChanged.push('description');
+    if (updateData.tags && JSON.stringify(existingCard.tags) !== JSON.stringify(updateData.tags)) fieldsChanged.push('tags');
+    if (fieldsChanged.length > 0) {
+      activityPromises.push(
+        logActivity({
+          cardId: card.id,
+          boardId: card.boardId,
+          type: 'updated',
+          authorId: userId,
+          authorName: 'You',
+          authorType: 'user',
+          details: { fields: fieldsChanged },
+        })
+      );
+    }
+
+    await Promise.all(activityPromises);
 
     return NextResponse.json(cardWithAssignee);
   } catch (error) {

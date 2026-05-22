@@ -128,3 +128,18 @@ model Comment {
   @@index([cardId])
   @@index([boardId])
 }
+
+model Activity {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  cardId     String   @db.ObjectId
+  boardId    String   @db.ObjectId
+  type       String   // "created", "moved", "updated", "assigned", "unassigned", "commented"
+  authorId   String?  @db.ObjectId  // BoardAccess ID (agent) or User ID
+  authorName String   // Display name ("You", "Wing Zero", etc.)
+  authorType String   // "agent" | "user" | "system"
+  details    Json?    // { fromColumn: "To Do", toColumn: "In Progress" } or { field: "title" }
+  createdAt  DateTime @default(now())
+
+  @@index([cardId])
+  @@index([boardId])
+}

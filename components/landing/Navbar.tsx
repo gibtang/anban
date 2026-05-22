@@ -24,6 +24,8 @@ export function Navbar({ cloudHref }: NavbarProps) {
     { label: 'Open Source', href: '#open-source' },
   ];
 
+  const aboutLink = { label: 'About', href: '/about' };
+
   return (
     <nav
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
@@ -55,6 +57,12 @@ export function Navbar({ cloudHref }: NavbarProps) {
                 {link.label}
               </a>
             ))}
+            <Link
+              href={aboutLink.href}
+              className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+            >
+              {aboutLink.label}
+            </Link>
           </div>
 
           {/* Desktop CTAs */}
@@ -109,6 +117,13 @@ export function Navbar({ cloudHref }: NavbarProps) {
                 {link.label}
               </a>
             ))}
+            <Link
+              href={aboutLink.href}
+              onClick={() => setMobileOpen(false)}
+              className="block text-sm font-medium text-gray-600 hover:text-gray-900 py-2"
+            >
+              {aboutLink.label}
+            </Link>
             <hr className="border-gray-100" />
             <Link
               href="/login"

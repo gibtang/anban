@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import type { Card, CreateCardRequest, UpdateCardRequest } from '@/types/card';
 import { Spinner } from '@/components/ui/Spinner';
+import { ActivityLog } from './ActivityLog';
 
 interface AgentOption {
   id: string;
@@ -342,6 +343,18 @@ export function CardModal({
                         ))}
                       </select>
                     </div>
+
+                    {/* Activity Log — only in edit mode */}
+                    {isEditMode && card && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Activity
+                        </label>
+                        <div className="border border-gray-200 rounded-md p-3 max-h-48 overflow-y-auto bg-gray-50/50">
+                          <ActivityLog cardId={card.id} />
+                        </div>
+                      </div>
+                    )}
 
                     {error && (
                       <div className="rounded-md bg-red-50 p-4">

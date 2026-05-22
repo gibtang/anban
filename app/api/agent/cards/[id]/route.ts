@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { verifyAgentAuth } from '@/lib/auth/helpers';
 import { eventBus } from '@/lib/events/event-bus';
+import { logActivity } from '@/lib/db/activity';
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -15,7 +16,7 @@ export const runtime = 'nodejs';
  */
 export async function PUT(request: NextRequest, context: RouteContext) {
   try {
-    const { boardId } = await verifyAgentAuth(request);
+    const { boardId, agentName, accessId } = await verifyAgentAuth(request);
     const { id: cardId } = await context.params;
 
     const body = await request.json();
@@ -66,6 +67,22 @@ export async function PUT(request: NextRequest, context: RouteContext) {
         toColumnId: columnId,
       });
 
+      // Log activity
+      const fromCol = await prisma.column.findUnique({ where: { id: existingCard.columnId } });
+      const toCol = await prisma.column.findUnique({ where: { id: columnId } });
+      await logActivity({
+        cardId,
+        boardId,
+        type: 'moved',
+        authorId: accessId,
+        authorName: agentName,
+        authorType: 'agent',
+        details: {
+          fromColumn: fromCol?.name ?? existingCard.columnId,
+          toColumn: toCol?.name ?? columnId,
+        },
+      });
+
       return NextResponse.json(updatedCard);
     }
 
@@ -86,6 +103,23 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       boardId,
       cardId,
     });
+
+    // Log activity for field updates
+    const fieldsChanged: string[] = [];
+    if (title !== undefined && existingCard.title !== title.trim()) fieldsChanged.push('title');
+    if (description !== undefined && existingCard.description !== (description?.trim() || null)) fieldsChanged.push('description');
+    if (tags !== undefined && JSON.stringify(existingCard.tags) !== JSON.stringify(tags)) fieldsChanged.push('tags');
+    if (fieldsChanged.length > 0) {
+      await logActivity({
+        cardId,
+        boardId,
+        type: 'updated',
+        authorId: accessId,
+        authorName: agentName,
+        authorType: 'agent',
+        details: { fields: fieldsChanged },
+      });
+    }
 
     return NextResponse.json(updatedCard);
   } catch (error) {

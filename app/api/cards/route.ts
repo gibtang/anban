@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { verifyAuth } from '@/lib/auth/helpers';
 import { logAuditEvent } from '@/lib/db/audit';
+import { logActivity } from '@/lib/db/activity';
 
 export const runtime = 'nodejs';
 
@@ -158,6 +159,16 @@ export async function POST(request: NextRequest) {
         agentId: card.agentId,
         position: card.position,
       },
+    });
+
+    // Log activity
+    await logActivity({
+      cardId: card.id,
+      boardId: card.boardId,
+      type: 'created',
+      authorId: userId,
+      authorName: 'You',
+      authorType: 'user',
     });
 
     return NextResponse.json(cardWithAssignee, { status: 201 });
