@@ -32,7 +32,8 @@ export default function SharePanel({ boardId }: SharePanelProps) {
 
   const handleCopy = () => {
     if (shareUrl) {
-      navigator.clipboard.writeText(shareUrl);
+      const shareText = `Check out Anban, the AI native Kanban board at ${shareUrl}`;
+      navigator.clipboard.writeText(shareText);
       setCopied(true);
       toast.showToast('Link copied!', 'success');
       setTimeout(() => setCopied(false), 2000);
