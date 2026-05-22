@@ -45,36 +45,24 @@ export async function GET(request: NextRequest) {
       orderBy: { position: 'asc' },
     });
 
-    // Manually fetch assignees for cards that have them
-    const cardsWithAssignees = await Promise.all(
-      cards.map(async (card: {
-        id: string;
-        title: string;
-        description: string | null;
-        position: number;
-        columnId: string;
-        boardId: string;
-        assigneeId: string | null;
-        tags: string[];
-        agentId: string | null;
-        createdAt: Date;
-        updatedAt: Date;
-      }) => {
-        if (!card.assigneeId) {
-          return { ...card, assignee: null };
-        }
+    // Batch-fetch unique assignees in a single query
+    const uniqueAssigneeIds = Array.from(new Set(cards.filter(c => c.assigneeId).map(c => c.assigneeId!)));
+    const assigneeMap = new Map<string, { id: string; firebaseUid: string }>();
 
-        const assignee = await prisma.user.findUnique({
-          where: { id: card.assigneeId },
-          select: { id: true, firebaseUid: true },
-        });
+    if (uniqueAssigneeIds.length > 0) {
+      const assignees = await prisma.user.findMany({
+        where: { id: { in: uniqueAssigneeIds } },
+        select: { id: true, firebaseUid: true },
+      });
+      for (const a of assignees) {
+        assigneeMap.set(a.id, a);
+      }
+    }
 
-        return {
-          ...card,
-          assignee,
-        };
-      })
-    );
+    const cardsWithAssignees = cards.map(card => ({
+      ...card,
+      assignee: card.assigneeId ? (assigneeMap.get(card.assigneeId) ?? null) : null,
+    }));
 
     return NextResponse.json(cardsWithAssignees);
   } catch (error) {

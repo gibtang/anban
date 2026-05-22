@@ -12,11 +12,21 @@ export async function GET(request: NextRequest, context: RouteContext) {
 
     const { id } = await context.params;
 
-    // Get board and verify ownership
+    // Fetch board with columns and cards in a single query using includes
     const board = await prisma.board.findFirst({
       where: {
         id,
         ownerId: userId,
+      },
+      include: {
+        columns: {
+          orderBy: { position: 'asc' },
+          include: {
+            cards: {
+              orderBy: { position: 'asc' },
+            },
+          },
+        },
       },
     });
 
@@ -24,29 +34,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: 'Board not found' }, { status: 404 });
     }
 
-    // Manually fetch columns and cards
-    const columns = await prisma.column.findMany({
-      where: { boardId: board.id },
-      orderBy: { position: 'asc' },
-    });
-
-    const columnsWithCards = await Promise.all(
-      columns.map(async (column: { id: string; name: string; position: number; boardId: string; createdAt: Date }) => {
-        const cards = await prisma.card.findMany({
-          where: { columnId: column.id },
-          orderBy: { position: 'asc' },
-        });
-        return {
-          ...column,
-          cards,
-        };
-      })
-    );
-
-    return NextResponse.json({
-      ...board,
-      columns: columnsWithCards,
-    });
+    return NextResponse.json(board);
   } catch (error) {
     console.error('Error fetching board:', error);
     if (error instanceof Error && error.message === 'Unauthorized') {

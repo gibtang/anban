@@ -8,31 +8,18 @@ export async function GET(request: NextRequest) {
   try {
     const userId = await verifyAuth(request);
 
-    // Get all boards for the user
+    // Get all boards for the user with column/card counts in a single query
     const boards = await prisma.board.findMany({
       where: { ownerId: userId },
       orderBy: { updatedAt: 'desc' },
+      include: {
+        _count: {
+          select: { columns: true, cards: true },
+        },
+      },
     });
 
-    // Manually count columns and cards for each board
-    const boardsWithCounts = await Promise.all(
-      boards.map(async (board: { id: string; name: string; ownerId: string; createdAt: Date; updatedAt: Date }) => {
-        const [columnCount, cardCount] = await Promise.all([
-          prisma.column.count({ where: { boardId: board.id } }),
-          prisma.card.count({ where: { boardId: board.id } }),
-        ]);
-
-        return {
-          ...board,
-          _count: {
-            cards: cardCount,
-            columns: columnCount,
-          },
-        };
-      })
-    );
-
-    return NextResponse.json(boardsWithCounts);
+    return NextResponse.json(boards);
   } catch (error) {
     console.error('Error fetching boards:', error);
     if (error instanceof Error && error.message === 'Unauthorized') {
