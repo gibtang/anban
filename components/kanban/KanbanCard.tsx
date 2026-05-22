@@ -8,9 +8,10 @@ interface KanbanCardProps {
   card: Card;
   isDragging?: boolean;
   onEdit?: () => void;
+  agentName?: string | null;
 }
 
-export default function KanbanCard({ card, isDragging, onEdit }: KanbanCardProps) {
+export default function KanbanCard({ card, isDragging, onEdit, agentName }: KanbanCardProps) {
   const {
     attributes,
     listeners,
@@ -73,9 +74,13 @@ export default function KanbanCard({ card, isDragging, onEdit }: KanbanCardProps
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-1.5 flex-wrap">
           {/* Agent badge */}
-          {card.agentId && (
+          {agentName ? (
             <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-100 text-emerald-800">
-              {card.agentId.slice(0, 8)}
+              {agentName}
+            </span>
+          ) : (
+            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-500">
+              Unassigned
             </span>
           )}
 

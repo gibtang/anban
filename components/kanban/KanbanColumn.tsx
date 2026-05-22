@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useDroppable } from '@dnd-kit/core';
 import {
   SortableContext,
@@ -19,6 +20,8 @@ interface KanbanColumnProps {
   cards: Card[];
   activeCardId: string | null;
   boardId: string;
+  agentNames: Record<string, string>;
+  defaultCollapsed?: boolean;
   onEditCard?: (card: Card) => void;
   onAddCard?: (columnId: string) => void;
 }
@@ -28,9 +31,18 @@ export default function KanbanColumn({
   cards,
   activeCardId,
   boardId,
+  agentNames,
+  defaultCollapsed = false,
   onEditCard,
   onAddCard,
 }: KanbanColumnProps) {
+  const [collapsed, setCollapsed] = useState(defaultCollapsed);
+
+  // Sync if defaultCollapsed changes (e.g., on initial load)
+  useEffect(() => {
+    setCollapsed(defaultCollapsed);
+  }, [defaultCollapsed]);
+
   const { setNodeRef, isOver } = useDroppable({
     id: column.id,
     data: {
@@ -40,6 +52,36 @@ export default function KanbanColumn({
   });
 
   const cardIds = cards.map((card) => card.id);
+
+  if (collapsed) {
+    return (
+      <div
+        className="flex flex-col min-w-[60px] bg-gray-100 rounded-xl px-3 py-3 cursor-pointer hover:bg-gray-200 transition-colors"
+        onClick={() => setCollapsed(false)}
+      >
+        <div className="flex flex-col items-center gap-2">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setCollapsed(false);
+            }}
+            className="text-gray-400 hover:text-gray-700 transition-colors"
+            title="Expand column"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+          <h3 className="text-sm font-semibold text-gray-700 text-center">
+            {column.name}
+          </h3>
+          <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-indigo-100 text-xs font-medium text-indigo-700">
+            {cards.length}
+          </span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -52,6 +94,17 @@ export default function KanbanColumn({
       {/* Column header */}
       <div className="flex items-center justify-between px-3 py-3">
         <div className="flex items-center gap-2">
+          {defaultCollapsed && (
+            <button
+              onClick={() => setCollapsed(true)}
+              className="text-gray-400 hover:text-gray-700 transition-colors"
+              title="Collapse column"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+          )}
           <h3 className="text-sm font-semibold text-gray-700">
             {column.name}
           </h3>
@@ -85,6 +138,7 @@ export default function KanbanColumn({
               card={card}
               isDragging={activeCardId === card.id}
               onEdit={() => onEditCard?.(card)}
+              agentName={card.agentId ? (agentNames[card.agentId] || null) : null}
             />
           ))}
         </SortableContext>

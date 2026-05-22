@@ -82,6 +82,14 @@ export default function KanbanBoard({ boardId }: KanbanBoardProps) {
     [accessList]
   );
 
+  const agentNames: Record<string, string> = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const agent of agents) {
+      map[agent.id] = agent.name;
+    }
+    return map;
+  }, [agents]);
+
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
   const [optimisticBoard, setOptimisticBoard] = useState<BoardData | null>(null);
   const [modalState, setModalState] = useState<
@@ -444,6 +452,8 @@ export default function KanbanBoard({ boardId }: KanbanBoardProps) {
                 cards={columnCardsMap.get(column.id) ?? column.cards}
                 activeCardId={activeCardId}
                 boardId={boardId}
+                agentNames={agentNames}
+                defaultCollapsed={column.name === 'Done'}
                 onEditCard={handleEditCard}
                 onAddCard={handleAddCard}
               />
@@ -457,7 +467,11 @@ export default function KanbanBoard({ boardId }: KanbanBoardProps) {
         }}>
           {activeCard ? (
             <div className="opacity-90 rotate-2">
-              <KanbanCard card={activeCard} isDragging />
+              <KanbanCard
+                card={activeCard}
+                isDragging
+                agentName={activeCard.agentId ? (agentNames[activeCard.agentId] || null) : null}
+              />
             </div>
           ) : null}
         </DragOverlay>

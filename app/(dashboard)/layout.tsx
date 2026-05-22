@@ -52,8 +52,15 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       >
         {/* Logo */}
         <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200">
-          <Link href="/boards" className="text-xl font-bold text-gray-900">
-            Anban
+          <Link href="/boards" className="flex items-center gap-2">
+            <img
+              src="/logo.svg"
+              alt="Anban logo"
+              className="h-8 w-auto"
+            />
+            <span className="text-xl font-bold text-gray-900">
+              Anban
+            </span>
           </Link>
           <button
             onClick={() => setSidebarOpen(false)}

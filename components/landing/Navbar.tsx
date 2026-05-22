@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 
 interface NavbarProps {
   cloudHref: string;
@@ -37,13 +36,10 @@ export function Navbar({ cloudHref }: NavbarProps) {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2">
-            <Image
-              src="/logo.png"
+            <img
+              src="/logo.svg"
               alt="Anban logo"
-              width={32}
-              height={17}
               className="h-8 w-auto"
-              priority
             />
             <span className="text-xl font-bold text-gray-900">Anban</span>
           </Link>
