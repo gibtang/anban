@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import type { Card, CreateCardRequest, UpdateCardRequest } from '@/types/card';
 import { Spinner } from '@/components/ui/Spinner';
 import { ActivityLog } from './ActivityLog';
+import { CommentSection } from './CommentSection';
 
 interface AgentOption {
   id: string;
@@ -347,6 +348,11 @@ export function CardModal({
                         ))}
                       </select>
                     </div>
+
+                    {/* Comments — only in edit mode */}
+                    {isEditMode && card && (
+                      <CommentSection cardId={card.id} />
+                    )}
 
                     {/* Activity Log — only in edit mode */}
                     {isEditMode && card && (

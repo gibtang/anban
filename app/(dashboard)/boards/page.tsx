@@ -29,6 +29,9 @@ export default function BoardsPage() {
   const [isCreating, setIsCreating] = useState(false);
   const [createError, setCreateError] = useState('');
   const [isRetrying, setIsRetrying] = useState(false);
+  const [deleteBoardId, setDeleteBoardId] = useState<string | null>(null);
+  const [deleteBoardName, setDeleteBoardName] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const { data: boards, error, isLoading, mutate: mutateBoards } = useSWR<Board[]>('/api/boards', fetcher, {
     onError: (error) => {
@@ -78,6 +81,29 @@ export default function BoardsPage() {
       toast.showToast('Failed to reload boards. Please try again.', 'error');
     } finally {
       setIsRetrying(false);
+    }
+  };
+
+  const handleDeleteBoard = async () => {
+    if (!deleteBoardId) return;
+    setIsDeleting(true);
+    try {
+      const res = await fetchWithRetry(`/api/boards/${deleteBoardId}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to delete board');
+      }
+      await mutateBoards();
+      toast.showToast(`"${deleteBoardName}" deleted`, 'success');
+      setDeleteBoardId(null);
+      setDeleteBoardName('');
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to delete board';
+      toast.showToast(errorMessage, 'error');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -159,30 +185,48 @@ export default function BoardsPage() {
       ) : (
         <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {boards.map((board) => (
-            <Link
+            <div
               key={board.id}
-              href={`/boards/${board.id}`}
-              className="group block p-5 bg-white rounded-lg border border-gray-200 hover:border-indigo-300 hover:shadow-md transition-all"
+              className="group relative p-5 bg-white rounded-lg border border-gray-200 hover:border-indigo-300 hover:shadow-md transition-all"
             >
-              {/* Board name */}
-              <h3 className="text-base font-semibold text-gray-900 truncate group-hover:text-indigo-600 transition-colors">
-                {board.name}
-              </h3>
+              {/* Delete button */}
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setDeleteBoardId(board.id);
+                  setDeleteBoardName(board.name);
+                }}
+                className="absolute top-3 right-3 p-1.5 rounded-md text-gray-400 hover:text-red-500 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-all"
+                title="Delete board"
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
 
-              {/* Card count */}
-              {(board._count?.cards ?? 0) > 0 ? (
-                <p className="mt-2 text-sm text-gray-500">
-                  {board._count?.cards} {board._count?.cards === 1 ? 'card' : 'cards'}
+              {/* Clickable card content */}
+              <Link href={`/boards/${board.id}`} className="block">
+                {/* Board name */}
+                <h3 className="text-base font-semibold text-gray-900 truncate group-hover:text-indigo-600 transition-colors pr-8">
+                  {board.name}
+                </h3>
+
+                {/* Card count */}
+                {(board._count?.cards ?? 0) > 0 ? (
+                  <p className="mt-2 text-sm text-gray-500">
+                    {board._count?.cards} {board._count?.cards === 1 ? 'card' : 'cards'}
+                  </p>
+                ) : (
+                  <p className="mt-2 text-sm text-gray-400 italic">No cards yet</p>
+                )}
+
+                {/* Timestamp */}
+                <p className="mt-3 text-xs text-gray-400">
+                  Updated {formatDate(board.updatedAt)}
                 </p>
-              ) : (
-                <p className="mt-2 text-sm text-gray-400 italic">No cards yet</p>
-              )}
-
-              {/* Timestamp */}
-              <p className="mt-3 text-xs text-gray-400">
-                Updated {formatDate(board.updatedAt)}
-              </p>
-            </Link>
+              </Link>
+            </div>
           ))}
         </div>
       )}
@@ -252,6 +296,62 @@ export default function BoardsPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Board Confirmation Modal */}
+      {deleteBoardId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-gray-900/50 transition-opacity"
+            onClick={() => {
+              setDeleteBoardId(null);
+              setDeleteBoardName('');
+            }}
+          />
+          <div className="relative bg-white rounded-xl shadow-xl w-full max-w-sm p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
+                <svg className="h-5 w-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">Delete Board</h2>
+                <p className="mt-1 text-sm text-gray-500">
+                  Are you sure you want to delete <span className="font-medium text-gray-700">"{deleteBoardName}"</span>? All cards and columns will be permanently removed.
+                </p>
+              </div>
+            </div>
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setDeleteBoardId(null);
+                  setDeleteBoardName('');
+                }}
+                disabled={isDeleting}
+                className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteBoard}
+                disabled={isDeleting}
+                className="px-4 py-2 text-sm font-medium rounded-lg text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {isDeleting ? (
+                  <>
+                    <Spinner size="xs" className="mr-1.5" />
+                    Deleting...
+                  </>
+                ) : (
+                  'Delete Board'
+                )}
+              </button>
+            </div>
           </div>
         </div>
       )}

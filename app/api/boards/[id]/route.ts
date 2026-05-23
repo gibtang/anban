@@ -134,6 +134,10 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
       prisma.openClawConnection.deleteMany({
         where: { boardId: id },
       }),
+      // Delete board access records
+      prisma.boardAccess.deleteMany({
+        where: { boardId: id },
+      }),
     ]);
 
     // Delete board
