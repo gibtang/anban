@@ -149,11 +149,8 @@ export function CardModal({
     if (card.agentId && agentTokensMap?.[card.agentId]) {
       // Assigned card — use agent token
       url = `${appUrl}/card/${card.id}?token=${agentTokensMap[card.agentId]}`;
-    } else if (agentTokensMap && Object.values(agentTokensMap).length > 0) {
-      // Unassigned card — use fallback token from board
-      url = `${appUrl}/card/${card.id}?token=${Object.values(agentTokensMap)[0]}`;
     } else {
-      // No tokens at all — public link (works for unassigned cards)
+      // Unassigned card — public link, no token needed
       url = `${appUrl}/card/${card.id}`;
     }
     navigator.clipboard.writeText(url).then(() => {
