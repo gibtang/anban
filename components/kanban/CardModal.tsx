@@ -189,13 +189,24 @@ export function CardModal({
                       {isEditMode ? 'Edit Card' : 'Create Card'}
                     </h3>
                     <div className="flex items-center gap-1">
-                      {/* Copy card URL button — only in edit mode when agent is assigned */}
-                      {isEditMode && card?.agentId && agentTokensMap?.[card.agentId] && (
+                      {/* Copy card URL button — always visible in edit mode */}
+                      {isEditMode && (
                         <button
                           type="button"
-                          onClick={handleCopyLink}
-                          className="p-1.5 rounded-md text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
-                          title={copiedLink ? 'Copied!' : 'Copy card URL'}
+                          onClick={card?.agentId && agentTokensMap?.[card.agentId] ? handleCopyLink : undefined}
+                          className={`p-1.5 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors ${
+                            card?.agentId && agentTokensMap?.[card.agentId]
+                              ? 'text-gray-400 hover:text-indigo-600 hover:bg-indigo-50'
+                              : 'text-gray-300 cursor-not-allowed'
+                          }`}
+                          title={
+                            copiedLink
+                              ? 'Copied!'
+                              : card?.agentId && agentTokensMap?.[card.agentId]
+                                ? 'Copy card URL'
+                                : 'Assign an agent first to copy card URL'
+                          }
+                          disabled={!card?.agentId || !agentTokensMap?.[card.agentId]}
                         >
                           {copiedLink ? (
                             <svg className="h-5 w-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
