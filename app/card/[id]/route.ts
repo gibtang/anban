@@ -18,29 +18,25 @@ export async function GET(request: NextRequest, context: RouteContext) {
     const { searchParams } = new URL(request.url);
     const token = searchParams.get('token');
 
-    let boardId: string | undefined;
-    let assignee: string | undefined;
-
-    if (token) {
-      // Token-based access: look up BoardAccess
-      const accessRequest = await prisma.boardAccess.findFirst({
-        where: {
-          agentToken: token,
-          status: 'approved',
-        },
-      });
-
-      if (!accessRequest) {
-        return NextResponse.json({ error: 'Invalid or revoked token' }, { status: 403 });
-      }
-
-      boardId = accessRequest.boardId;
-      assignee = accessRequest.agentName;
+    if (!token) {
+      return NextResponse.json({ error: 'Token required' }, { status: 401 });
     }
 
-    // Fetch card — scoped to board if token provided, global if not (public share)
+    // Validate agent has board access
+    const accessRequest = await prisma.boardAccess.findFirst({
+      where: {
+        agentToken: token,
+        status: 'approved',
+      },
+    });
+
+    if (!accessRequest) {
+      return NextResponse.json({ error: 'Invalid or revoked token' }, { status: 403 });
+    }
+
+    // Fetch card scoped to the agent's board — any card on the board is accessible
     const card = await prisma.card.findFirst({
-      where: boardId ? { id: cardId, boardId } : { id: cardId },
+      where: { id: cardId, boardId: accessRequest.boardId },
     });
 
     if (!card) {
@@ -63,13 +59,23 @@ export async function GET(request: NextRequest, context: RouteContext) {
       orderBy: { createdAt: 'asc' },
     });
 
+    // Get assignee name if card is assigned
+    let assigneeName: string | null = null;
+    if (card.assigneeId) {
+      const assigneeAccess = await prisma.boardAccess.findFirst({
+        where: { id: card.assigneeId },
+        select: { agentName: true },
+      });
+      assigneeName = assigneeAccess?.agentName || null;
+    }
+
     const cardDetails = {
       id: card.id,
       title: card.title,
       description: card.description,
       column: column?.name || 'Unknown',
       tags: card.tags,
-      assignee: assignee || null,
+      assignee: assigneeName,
       boardName: board?.name || 'Unknown',
       comments: comments.map((c: { authorName: string; content: string; createdAt: Date }) => ({
         author: c.authorName,

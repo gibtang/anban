@@ -7,6 +7,7 @@ const publicRoutes = [
   '/signup',
   '/join',
   '/approve',
+  '/card',
   '/api/firebase-config',
   '/api/auth',
   '/api/board-access/board',
