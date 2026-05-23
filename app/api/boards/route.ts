@@ -40,28 +40,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Name is required' }, { status: 400 });
     }
 
-    // Create board
+    // Create board + default columns in a single DB call
     const board = await prisma.board.create({
       data: {
         name: name.trim(),
         ownerId: userId,
+        columns: {
+          create: [
+            { name: 'To Do', position: 0 },
+            { name: 'In Progress', position: 1 },
+            { name: 'Done', position: 2 },
+          ],
+        },
       },
+      include: { columns: true },
     });
 
-    // Create default columns manually
-    const columns = await Promise.all([
-      prisma.column.create({
-        data: { name: 'To Do', position: 0, boardId: board.id },
-      }),
-      prisma.column.create({
-        data: { name: 'In Progress', position: 1, boardId: board.id },
-      }),
-      prisma.column.create({
-        data: { name: 'Done', position: 2, boardId: board.id },
-      }),
-    ]);
-
-    return NextResponse.json({ ...board, columns }, { status: 201 });
+    return NextResponse.json(board, { status: 201 });
   } catch (error) {
     console.error('Error creating board:', error);
     if (error instanceof Error && error.message === 'Unauthorized') {

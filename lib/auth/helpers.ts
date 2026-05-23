@@ -50,24 +50,19 @@ export async function verifyAuth(request: NextRequest): Promise<string> {
     });
 
     if (existingBoards === 0) {
-      const board = await prisma.board.create({
+      await prisma.board.create({
         data: {
           name: 'My Board',
           ownerId: user.id,
+          columns: {
+            create: [
+              { name: 'To Do', position: 0 },
+              { name: 'In Progress', position: 1 },
+              { name: 'Done', position: 2 },
+            ],
+          },
         },
       });
-
-      await Promise.all([
-        prisma.column.create({
-          data: { name: 'To Do', position: 0, boardId: board.id },
-        }),
-        prisma.column.create({
-          data: { name: 'In Progress', position: 1, boardId: board.id },
-        }),
-        prisma.column.create({
-          data: { name: 'Done', position: 2, boardId: board.id },
-        }),
-      ]);
     }
   }
 
