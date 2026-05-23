@@ -1,0 +1,7 @@
+{
+  "database": "dolt",
+  "backend": "dolt",
+  "dolt_mode": "embedded",
+  "dolt_database": "anban",
+  "project_id": "525c6b68-fd28-4412-bd30-368d713f3598"
+}
