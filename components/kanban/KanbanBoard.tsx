@@ -483,7 +483,7 @@ export default function KanbanBoard({ boardId }: KanbanBoardProps) {
                 card={activeCard}
                 isDragging
                 agentName={activeCard.agentId ? (agentNames[activeCard.agentId] || null) : null}
-                agentToken={activeCard.agentId ? (agentTokensMap[activeCard.agentId] || null) : null}
+                agentToken={activeCard.agentId ? (agentTokensMap[activeCard.agentId] || null) : (Object.values(agentTokensMap)[0] || null)}
               />
             </div>
           ) : null}

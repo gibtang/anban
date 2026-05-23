@@ -143,11 +143,19 @@ export function CardModal({
   };
 
   const handleCopyLink = () => {
-    if (!card?.agentId || !agentTokensMap) return;
-    const token = agentTokensMap[card.agentId];
-    if (!token) return;
+    if (!card) return;
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-    const url = `${appUrl}/card/${card.id}?token=${token}`;
+    let url: string;
+    if (card.agentId && agentTokensMap?.[card.agentId]) {
+      // Assigned card — use agent token
+      url = `${appUrl}/card/${card.id}?token=${agentTokensMap[card.agentId]}`;
+    } else if (agentTokensMap && Object.values(agentTokensMap).length > 0) {
+      // Unassigned card — use fallback token from board
+      url = `${appUrl}/card/${card.id}?token=${Object.values(agentTokensMap)[0]}`;
+    } else {
+      // No tokens at all — public link (works for unassigned cards)
+      url = `${appUrl}/card/${card.id}`;
+    }
     navigator.clipboard.writeText(url).then(() => {
       setCopiedLink(true);
       setTimeout(() => setCopiedLink(false), 2000);
@@ -193,20 +201,9 @@ export function CardModal({
                       {isEditMode && (
                         <button
                           type="button"
-                          onClick={card?.agentId && agentTokensMap?.[card.agentId] ? handleCopyLink : undefined}
-                          className={`p-1.5 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors ${
-                            card?.agentId && agentTokensMap?.[card.agentId]
-                              ? 'text-gray-400 hover:text-indigo-600 hover:bg-indigo-50'
-                              : 'text-gray-300 cursor-not-allowed'
-                          }`}
-                          title={
-                            copiedLink
-                              ? 'Copied!'
-                              : card?.agentId && agentTokensMap?.[card.agentId]
-                                ? 'Copy card URL'
-                                : 'Assign an agent first to copy card URL'
-                          }
-                          disabled={!card?.agentId || !agentTokensMap?.[card.agentId]}
+                          onClick={handleCopyLink}
+                          className="p-1.5 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors text-gray-400 hover:text-indigo-600 hover:bg-indigo-50"
+                          title={copiedLink ? 'Copied!' : 'Copy card URL'}
                         >
                           {copiedLink ? (
                             <svg className="h-5 w-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">

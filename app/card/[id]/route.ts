@@ -18,25 +18,29 @@ export async function GET(request: NextRequest, context: RouteContext) {
     const { searchParams } = new URL(request.url);
     const token = searchParams.get('token');
 
-    if (!token) {
-      return NextResponse.json({ error: 'Missing token parameter' }, { status: 401 });
+    let boardId: string | undefined;
+    let assignee: string | undefined;
+
+    if (token) {
+      // Token-based access: look up BoardAccess
+      const accessRequest = await prisma.boardAccess.findFirst({
+        where: {
+          agentToken: token,
+          status: 'approved',
+        },
+      });
+
+      if (!accessRequest) {
+        return NextResponse.json({ error: 'Invalid or revoked token' }, { status: 403 });
+      }
+
+      boardId = accessRequest.boardId;
+      assignee = accessRequest.agentName;
     }
 
-    // Look up BoardAccess by agentToken
-    const accessRequest = await prisma.boardAccess.findFirst({
-      where: {
-        agentToken: token,
-        status: 'approved',
-      },
-    });
-
-    if (!accessRequest) {
-      return NextResponse.json({ error: 'Invalid or revoked token' }, { status: 403 });
-    }
-
-    // Fetch card with column info
+    // Fetch card — scoped to board if token provided, global if not (public share)
     const card = await prisma.card.findFirst({
-      where: { id: cardId, boardId: accessRequest.boardId },
+      where: boardId ? { id: cardId, boardId } : { id: cardId },
     });
 
     if (!card) {
@@ -65,7 +69,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
       description: card.description,
       column: column?.name || 'Unknown',
       tags: card.tags,
-      assignee: accessRequest.agentName,
+      assignee: assignee || null,
       boardName: board?.name || 'Unknown',
       comments: comments.map((c: { authorName: string; content: string; createdAt: Date }) => ({
         author: c.authorName,
@@ -119,7 +123,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
       <h1>${escapeHtml(cardDetails.title)}</h1>
       <div class="meta">
         <span class="badge badge-column">${escapeHtml(cardDetails.column)}</span>
-        <span class="badge badge-agent">${escapeHtml(cardDetails.assignee)}</span>
+        <span class="badge badge-agent">${escapeHtml(cardDetails.assignee || '')}</span>
         ${cardDetails.tags.map((t: string) => `<span class="badge badge-tag">${escapeHtml(t)}</span>`).join('')}
       </div>
       <div class="board-name" style="margin-top:0.5rem">Board: ${escapeHtml(cardDetails.boardName)}</div>

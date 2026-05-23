@@ -143,7 +143,7 @@ export default function KanbanColumn({
               isDragging={activeCardId === card.id}
               onEdit={() => onEditCard?.(card)}
               agentName={card.agentId ? (agentNames[card.agentId] || null) : null}
-              agentToken={card.agentId ? (agentTokensMap[card.agentId] || null) : null}
+              agentToken={card.agentId ? (agentTokensMap[card.agentId] || null) : (Object.values(agentTokensMap)[0] || null)}
             />
           ))}
         </SortableContext>
