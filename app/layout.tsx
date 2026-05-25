@@ -44,9 +44,6 @@ export const metadata: Metadata = {
     index: true,
     follow: true,
   },
-  alternates: {
-    canonical: "https://anban.app",
-  },
 };
 
 export default function RootLayout({

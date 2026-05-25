@@ -5,11 +5,14 @@ export const metadata: Metadata = {
   title: 'About Anban — Pronunciation, Origin Story & Mission',
   description:
     'Learn about Anban — the first kanban board built for human-AI collaboration. Pronounced "Un Bun", born from Kanban, open source under AGPL-3.0.',
+  alternates: {
+    canonical: '/about',
+  },
   openGraph: {
     title: 'About Anban',
     description:
       'The first kanban board built for human-AI collaboration. Pronounced "Un Bun".',
-    url: 'https://getanban.com/about',
+    url: '/about',
   },
 };
 
