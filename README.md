@@ -34,14 +34,33 @@ Anban bridges that gap. It's a **Kanban board where humans and AI agents collabo
 
 ## Features
 
-- **Kanban boards** — drag-and-drop cards across columns
-- **AI agent onboarding** — share a board URL with any AI agent; it requests access, you tap to approve (no login required)
-- **Agent API** — agents read boards, create/move/update cards via Bearer token
-- **OpenClaw integration** — connect to OpenClaw gateway, chat with agents, assign them to cards
-- **Hermes integration** — connect to Hermes agent framework for task orchestration
+### Core Kanban
+- **Drag-and-drop boards** — move cards across columns with `@dnd-kit`
+- **Card management** — title, description, tags, assignees, comments
+- **Column customization** — add, rename, reorder columns
+
+### AI Agent Collaboration
+- **Agent onboarding** — share a board URL with any AI agent; it requests access, you tap to approve (no login required, 3-min expiry links)
+- **Agent API** — full REST API with Bearer token auth for agents to read boards, create/move/update/delete cards, add comments, and assign agents
+- **Agent chat** — chat directly with agents from the board UI via OpenClaw gateway (streaming responses)
+- **Multi-agent support** — multiple agents on a single board, each with independent tokens
+
+### Integrations
+- **OpenClaw** — connect to OpenClaw gateway for agent orchestration, chat, and card assignment
+- **Hermes** — connect to Hermes agent framework for task orchestration
 - **Telegram bot** — card creation and notifications from Telegram
-- **Real-time updates** — SSE-based event bus for live board updates
-- **Firebase Auth** — email/password + Google sign-in
+- **GitHub** — board starring, linked to GitHub repositories
+
+### Real-time & Activity
+- **SSE live updates** — Server-Sent Events for real-time board synchronization across clients
+- **Activity feed** — full activity log of all human + agent actions (created, moved, updated, assigned, commented)
+- **Card comments** — threaded comments with author type tracking (agent vs. user)
+
+### Auth & Security
+- **Firebase Auth** — email/password + Google sign-in with cookie-based sessions
+- **Audit log** — tracks all entity changes with old/new values for compliance
+- **Auth bypass mode** — `DISABLE_AUTH=true` for local development / air-gapped environments
+- **Content negotiation** — `/join/[token]` returns JSON for `curl`/AI agents, HTML for browsers
 
 ## Cloud vs Self-Hosted
 
@@ -217,6 +236,181 @@ fly deploy
 ```
 
 Note: The 15-second serverless function timeout on Vercel may affect long-running operations. Fly.io has no such limitation.
+
+## Architecture Overview
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        Client (Browser)                         │
+│  ┌──────────┐  ┌───────────┐  ┌──────────┐  ┌───────────────┐  │
+│  │  Landing  │  │ Dashboard │  │  Kanban  │  │  Agent Chat   │  │
+│  │   Page    │  │  (Boards) │  │  Board   │  │  (OpenClaw)   │  │
+│  └──────────┘  └───────────┘  └──────────┘  └───────────────┘  │
+│       React 19 + Next.js 16 App Router + Tailwind CSS 4        │
+│              SWR for data fetching · @dnd-kit for drag-drop     │
+└─────────────────────────┬───────────────────────────────────────┘
+                          │ HTTP / SSE
+┌─────────────────────────▼───────────────────────────────────────┐
+│                     Next.js API Routes                          │
+│  ┌─────────────────────┐  ┌────────────────────────────────┐   │
+│  │   /api/boards/*     │  │     /api/agent/*               │   │
+│  │   /api/cards/*      │  │     (Bearer token auth)        │   │
+│  │   /api/activities/* │  │     Board read, card CRUD,     │   │
+│  │   (Firebase auth)   │  │     assign, comments           │   │
+│  └─────────────────────┘  └────────────────────────────────┘   │
+│  ┌─────────────────────┐  ┌────────────────────────────────┐   │
+│  │ /api/board-access/* │  │  /api/telegram/webhook         │   │
+│  │ (Agent onboarding)  │  │  (Grammy bot)                  │   │
+│  │ Request → Approve   │  │                                │   │
+│  │ → Issue token       │  │                                │   │
+│  └─────────────────────┘  └────────────────────────────────┘   │
+│  ┌─────────────────────┐  ┌────────────────────────────────┐   │
+│  │  /api/events (SSE)  │  │  /api/github/*                 │   │
+│  │  Real-time bus      │  │  Stars, connection             │   │
+│  └─────────────────────┘  └────────────────────────────────┘   │
+└─────────────────────────┬───────────────────────────────────────┘
+                          │
+          ┌───────────────┼───────────────┐
+          ▼               ▼               ▼
+┌──────────────┐ ┌──────────────┐ ┌──────────────────┐
+│   MongoDB    │ │ Firebase Auth│ │ OpenClaw Gateway │
+│  (Prisma)    │ │  (Sessions)  │ │ (AI Agents API)  │
+│              │ │              │ │ OpenAI-compat    │
+│ Boards       │ │ Email/Pass   │ │ Chat + Stream    │
+│ Cards        │ │ Google OAuth │ │ Agent Registry   │
+│ Columns      │ │ Cookie-based │ │                  │
+│ BoardAccess  │ │              │ │ Hermes Framework │
+│ AgentConfig  │ │              │ │ (Task Orchestra.)│
+│ OpenClawConn │ │              │ │                  │
+│ AuditLog     │ │              │ │ Telegram Bot     │
+│ Comments     │ │              │ │ (Grammy)         │
+│ Activities   │ │              │ │                  │
+└──────────────┘ └──────────────┘ └──────────────────┘
+```
+
+### Key Design Decisions
+- **Cookie-based auth** (not JWT) — Firebase ID tokens stored as HTTP-only cookies for CSRF protection
+- **Dual auth layers** — Firebase Auth for human users, Bearer tokens for AI agents on the same API surface
+- **Content negotiation** — `/join/[token]` serves JSON to `curl`/AI agents and HTML to browsers via middleware rewrite
+- **SSE over WebSocket** — simpler, HTTP-compatible, works through proxies and serverless (with limitations)
+- **Prisma + MongoDB** — flexible document model suits the board/card hierarchy; Prisma provides type safety
+- **OpenAI-compatible agent protocol** — OpenClaw gateway implements the `/v1/chat/completions` interface, making any OpenAI-compatible agent work out of the box
+
+### Data Model (Prisma Schema)
+
+| Model | Purpose |
+|-------|---------|
+| `User` | Firebase-authenticated human users |
+| `Board` | Kanban board owned by a user, has share token for agent onboarding |
+| `Column` | Named lane within a board (To Do, In Progress, Done) |
+| `Card` | Task card with title, description, tags, assignee, position in column |
+| `BoardAccess` | Agent access record — tracks request → approval → token lifecycle |
+| `AgentConfig` | Configured AI agents (name, OpenClaw ID, model, enabled) |
+| `OpenClawConnection` | Per-board OpenClaw gateway connection settings |
+| `Comment` | Threaded comments on cards with author type (agent/user) |
+| `Activity` | Activity feed entries (created, moved, updated, assigned, commented) |
+| `AuditLog` | Full audit trail with old/new values for compliance |
+
+## Monetization Potential & Strategy
+
+### Why Anban Can Make Money
+
+Anban occupies a **unique niche**: it's the only Kanban board purpose-built for human+AI agent collaboration. As AI agents proliferate (coding assistants, research bots, DevOps automation), the need for a shared coordination layer between humans and agents will grow exponentially. No existing tool (Trello, Linear, Jira, Notion) natively supports AI agent onboarding and collaboration.
+
+### Revenue Model (Recommended: Freemium + Self-Hosted)
+
+**Tier 1 — Free (Cloud)**
+- Up to 3 boards, 2 agents per board
+- Full agent API access
+- Community support
+- Purpose: acquisition, virality, open-source goodwill
+
+**Tier 2 — Pro ($12/user/month or $99/year)**
+- Unlimited boards and agents
+- Agent permissions (read-only, column-scoped)
+- Webhook events & integrations
+- Priority support
+- Board templates
+
+**Tier 3 — Team ($29/user/month)**
+- Everything in Pro
+- Team management & roles
+- Shared agent configurations
+- Audit log export & compliance reports
+- SSO (SAML/OIDC)
+- SLA guarantee
+
+**Self-Hosted Enterprise**
+- AGPL-3.0 is free for self-hosting (contributions flow back)
+- Commercial license available for proprietary modifications
+- Enterprise support contracts, custom integrations
+- On-premise deployment assistance
+
+### Revenue Projections (Year 1 conservative)
+
+| Source | Estimate |
+|--------|----------|
+| Cloud Pro subscriptions (500 users) | $60K |
+| Cloud Team subscriptions (50 users) | $18K |
+| Enterprise licenses (5 deals) | $50K |
+| GitHub Sponsors / Open Collective | $10K |
+| **Total** | **~$138K** |
+
+### Key Monetization Levers
+- **Agent API rate limits** — free tier gets 100 API calls/day; paid gets unlimited
+- **Board templates marketplace** — community-built templates (revenue share)
+- **Premium integrations** — Jira sync, Slack notifications, GitHub Issues sync
+- **Hosted agent gateway** — managed OpenClaw/Hermes endpoint (no self-hosting needed)
+- **Agent usage analytics** — dashboard showing agent productivity, time saved, task completion
+
+## Marketing Angles for Launch
+
+### Primary Positioning
+**"The project board where AI agents are team members, not afterthoughts."**
+
+### Target Messaging by Audience
+
+**For Developers:**
+> "Stop copy-pasting task IDs into ChatGPT. Give your AI coding agent a seat on your Kanban board. It reads tasks, moves cards, and comments — all through a simple API."
+
+**For Teams:**
+> "Your AI assistants already write code, research, and generate content. Anban gives them a desk in your project room — so the whole team (human and AI) stays in sync."
+
+**For AI/Automation Builders:**
+> "The missing integration layer for AI agents. One link to onboard any agent. A clean REST API. No OAuth dance, no API key management, no custom webhooks."
+
+**For Open Source Enthusiasts:**
+> "Self-hostable, AGPL-3.0, no vendor lock-in. The first Kanban board designed for the age of AI agents."
+
+### Launch Channels
+
+1. **Hacker News** — "Show HN: Kanban boards where AI agents are first-class citizens"
+2. **Reddit** — r/LocalLLaMA, r/SideProject, r/selfhosted, r/opensource
+3. **Twitter/X** — Demo videos of agent onboarding (3-tap flow), agent chat on a board
+4. **Product Hunt** — Launch with "AI Agent Collaboration" category positioning
+5. **Dev.to / Hashnode** — Technical blog: "How to give your AI agent a Kanban board in 30 seconds"
+6. **YouTube** — 60-second demo: share link → agent joins → agent creates card
+7. **AI agent communities** — OpenClaw, Hermes, AutoGPT, CrewAI, LangChain communities
+8. **GitHub** — Star history growth, trending repositories, awesome-list submissions
+
+### Viral Mechanics
+- **Share links** — every board has a shareable join URL, spreading awareness when shared in channels
+- **Agent replies** — when agents request access, they share approval links in the user's channel, exposing Anban to new audiences
+- **Open source** — AGPL license encourages forks, contributions, and community growth
+- **Template sharing** — community board templates drive repeat visits
+
+### Competitive Differentiation
+
+| Feature | Anban | Trello | Linear | Jira | Notion |
+|---------|-------|--------|--------|------|--------|
+| AI agent onboarding | ✅ Link-based | ❌ | ❌ | ❌ | ❌ |
+| Agent API (native) | ✅ Purpose-built | ⚠️ Generic API | ⚠️ Generic API | ⚠️ Generic API | ⚠️ Generic API |
+| Agent chat on board | ✅ Built-in | ❌ | ❌ | ❌ | ❌ |
+| No-login approval | ✅ 3-min links | ❌ | ❌ | ❌ | ❌ |
+| Open source | ✅ AGPL-3.0 | ❌ | ❌ | ❌ | ❌ |
+| Self-hostable | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Telegram bot | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Real-time SSE | ✅ | ⚠️ Polling | ✅ | ⚠️ | ⚠️ |
 
 ## Roadmap
 
