@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import useSWR, { mutate } from 'swr';
 import { useEventSource } from '@/lib/hooks/useEventSource';
@@ -14,6 +14,12 @@ import { fetchWithRetry } from '@/lib/utils/retry';
 interface BoardData {
   id: string;
   name: string;
+  columns: Array<{
+    id: string;
+    name: string;
+    position: number;
+    cards: Array<{ id: string }>;
+  }>;
 }
 
 const boardFetcher = async (url: string) => {
@@ -31,6 +37,24 @@ export default function BoardDetailPage() {
 
   // Fetch board name (full board data is fetched separately in KanbanBoard)
   const { data: board } = useSWR<BoardData>(`/api/boards/${boardId}`, boardFetcher);
+
+  // Compute ticket counts: last column (highest position) = Done, rest = Open
+  const counts = useMemo(() => {
+    if (!board?.columns?.length) return { open: 0, closed: 0, total: 0 };
+    const sorted = [...board.columns].sort((a, b) => a.position - b.position);
+    const doneColumnId = sorted[sorted.length - 1].id;
+    let open = 0;
+    let closed = 0;
+    for (const col of board.columns) {
+      const count = col.cards.length;
+      if (col.id === doneColumnId) {
+        closed += count;
+      } else {
+        open += count;
+      }
+    }
+    return { open, closed, total: open + closed };
+  }, [board]);
 
   // Inline rename state
   const [isEditing, setIsEditing] = useState(false);
@@ -171,6 +195,23 @@ export default function BoardDetailPage() {
             <p className="text-sm text-gray-500">
               {connected ? 'Live' : 'Disconnected'}
             </p>
+          </div>
+
+          {/* Ticket counts */}
+          <div className="flex items-center gap-2 text-xs text-gray-500 bg-gray-100 rounded-full px-3 py-1">
+            <span className="flex items-center gap-1">
+              <span className="inline-block h-2 w-2 rounded-full bg-blue-500" />
+              <span className="font-medium text-gray-700">{counts.open}</span> Open
+            </span>
+            <span className="text-gray-300">|</span>
+            <span className="flex items-center gap-1">
+              <span className="inline-block h-2 w-2 rounded-full bg-green-500" />
+              <span className="font-medium text-gray-700">{counts.closed}</span> Closed
+            </span>
+            <span className="text-gray-300">|</span>
+            <span>
+              <span className="font-medium text-gray-700">{counts.total}</span> Total
+            </span>
           </div>
         </div>
 
