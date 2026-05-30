@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
-import { verifyAgentAuth } from '@/lib/auth/helpers';
+import { verifyAgentAuth, verifyAgentBoardAccess } from '@/lib/auth/helpers';
 import { eventBus } from '@/lib/events/event-bus';
 import { logActivity } from '@/lib/db/activity';
 
@@ -12,15 +12,22 @@ export const runtime = 'nodejs';
 
 /**
  * Agent endpoint: update a card (move column, update description, etc.)
- * Used by agents to mark tasks as complete by moving to "Done" column
+ * PUT /api/agent/cards/:cardId
+ * Body: { boardId, title?, description?, columnId?, tags? }
  */
 export async function PUT(request: NextRequest, context: RouteContext) {
   try {
-    const { boardId, agentName, accessId } = await verifyAgentAuth(request);
+    const { agentId, agentName } = await verifyAgentAuth(request);
     const { id: cardId } = await context.params;
 
     const body = await request.json();
-    const { title, description, columnId, tags } = body;
+    const { boardId, title, description, columnId, tags } = body;
+
+    if (!boardId) {
+      return NextResponse.json({ error: 'boardId is required' }, { status: 400 });
+    }
+
+    await verifyAgentBoardAccess(agentId, boardId);
 
     // Verify card belongs to this board
     const existingCard = await prisma.card.findFirst({
@@ -74,7 +81,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
         cardId,
         boardId,
         type: 'moved',
-        authorId: accessId,
+        authorId: agentId,
         authorName: agentName,
         authorType: 'agent',
         details: {
@@ -114,7 +121,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
         cardId,
         boardId,
         type: 'updated',
-        authorId: accessId,
+        authorId: agentId,
         authorName: agentName,
         authorType: 'agent',
         details: { fields: fieldsChanged },
@@ -126,6 +133,9 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     console.error('Error in agent card update:', error);
     if (error instanceof Error && error.message.startsWith('Unauthorized')) {
       return NextResponse.json({ error: error.message }, { status: 401 });
+    }
+    if (error instanceof Error && error.message.startsWith('Forbidden')) {
+      return NextResponse.json({ error: error.message }, { status: 403 });
     }
     return NextResponse.json({ error: 'Failed to update card' }, { status: 500 });
   }

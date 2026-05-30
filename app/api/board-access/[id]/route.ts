@@ -24,9 +24,14 @@ export async function GET(request: NextRequest, context: RouteContext) {
       select: {
         id: true,
         status: true,
-        agentToken: true,
-        agentName: true,
+        agentId: true,
         requestedAt: true,
+        agent: {
+          select: {
+            token: true,
+            name: true,
+          },
+        },
       },
     });
 
@@ -40,10 +45,15 @@ export async function GET(request: NextRequest, context: RouteContext) {
         ? 'expired'
         : accessRequest.status;
 
+    // Only return real token for approved requests with a non-placeholder token
+    const agentToken = effectiveStatus === 'approved' && !accessRequest.agent.token.startsWith('__pending__')
+      ? accessRequest.agent.token
+      : null;
+
     return NextResponse.json({
       requestId: accessRequest.id,
       status: effectiveStatus,
-      agentToken: effectiveStatus === 'approved' ? accessRequest.agentToken : null,
+      agentToken,
     });
   } catch (error) {
     console.error('Error fetching access request:', error);
@@ -67,6 +77,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
 
     const accessRequest = await prisma.boardAccess.findUnique({
       where: { id },
+      include: { agent: true },
     });
 
     if (!accessRequest) {
@@ -94,14 +105,20 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ status: 'denied' });
     }
 
-    // Approve: generate agent token
-    const agentToken = crypto.randomBytes(32).toString('hex');
+    // Approve: generate a real agent token if it's still a placeholder
+    let agentToken = accessRequest.agent.token;
+    if (agentToken.startsWith('__pending__')) {
+      agentToken = crypto.randomBytes(32).toString('hex');
+      await prisma.agent.update({
+        where: { id: accessRequest.agentId },
+        data: { token: agentToken },
+      });
+    }
 
     await prisma.boardAccess.update({
       where: { id },
       data: {
         status: 'approved',
-        agentToken,
         approvedAt: new Date(),
       },
     });

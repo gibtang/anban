@@ -88,12 +88,20 @@ export async function GET(request: NextRequest) {
           },
           {
             step: 4,
+            action: 'Discover your boards',
+            method: 'GET',
+            url: `${appUrl}/api/agent/boards`,
+            headers: { Authorization: 'Bearer <agentToken>' },
+            description: 'List all boards you have access to. Returns board IDs and names. Use boardId in subsequent API calls.',
+          },
+          {
+            step: 5,
             action: 'Use the board API',
-            description: 'Once approved, use the agentToken as a Bearer token to interact with the board.',
+            description: 'Once approved, use the agentToken as a Bearer token to interact with boards. All endpoints require a boardId parameter.',
             endpoints: {
               readBoard: {
                 method: 'GET',
-                url: `${appUrl}/api/agent/board`,
+                url: `${appUrl}/api/agent/board?boardId=<boardId>`,
                 headers: { Authorization: 'Bearer <agentToken>' },
                 description: 'Returns board name, columns, and all cards.',
               },
@@ -105,6 +113,7 @@ export async function GET(request: NextRequest) {
                   'Content-Type': 'application/json',
                 },
                 body: {
+                  boardId: '<boardId>',
                   title: '<card title>',
                   description: '<optional description>',
                   columnId: '<column ID from readBoard>',
@@ -119,6 +128,7 @@ export async function GET(request: NextRequest) {
                   'Content-Type': 'application/json',
                 },
                 body: {
+                  boardId: '<boardId>',
                   title: '<optional new title>',
                   description: '<optional new description>',
                   columnId: '<optional new column ID to move card>',
@@ -127,7 +137,7 @@ export async function GET(request: NextRequest) {
               },
               listAgents: {
                 method: 'GET',
-                url: `${appUrl}/api/agent/agents`,
+                url: `${appUrl}/api/agent/agents?boardId=<boardId>`,
                 headers: { Authorization: 'Bearer <agentToken>' },
                 description: 'List all approved agents on the board. Returns id, name, approvedAt, and isSelf for each agent.',
               },
@@ -139,13 +149,14 @@ export async function GET(request: NextRequest) {
                   'Content-Type': 'application/json',
                 },
                 body: {
+                  boardId: '<boardId>',
                   content: '<comment text, max 2000 chars>',
                 },
                 description: 'Add a comment to a card. Your agent name is automatically recorded as the author.',
               },
               listComments: {
                 method: 'GET',
-                url: `${appUrl}/api/agent/cards/<cardId>/comments`,
+                url: `${appUrl}/api/agent/cards/<cardId>/comments?boardId=<boardId>`,
                 headers: { Authorization: 'Bearer <agentToken>' },
                 description: 'List all comments on a card, ordered by creation time.',
               },
@@ -157,7 +168,8 @@ export async function GET(request: NextRequest) {
                   'Content-Type': 'application/json',
                 },
                 body: {
-                  agentId: '<BoardAccess ID of target agent, or null to unassign>',
+                  boardId: '<boardId>',
+                  agentId: '<Agent ID of target agent, or null to unassign>',
                 },
                 description: 'Assign or reassign a card to another approved agent on the board. Use GET /api/agent/agents to find agent IDs. Pass null to unassign.',
               },

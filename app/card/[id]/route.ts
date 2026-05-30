@@ -22,21 +22,32 @@ export async function GET(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: 'Token required' }, { status: 401 });
     }
 
-    // Validate agent has board access
-    const accessRequest = await prisma.boardAccess.findFirst({
-      where: {
-        agentToken: token,
-        status: 'approved',
-      },
+    // Validate agent exists with this token
+    const agent = await prisma.agent.findUnique({
+      where: { token },
     });
 
-    if (!accessRequest) {
+    if (!agent) {
       return NextResponse.json({ error: 'Invalid or revoked token' }, { status: 403 });
     }
 
-    // Fetch card scoped to the agent's board — any card on the board is accessible
+    // Check agent has approved access to ANY board (we'll verify card belongs to one of those boards)
+    const accesses = await prisma.boardAccess.findMany({
+      where: {
+        agentId: agent.id,
+        status: 'approved',
+      },
+      select: { boardId: true },
+    });
+
+    const accessibleBoardIds = accesses.map((a: { boardId: string }) => a.boardId);
+
+    // Fetch card — must be on one of the agent's accessible boards
     const card = await prisma.card.findFirst({
-      where: { id: cardId, boardId: accessRequest.boardId },
+      where: {
+        id: cardId,
+        boardId: { in: accessibleBoardIds },
+      },
     });
 
     if (!card) {
@@ -59,14 +70,14 @@ export async function GET(request: NextRequest, context: RouteContext) {
       orderBy: { createdAt: 'asc' },
     });
 
-    // Get assignee name if card is assigned
+    // Get assignee name if card is assigned (agentId field)
     let assigneeName: string | null = null;
-    if (card.assigneeId) {
-      const assigneeAccess = await prisma.boardAccess.findFirst({
-        where: { id: card.assigneeId },
-        select: { agentName: true },
+    if (card.agentId) {
+      const assigneeAgent = await prisma.agent.findUnique({
+        where: { id: card.agentId },
+        select: { name: true },
       });
-      assigneeName = assigneeAccess?.agentName || null;
+      assigneeName = assigneeAgent?.name || null;
     }
 
     const cardDetails = {

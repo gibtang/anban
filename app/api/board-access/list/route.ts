@@ -29,10 +29,31 @@ export async function GET(request: NextRequest) {
 
     const requests = await prisma.boardAccess.findMany({
       where: { boardId },
+      include: {
+        agent: {
+          select: {
+            id: true,
+            name: true,
+            token: true,
+          },
+        },
+      },
       orderBy: { requestedAt: 'desc' },
     });
 
-    return NextResponse.json(requests);
+    // Map to a flat shape for backward compat with UI
+    const mapped = requests.map((r: { id: string; boardId: string; agentId: string; status: string; requestedAt: Date; approvedAt: Date | null; agent: { id: string; name: string; token: string } }) => ({
+      id: r.id,
+      boardId: r.boardId,
+      agentId: r.agent.id,
+      agentName: r.agent.name,
+      agentToken: r.agent.token.startsWith('__pending__') ? null : r.agent.token,
+      status: r.status,
+      requestedAt: r.requestedAt,
+      approvedAt: r.approvedAt,
+    }));
+
+    return NextResponse.json(mapped);
   } catch (error) {
     console.error('Error listing access requests:', error);
     if (error instanceof Error && error.message === 'Unauthorized') {
@@ -72,14 +93,14 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Not authorized' }, { status: 403 });
     }
 
-    await prisma.boardAccess.delete({
-      where: { id: accessId },
+    // Clear agentId on any cards that referenced this agent
+    await prisma.card.updateMany({
+      where: { boardId: accessRequest.boardId, agentId: accessRequest.agentId },
+      data: { agentId: null },
     });
 
-    // Clear agentId on any cards that referenced this access
-    await prisma.card.updateMany({
-      where: { boardId: accessRequest.boardId, agentId: accessId },
-      data: { agentId: null },
+    await prisma.boardAccess.delete({
+      where: { id: accessId },
     });
 
     return NextResponse.json({ success: true });

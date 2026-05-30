@@ -31,18 +31,27 @@ model Board {
   @@index([ownerId])
 }
 
+model Agent {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  token     String   @unique
+  createdAt DateTime @default(now())
+
+  accesses  BoardAccess[]
+}
+
 model BoardAccess {
   id          String    @id @default(auto()) @map("_id") @db.ObjectId
   boardId     String    @db.ObjectId
-  shareToken  String
-  agentName   String
-  agentToken  String?   @unique
+  agentId     String    @db.ObjectId
   status      String    @default("pending")
   requestedAt DateTime  @default(now())
   approvedAt  DateTime?
 
+  agent       Agent     @relation(fields: [agentId], references: [id])
+
+  @@unique([boardId, agentId])
   @@index([boardId])
-  @@index([shareToken])
 }
 
 model Column {
@@ -134,7 +143,7 @@ model Activity {
   cardId     String   @db.ObjectId
   boardId    String   @db.ObjectId
   type       String   // "created", "moved", "updated", "assigned", "unassigned", "commented"
-  authorId   String?  @db.ObjectId  // BoardAccess ID (agent) or User ID
+  authorId   String?  @db.ObjectId  // Agent ID or User ID
   authorName String   // Display name ("You", "Wing Zero", etc.)
   authorType String   // "agent" | "user" | "system"
   details    Json?    // { fromColumn: "To Do", toColumn: "In Progress" } or { field: "title" }

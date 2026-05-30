@@ -70,14 +70,13 @@ export async function verifyAuth(request: NextRequest): Promise<string> {
 }
 
 export interface AgentAuthResult {
-  boardId: string;
+  agentId: string;
   agentName: string;
-  accessId: string;
 }
 
 /**
- * Verify agent token from Authorization header
- * Returns boardId and agentName if valid
+ * Verify agent token from Authorization header (account-level)
+ * Returns agent identity only — callers must check board access separately
  */
 export async function verifyAgentAuth(request: NextRequest): Promise<AgentAuthResult> {
   const authHeader = request.headers.get('Authorization');
@@ -90,20 +89,33 @@ export async function verifyAgentAuth(request: NextRequest): Promise<AgentAuthRe
     throw new Error('Unauthorized: Empty token');
   }
 
-  const accessRequest = await prisma.boardAccess.findFirst({
-    where: {
-      agentToken: token,
-      status: 'approved',
-    },
+  const agent = await prisma.agent.findUnique({
+    where: { token },
   });
 
-  if (!accessRequest) {
+  if (!agent) {
     throw new Error('Unauthorized: Invalid or revoked token');
   }
 
   return {
-    boardId: accessRequest.boardId,
-    agentName: accessRequest.agentName,
-    accessId: accessRequest.id,
+    agentId: agent.id,
+    agentName: agent.name,
   };
+}
+
+/**
+ * Verify that an agent has approved access to a specific board
+ */
+export async function verifyAgentBoardAccess(agentId: string, boardId: string): Promise<void> {
+  const access = await prisma.boardAccess.findFirst({
+    where: {
+      agentId,
+      boardId,
+      status: 'approved',
+    },
+  });
+
+  if (!access) {
+    throw new Error('Forbidden: No access to this board');
+  }
 }

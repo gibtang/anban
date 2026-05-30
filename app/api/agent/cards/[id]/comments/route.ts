@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
-import { verifyAgentAuth } from '@/lib/auth/helpers';
+import { verifyAgentAuth, verifyAgentBoardAccess } from '@/lib/auth/helpers';
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -11,16 +11,20 @@ export const runtime = 'nodejs';
 /**
  * Agent endpoint: add a comment to a card
  * POST /api/agent/cards/:cardId/comments
- * Body: { content: string }
+ * Body: { boardId, content: string }
  * Headers: Authorization: Bearer <agentToken>
  */
 export async function POST(request: NextRequest, context: RouteContext) {
   try {
-    const { boardId, accessId, agentName } = await verifyAgentAuth(request);
+    const { agentId, agentName } = await verifyAgentAuth(request);
     const { id: cardId } = await context.params;
 
     const body = await request.json();
-    const { content } = body;
+    const { boardId, content } = body;
+
+    if (!boardId) {
+      return NextResponse.json({ error: 'boardId is required' }, { status: 400 });
+    }
 
     if (!content || typeof content !== 'string' || content.trim().length === 0) {
       return NextResponse.json({ error: 'Comment content is required' }, { status: 400 });
@@ -32,6 +36,8 @@ export async function POST(request: NextRequest, context: RouteContext) {
         { status: 400 }
       );
     }
+
+    await verifyAgentBoardAccess(agentId, boardId);
 
     // Verify card belongs to this board
     const card = await prisma.card.findFirst({
@@ -46,7 +52,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
       data: {
         cardId,
         boardId,
-        authorId: accessId,
+        authorId: agentId,
         authorName: agentName,
         authorType: 'agent',
         content: content.trim(),
@@ -59,19 +65,31 @@ export async function POST(request: NextRequest, context: RouteContext) {
     if (error instanceof Error && error.message.startsWith('Unauthorized')) {
       return NextResponse.json({ error: error.message }, { status: 401 });
     }
+    if (error instanceof Error && error.message.startsWith('Forbidden')) {
+      return NextResponse.json({ error: error.message }, { status: 403 });
+    }
     return NextResponse.json({ error: 'Failed to create comment' }, { status: 500 });
   }
 }
 
 /**
  * Agent endpoint: list comments on a card
- * GET /api/agent/cards/:cardId/comments
+ * GET /api/agent/cards/:cardId/comments?boardId=xxx
  * Headers: Authorization: Bearer <agentToken>
  */
 export async function GET(request: NextRequest, context: RouteContext) {
   try {
-    const { boardId } = await verifyAgentAuth(request);
+    const { agentId } = await verifyAgentAuth(request);
     const { id: cardId } = await context.params;
+
+    const { searchParams } = new URL(request.url);
+    const boardId = searchParams.get('boardId');
+
+    if (!boardId) {
+      return NextResponse.json({ error: 'boardId query parameter is required' }, { status: 400 });
+    }
+
+    await verifyAgentBoardAccess(agentId, boardId);
 
     // Verify card belongs to this board
     const card = await prisma.card.findFirst({
@@ -92,6 +110,9 @@ export async function GET(request: NextRequest, context: RouteContext) {
     console.error('Error fetching agent comments:', error);
     if (error instanceof Error && error.message.startsWith('Unauthorized')) {
       return NextResponse.json({ error: error.message }, { status: 401 });
+    }
+    if (error instanceof Error && error.message.startsWith('Forbidden')) {
+      return NextResponse.json({ error: error.message }, { status: 403 });
     }
     return NextResponse.json({ error: 'Failed to fetch comments' }, { status: 500 });
   }

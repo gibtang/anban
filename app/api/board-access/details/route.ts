@@ -20,6 +20,7 @@ export async function GET(request: NextRequest) {
 
     const accessRequest = await prisma.boardAccess.findUnique({
       where: { id },
+      include: { agent: { select: { name: true } } },
     });
 
     if (!accessRequest) {
@@ -41,7 +42,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       id: accessRequest.id,
-      agentName: accessRequest.agentName,
+      agentName: accessRequest.agent.name,
       status: effectiveStatus,
       requestedAt: accessRequest.requestedAt,
       boardName: board?.name || 'Unknown',

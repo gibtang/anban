@@ -1,22 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
-import { verifyAgentAuth } from '@/lib/auth/helpers';
+import { verifyAgentAuth, verifyAgentBoardAccess } from '@/lib/auth/helpers';
 
 export const runtime = 'nodejs';
 
 /**
- * Agent endpoint: create a card on the board
+ * Agent endpoint: create a card on a board
+ * POST /api/agent/cards
+ * Body: { boardId, title, description?, columnId?, tags? }
  */
 export async function POST(request: NextRequest) {
   try {
-    const { boardId } = await verifyAgentAuth(request);
+    const { agentId } = await verifyAgentAuth(request);
 
     const body = await request.json();
-    const { title, description, columnId, tags } = body;
+    const { boardId, title, description, columnId, tags } = body;
+
+    if (!boardId) {
+      return NextResponse.json({ error: 'boardId is required' }, { status: 400 });
+    }
 
     if (!title || typeof title !== 'string' || title.trim().length === 0) {
       return NextResponse.json({ error: 'Title is required' }, { status: 400 });
     }
+
+    await verifyAgentBoardAccess(agentId, boardId);
 
     // If no column specified, find or create "To Do" column
     let targetColumnId = columnId;
@@ -65,6 +73,9 @@ export async function POST(request: NextRequest) {
     console.error('Error in agent card creation:', error);
     if (error instanceof Error && error.message.startsWith('Unauthorized')) {
       return NextResponse.json({ error: error.message }, { status: 401 });
+    }
+    if (error instanceof Error && error.message.startsWith('Forbidden')) {
+      return NextResponse.json({ error: error.message }, { status: 403 });
     }
     return NextResponse.json({ error: 'Failed to create card' }, { status: 500 });
   }

@@ -9,7 +9,7 @@ const APPROVAL_EXPIRY_MS = 3 * 60 * 1000; // 3 minutes
  * Public endpoint: request access to a board
  * Called from the /join/[token] page or by agents directly
  *
- * If an existing pending request has expired, creates a new one
+ * Looks up or creates an Agent by name, then creates a BoardAccess request
  */
 export async function POST(request: NextRequest) {
   try {
@@ -33,57 +33,78 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid or expired share link' }, { status: 404 });
     }
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-
-    // Check if this agent already has a request
-    const existing = await prisma.boardAccess.findFirst({
-      where: {
-        boardId: board.id,
-        agentName: agentName.trim(),
-      },
-      orderBy: { requestedAt: 'desc' },
+    // Look up or create Agent by name
+    let agent = await prisma.agent.findFirst({
+      where: { name: agentName.trim() },
     });
 
-    if (existing) {
-      // Already approved — return token
-      if (existing.status === 'approved') {
-        return NextResponse.json({
-          requestId: existing.id,
-          status: 'approved',
-          agentToken: existing.agentToken,
-        });
-      }
+    if (!agent) {
+      // Agent doesn't exist yet — will be created on approval
+      // For now, check by name in a pending state
+    }
 
-      // Denied — tell agent
-      if (existing.status === 'denied') {
-        return NextResponse.json({
-          requestId: existing.id,
-          status: 'denied',
-        });
-      }
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
-      // Pending and NOT expired — return existing
-      if (existing.status === 'pending' && (Date.now() - existing.requestedAt.getTime()) <= APPROVAL_EXPIRY_MS) {
-        const approvalUrl = `${appUrl}/approve/${existing.id}`;
-        return NextResponse.json({
-          requestId: existing.id,
-          status: 'pending',
-          approvalUrl,
-          boardName: board.name,
-          message: `Access already requested for board "${board.name}". Notify the board owner: ${approvalUrl}`,
-        });
-      }
+    // If agent exists, check for existing BoardAccess
+    if (agent) {
+      const existing = await prisma.boardAccess.findFirst({
+        where: {
+          boardId: board.id,
+          agentId: agent.id,
+        },
+        orderBy: { requestedAt: 'desc' },
+      });
 
-      // Pending but EXPIRED — delete old, create new below
-      await prisma.boardAccess.delete({ where: { id: existing.id } });
+      if (existing) {
+        // Already approved — return token
+        if (existing.status === 'approved') {
+          return NextResponse.json({
+            requestId: existing.id,
+            status: 'approved',
+            agentToken: agent.token,
+          });
+        }
+
+        // Denied — tell agent
+        if (existing.status === 'denied') {
+          return NextResponse.json({
+            requestId: existing.id,
+            status: 'denied',
+          });
+        }
+
+        // Pending and NOT expired — return existing
+        if (existing.status === 'pending' && (Date.now() - existing.requestedAt.getTime()) <= APPROVAL_EXPIRY_MS) {
+          const approvalUrl = `${appUrl}/approve/${existing.id}`;
+          return NextResponse.json({
+            requestId: existing.id,
+            status: 'pending',
+            approvalUrl,
+            boardName: board.name,
+            message: `Access already requested for board "${board.name}". Notify the board owner: ${approvalUrl}`,
+          });
+        }
+
+        // Pending but EXPIRED — delete old, create new below
+        await prisma.boardAccess.delete({ where: { id: existing.id } });
+      }
+    }
+
+    // Create agent if it doesn't exist yet (without token — token generated on first approval)
+    if (!agent) {
+      agent = await prisma.agent.create({
+        data: {
+          name: agentName.trim(),
+          token: '__pending__' + Date.now(), // placeholder, replaced on approval
+        },
+      });
     }
 
     // Create new access request
     const accessRequest = await prisma.boardAccess.create({
       data: {
         boardId: board.id,
-        shareToken,
-        agentName: agentName.trim(),
+        agentId: agent.id,
         status: 'pending',
       },
     });

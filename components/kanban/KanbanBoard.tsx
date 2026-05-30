@@ -39,9 +39,8 @@ interface BoardData {
 }
 
 interface AgentOption {
-  id: string;
+  id: string; // Agent.id
   name: string;
-  agentToken: string | null;
 }
 
 const fetcher = async (url: string) => {
@@ -79,7 +78,7 @@ export default function KanbanBoard({ boardId }: KanbanBoardProps) {
   const agents: AgentOption[] = useMemo(() =>
     (accessList || [])
       .filter((r: { status: string }) => r.status === 'approved')
-      .map((r: { id: string; agentName: string; agentToken: string | null }) => ({ id: r.id, name: r.agentName, agentToken: r.agentToken })),
+      .map((r: { agentId: string; agentName: string }) => ({ id: r.agentId, name: r.agentName })),
     [accessList]
   );
 
@@ -93,13 +92,13 @@ export default function KanbanBoard({ boardId }: KanbanBoardProps) {
 
   const agentTokensMap: Record<string, string> = useMemo(() => {
     const map: Record<string, string> = {};
-    for (const agent of agents) {
-      if (agent.agentToken) {
-        map[agent.id] = agent.agentToken;
+    for (const r of (accessList || [])) {
+      if (r.status === 'approved' && r.agentToken) {
+        map[r.agentId] = r.agentToken;
       }
     }
     return map;
-  }, [agents]);
+  }, [accessList]);
 
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
   const [optimisticBoard, setOptimisticBoard] = useState<BoardData | null>(null);
