@@ -94,16 +94,27 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: 'expired', message: 'This approval link has expired. Ask the agent for a new link.' }, { status: 410 });
     }
 
+    // Account-level: approve/deny ALL pending BoardAccess records for this agent
+    const allPending = await prisma.boardAccess.findMany({
+      where: {
+        agentId: accessRequest.agentId,
+        status: 'pending',
+      },
+    });
+
     if (action === 'deny') {
-      await prisma.boardAccess.update({
-        where: { id },
+      await prisma.boardAccess.updateMany({
+        where: {
+          agentId: accessRequest.agentId,
+          status: 'pending',
+        },
         data: {
           status: 'denied',
           approvedAt: new Date(),
         },
       });
 
-      return NextResponse.json({ status: 'denied' });
+      return NextResponse.json({ status: 'denied', boardCount: allPending.length });
     }
 
     // Approve: generate a real agent token if it's still a placeholder
@@ -116,15 +127,19 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       });
     }
 
-    await prisma.boardAccess.update({
-      where: { id },
+    // Approve ALL pending BoardAccess records for this agent (account-level)
+    await prisma.boardAccess.updateMany({
+      where: {
+        agentId: accessRequest.agentId,
+        status: 'pending',
+      },
       data: {
         status: 'approved',
         approvedAt: new Date(),
       },
     });
 
-    return NextResponse.json({ status: 'approved', agentToken });
+    return NextResponse.json({ status: 'approved', agentToken, boardCount: allPending.length });
   } catch (error) {
     console.error('Error updating access request:', error);
     return NextResponse.json({ error: 'Failed to update request' }, { status: 500 });

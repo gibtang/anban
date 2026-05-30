@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
       // Agent doesn't exist yet — will be created below
     }
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const appUrl = (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').trim();
 
     // Check existing BoardAccess for the FIRST board (for backwards compat with approval flow)
     // The approval of any board grants the agent token which works for all boards
