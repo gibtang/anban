@@ -41,6 +41,11 @@ export async function GET(request: NextRequest) {
       orderBy: { requestedAt: 'desc' },
     });
 
+    console.log(`[board-access/list] boardId=${boardId} userId=${userId} found=${requests.length} records`);
+    for (const r of requests) {
+      console.log(`[board-access/list]   agentId=${r.agentId} agentName=${(r.agent as { name: string })?.name} status=${r.status}`);
+    }
+
     // Map to a flat shape for backward compat with UI
     const mapped = requests.map((r: { id: string; boardId: string; agentId: string; status: string; requestedAt: Date; approvedAt: Date | null; agent: { id: string; name: string; token: string } }) => ({
       id: r.id,
