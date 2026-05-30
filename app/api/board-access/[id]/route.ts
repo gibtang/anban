@@ -46,8 +46,9 @@ export async function GET(request: NextRequest, context: RouteContext) {
         : accessRequest.status;
 
     // Only return real token for approved requests with a non-placeholder token
-    const agentToken = effectiveStatus === 'approved' && !accessRequest.agent.token.startsWith('__pending__')
-      ? accessRequest.agent.token
+    const rawToken = accessRequest.agent?.token;
+    const agentToken = effectiveStatus === 'approved' && rawToken && !rawToken.startsWith('__pending__')
+      ? rawToken
       : null;
 
     return NextResponse.json({
@@ -106,7 +107,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     }
 
     // Approve: generate a real agent token if it's still a placeholder
-    let agentToken = accessRequest.agent.token;
+    let agentToken = accessRequest.agent?.token || '__pending__';
     if (agentToken.startsWith('__pending__')) {
       agentToken = crypto.randomBytes(32).toString('hex');
       await prisma.agent.update({

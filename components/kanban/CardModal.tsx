@@ -146,13 +146,13 @@ export function CardModal({
   const handleCopyLink = () => {
     if (!card) return;
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-    let url: string;
-    // Board-level access: use assigned agent token, or any agent on the board
+    // Use assigned agent token, or fall back to any approved agent token on the board
     const token = (card.agentId && agentTokensMap?.[card.agentId])
       ? agentTokensMap[card.agentId]
       : Object.values(agentTokensMap || {})[0];
-    if (!token) return; // no agents on board, can't generate link
-    url = `${appUrl}/card/${card.id}?token=${token}`;
+    const url = token
+      ? `${appUrl}/card/${card.id}?token=${token}`
+      : `${appUrl}/boards/${boardId}`;
     navigator.clipboard.writeText(url).then(() => {
       setCopiedLink(true);
       setTimeout(() => setCopiedLink(false), 2000);

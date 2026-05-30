@@ -45,9 +45,9 @@ export async function GET(request: NextRequest) {
     const mapped = requests.map((r: { id: string; boardId: string; agentId: string; status: string; requestedAt: Date; approvedAt: Date | null; agent: { id: string; name: string; token: string } }) => ({
       id: r.id,
       boardId: r.boardId,
-      agentId: r.agent.id,
-      agentName: r.agent.name,
-      agentToken: r.agent.token.startsWith('__pending__') ? null : r.agent.token,
+      agentId: r.agent?.id ?? r.agentId,
+      agentName: r.agent?.name ?? 'Unknown',
+      agentToken: r.agent?.token?.startsWith('__pending__') ? null : (r.agent?.token ?? null),
       status: r.status,
       requestedAt: r.requestedAt,
       approvedAt: r.approvedAt,

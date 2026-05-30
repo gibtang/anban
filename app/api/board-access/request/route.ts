@@ -56,12 +56,13 @@ export async function POST(request: NextRequest) {
       });
 
       if (existing) {
-        // Already approved — return token
+        // Already approved — return real token (not __pending__ placeholder)
         if (existing.status === 'approved') {
+          const realToken = agent.token?.startsWith('__pending__') ? null : (agent.token ?? null);
           return NextResponse.json({
             requestId: existing.id,
             status: 'approved',
-            agentToken: agent.token,
+            agentToken: realToken,
           });
         }
 

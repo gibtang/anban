@@ -10,6 +10,7 @@ import { EmptyBoards } from '@/components/empty/EmptyBoards';
 import { Spinner } from '@/components/ui/Spinner';
 import { useToast } from '@/components/toast/ToastProvider';
 import { fetchWithRetry } from '@/lib/utils/retry';
+import SharePanel from '@/components/board/SharePanel';
 
 const fetcher = async (url: string) => {
   try {
@@ -189,21 +190,24 @@ export default function BoardsPage() {
               key={board.id}
               className="group relative p-5 bg-white rounded-lg border border-gray-200 hover:border-indigo-300 hover:shadow-md transition-all"
             >
-              {/* Delete button */}
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setDeleteBoardId(board.id);
-                  setDeleteBoardName(board.name);
-                }}
-                className="absolute top-3 right-3 p-1.5 rounded-md text-gray-400 hover:text-red-500 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-all"
-                title="Delete board"
-              >
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
-              </button>
+              {/* Share + Delete buttons */}
+              <div className="absolute top-3 right-3 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                <SharePanel boardId={board.id} />
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setDeleteBoardId(board.id);
+                    setDeleteBoardName(board.name);
+                  }}
+                  className="p-1.5 rounded-md text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                  title="Delete board"
+                >
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
+              </div>
 
               {/* Clickable card content */}
               <Link href={`/boards/${board.id}`} className="block">
