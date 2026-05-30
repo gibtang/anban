@@ -5,34 +5,34 @@ export const runtime = 'nodejs';
 
 /**
  * TEMPORARY debug endpoint — remove after fixing agent dropdown
- * Uses raw MongoDB to bypass Prisma's type validation on null agentId
+ * GET: raw MongoDB query to inspect BoardAccess/Agent data
+ * DELETE: clean up stale records
  */
 export async function GET(request: NextRequest) {
   try {
-    // Find all BoardAccess records with null agentId using raw MongoDB
-    const nullAgentRecords = await prisma.$runCommandRaw({
-      find: 'BoardAccess',
-      filter: { agentId: null },
-    });
+    const { searchParams } = new URL(request.url);
+    const boardId = searchParams.get('boardId');
 
     interface MongoCursor {
       cursor: { firstBatch: Record<string, unknown>[]; id: number; ns: string };
       ok: number;
     }
 
-    const cursor = nullAgentRecords as MongoCursor;
-    const nullRecords = cursor.cursor?.firstBatch || [];
+    // Find all BoardAccess records
+    const filter: Record<string, unknown> = {};
+    if (boardId) {
+      filter.boardId = { $oid: boardId };
+    }
 
-    // Find all BoardAccess records using raw query to avoid Prisma crash
     const allRecordsRaw = await prisma.$runCommandRaw({
       find: 'BoardAccess',
-      filter: {},
-      limit: 50,
+      filter,
+      limit: 100,
     });
 
     const allRecords = (allRecordsRaw as MongoCursor).cursor?.firstBatch || [];
 
-    // Also get agents
+    // Get agents
     const agentsRaw = await prisma.$runCommandRaw({
       find: 'Agent',
       filter: {},
@@ -40,15 +40,8 @@ export async function GET(request: NextRequest) {
     const agents = (agentsRaw as MongoCursor).cursor?.firstBatch || [];
 
     return NextResponse.json({
-      nullAgentRecords: nullRecords.length,
-      nullRecords: nullRecords.map((r: Record<string, unknown>) => ({
-        _id: r._id,
-        boardId: r.boardId,
-        agentId: r.agentId,
-        status: r.status,
-      })),
       totalRecords: allRecords.length,
-      allRecords: allRecords.map((r: Record<string, unknown>) => ({
+      records: allRecords.map((r: Record<string, unknown>) => ({
         _id: r._id,
         boardId: r.boardId,
         agentId: r.agentId,
@@ -69,25 +62,32 @@ export async function GET(request: NextRequest) {
 }
 
 /**
- * DELETE: remove BoardAccess records with null agentId
+ * DELETE: clean up stale BoardAccess records
+ * Body: { filter: { status: 'pending', agentId: '...' } }
  */
 export async function DELETE(request: NextRequest) {
   try {
-    const result = await prisma.$runCommandRaw({
-      delete: 'BoardAccess',
-      deletes: [{ q: { agentId: null }, limit: 0 }],
-    });
+    const body = await request.json();
+    const { filter } = body;
 
-    interface DeleteResult {
-      ok: number;
-      n: number;
+    if (!filter) {
+      return NextResponse.json({ error: 'filter required' }, { status: 400 });
     }
 
-    const deleted = result as DeleteResult;
-    return NextResponse.json({
-      success: true,
-      deletedCount: deleted.n,
+    // Build MongoDB filter
+    const mongoFilter: Record<string, unknown> = {};
+    if (filter.status) mongoFilter.status = filter.status;
+    if (filter.agentId) mongoFilter.agentId = { $oid: filter.agentId };
+    if (filter.nullAgentId) mongoFilter.agentId = null;
+
+    const result = await prisma.$runCommandRaw({
+      delete: 'BoardAccess',
+      deletes: [{ q: mongoFilter, limit: 0 }],
     });
+
+    interface DeleteResult { ok: number; n: number }
+    const deleted = result as DeleteResult;
+    return NextResponse.json({ success: true, deletedCount: deleted.n, filter: mongoFilter });
   } catch (error) {
     console.error('Cleanup error:', error);
     return NextResponse.json({ error: String(error) }, { status: 500 });
