@@ -49,28 +49,31 @@ async function main() {
     });
     console.log(`   ✅ Cleared agentId on ${cardsWithAgent} cards\n`);
   } else {
-    console.log('   ⏭️  No stale agentId to clear\n`);
+    console.log('   ⏭️  No stale agentId to clear\n');
   }
 
   // 3. Remove stale assigneeId from Cards (via raw MongoDB $unset)
-  const cardsWithAssignee = await prisma.card.count({
-    where: { assigneeId: { not: null } } as any,
+  //    assigneeId was removed from schema, so we can't use Prisma's typed query
+  const assigneeResult: any = await prisma.$runCommandRaw({
+    count: 'Card',
+    query: { assigneeId: { $exists: true, $ne: null } },
   });
+  const cardsWithAssignee = assigneeResult?.n ?? 0;
   console.log(`👤 Cards with stale assigneeId: ${cardsWithAssignee}`);
   if (cardsWithAssignee > 0) {
     await prisma.$runCommandRaw({
       update: 'Card',
       updates: [
         {
-          q: { assignee: { $exists: true } },
+          q: { assigneeId: { $exists: true, $ne: null } },
           u: { $unset: { assigneeId: '' } },
           multi: true,
         },
       ],
     });
-    console.log(`   ✅ Unset assigneeId on cards\n`);
+    console.log(`   ✅ Unset assigneeId on ${cardsWithAssignee} cards\n`);
   } else {
-    console.log('   ⏭️  No stale assigneeId to clear\n`);
+    console.log('   ⏭️  No stale assigneeId to clear\n');
   }
 
   // 4. Remove stale agentName/agentToken/shareToken from BoardAccess (if any survive)

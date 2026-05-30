@@ -54,7 +54,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200">
           <Link href="/boards" className="flex items-center gap-2">
             <img
-              src="/logo.svg"
+              src="/logo.png"
               alt="Anban logo"
               className="h-8 w-auto"
             />
