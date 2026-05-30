@@ -13,12 +13,12 @@ export default async function JoinLayout({ children, params }: JoinLayoutProps) 
   const agentContext = {
     '@context': 'https://schema.org',
     '@type': 'WebPage',
-    name: 'Join an Anban board',
-    description: 'Machine-readable instructions for AI agents to join this Anban board via API.',
+    name: 'Join an Anban account',
+    description: 'Machine-readable instructions for AI agents to join all boards on this Anban account via API.',
     shareToken,
     apiBaseUrl: appUrl,
     agentInstructions: {
-      summary: 'You have been invited to join a kanban board on Anban. Follow these steps to get API access.',
+      summary: 'You have been invited to join all boards on an Anban account. Follow these steps to get API access.',
       steps: [
         {
           step: 1,

@@ -7,12 +7,8 @@ export const runtime = 'nodejs';
  * Public endpoint: returns machine-readable join instructions for AI agents.
  *
  * Called with: GET /api/board-access/join-info?shareToken=<token>
- * Or: GET /join/<token> with Accept: application/json header
  *
- * Returns:
- *  - Board info (name, id)
- *  - The shareToken extracted from the URL
- *  - Step-by-step API instructions for the agent to follow
+ * Now resolves User.shareToken (account-level) instead of Board.shareToken
  */
 export async function GET(request: NextRequest) {
   try {
@@ -26,29 +22,42 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const board = await prisma.board.findUnique({
+    // Look up user by account-level share token
+    const user = await prisma.user.findUnique({
       where: { shareToken },
-      select: { id: true, name: true },
+      select: { id: true },
     });
 
-    if (!board) {
+    if (!user) {
       return NextResponse.json(
         { error: 'Invalid or expired share link' },
         { status: 404 }
       );
     }
 
+    // Get all boards owned by this user
+    const boards = await prisma.board.findMany({
+      where: { ownerId: user.id },
+      select: { id: true, name: true },
+      orderBy: { createdAt: 'asc' },
+    }) as { id: string; name: string }[];
+
+    if (boards.length === 0) {
+      return NextResponse.json(
+        { error: 'No boards found for this account' },
+        { status: 404 }
+      );
+    }
+
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const boardNames = boards.map(b => b.name).join(', ');
 
     return NextResponse.json({
-      type: 'anban-board-join',
-      board: {
-        id: board.id,
-        name: board.name,
-      },
+      type: 'anban-account-join',
+      boards: boards.map(b => ({ id: b.id, name: b.name })),
       shareToken,
       instructions: {
-        summary: `You are invited to join the "${board.name}" board on Anban (a kanban board). Follow these steps to get access.`,
+        summary: `You are invited to join all boards (${boardNames}) on Anban (a kanban board). Follow these steps to get access.`,
         steps: [
           {
             step: 1,
@@ -60,18 +69,18 @@ export async function GET(request: NextRequest) {
               shareToken,
               agentName: '<YOUR_AGENT_NAME>',
             },
-            description: 'Send your agent name to request access. Use a descriptive name like "Research Bot" or "Task Manager".',
+            description: 'Send your agent name to request access to ALL boards on this account. Use a descriptive name like "Research Bot" or "Task Manager".',
             response: {
               requestId: '<string>',
               status: 'pending',
-              approvalUrl: '<string — send this URL back to the board owner>',
-              boardName: board.name,
+              approvalUrl: '<string — send this URL back to the account owner>',
+              boardName: '<primary board name>',
               message: '<string>',
             },
           },
           {
             step: 2,
-            action: 'Notify board owner',
+            action: 'Notify account owner',
             description: 'Send the approvalUrl from step 1 back to the person who shared this link with you. They must click it to approve your access.',
           },
           {

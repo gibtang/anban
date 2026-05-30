@@ -4,8 +4,10 @@ import { prisma } from '@/lib/db/prisma';
 export const runtime = 'nodejs';
 
 /**
- * Public endpoint: get board name from share token
- * Used by the join page to show which board the agent is requesting access to
+ * Public endpoint: get account info from share token
+ * Used by the join page to show which account (and boards) the agent is requesting access to
+ *
+ * Now resolves User.shareToken instead of Board.shareToken
  */
 export async function GET(request: NextRequest) {
   try {
@@ -16,18 +18,34 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'shareToken is required' }, { status: 400 });
     }
 
-    const board = await prisma.board.findUnique({
+    // Look up user by account-level share token
+    const user = await prisma.user.findUnique({
       where: { shareToken },
-      select: { id: true, name: true },
+      select: { id: true },
     });
 
-    if (!board) {
+    if (!user) {
       return NextResponse.json({ error: 'Invalid or expired share link' }, { status: 404 });
     }
 
-    return NextResponse.json({ boardName: board.name, boardId: board.id });
+    // Get all boards owned by this user
+    const boards = await prisma.board.findMany({
+      where: { ownerId: user.id },
+      select: { id: true, name: true },
+      orderBy: { createdAt: 'asc' },
+    }) as { id: string; name: string }[];
+
+    if (boards.length === 0) {
+      return NextResponse.json({ error: 'No boards found for this account' }, { status: 404 });
+    }
+
+    return NextResponse.json({
+      boards,
+      boardName: boards[0].name, // primary board name for backwards compat with join page
+      boardId: boards[0].id,     // primary board id for backwards compat
+    });
   } catch (error) {
-    console.error('Error looking up board:', error);
-    return NextResponse.json({ error: 'Failed to look up board' }, { status: 500 });
+    console.error('Error looking up account:', error);
+    return NextResponse.json({ error: 'Failed to look up account' }, { status: 500 });
   }
 }

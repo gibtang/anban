@@ -4,11 +4,7 @@ import { useState } from 'react';
 import { useToast } from '@/components/toast/ToastProvider';
 import { Spinner } from '@/components/ui/Spinner';
 
-interface SharePanelProps {
-  boardId: string;
-}
-
-export default function SharePanel({ boardId }: SharePanelProps) {
+export default function SharePanel() {
   const toast = useToast();
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -18,7 +14,7 @@ export default function SharePanel({ boardId }: SharePanelProps) {
   const handleShare = async () => {
     setIsLoading(true);
     try {
-      const res = await fetch(`/api/boards/${boardId}/share`, { method: 'POST' });
+      const res = await fetch('/api/user/share', { method: 'POST' });
       if (!res.ok) throw new Error('Failed to generate share link');
       const data = await res.json();
       setShareUrl(data.shareUrl);
@@ -37,6 +33,18 @@ export default function SharePanel({ boardId }: SharePanelProps) {
       setCopied(true);
       toast.showToast('Link copied!', 'success');
       setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const handleRevoke = async () => {
+    try {
+      const res = await fetch('/api/user/share', { method: 'DELETE' });
+      if (!res.ok) throw new Error('Failed to revoke');
+      setShareUrl(null);
+      setShowPanel(false);
+      toast.showToast('Share link revoked', 'success');
+    } catch {
+      toast.showToast('Failed to revoke share link', 'error');
     }
   };
 
@@ -66,7 +74,7 @@ export default function SharePanel({ boardId }: SharePanelProps) {
         <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 p-4 z-50">
           {/* Header with title + close X */}
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-medium text-gray-900">Share Board</h3>
+            <h3 className="text-sm font-medium text-gray-900">Share All Boards</h3>
             <button
               onClick={() => setShowPanel(false)}
               className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
@@ -78,7 +86,7 @@ export default function SharePanel({ boardId }: SharePanelProps) {
             </button>
           </div>
           <p className="text-xs text-gray-500 mb-3">
-            Send this link to an agent to request access to your board.
+            Send this link to an agent to request access to all your boards.
           </p>
           <div className="flex items-center gap-2">
             <input
@@ -94,6 +102,12 @@ export default function SharePanel({ boardId }: SharePanelProps) {
               {copied ? '✓' : 'Copy'}
             </button>
           </div>
+          <button
+            onClick={handleRevoke}
+            className="mt-3 text-xs text-red-500 hover:text-red-700 transition-colors"
+          >
+            Revoke link
+          </button>
         </div>
       )}
     </div>

@@ -14,6 +14,7 @@ model User {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   firebaseUid String   @unique
   email       String?
+  shareToken  String?  @unique
   createdAt   DateTime @default(now())
 }
 
@@ -21,7 +22,6 @@ model Board {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
   name       String
   ownerId    String   @db.ObjectId
-  shareToken String?  @unique
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 

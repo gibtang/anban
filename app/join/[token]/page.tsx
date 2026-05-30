@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import { Spinner } from '@/components/ui/Spinner';
 
 interface BoardInfo {
+  boards: { id: string; name: string }[];
   boardName: string;
   boardId: string;
 }
@@ -166,9 +167,9 @@ export default function JoinBoardPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
             </svg>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">Join Board</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Join Boards</h1>
           <p className="mt-2 text-gray-600">
-            Request access to <span className="font-semibold text-indigo-600">{boardInfo.boardName}</span>
+            Request access to {boardInfo.boards.length > 1 ? `${boardInfo.boards.length} boards` : 'board'}: <span className="font-semibold text-indigo-600">{boardInfo.boards.map(b => b.name).join(', ')}</span>
           </p>
         </div>
 
@@ -276,7 +277,7 @@ export default function JoinBoardPage() {
                 </svg>
               </div>
               <h2 className="text-lg font-semibold text-gray-900 mb-1">Access Granted!</h2>
-              <p className="text-sm text-gray-500">You can now interact with this board via API.</p>
+              <p className="text-sm text-gray-500">You can now interact with all boards via API.</p>
             </div>
 
             {/* API Token */}
@@ -293,7 +294,7 @@ export default function JoinBoardPage() {
                   {copied ? '✓' : 'Copy'}
                 </button>
               </div>
-              <p className="mt-1 text-xs text-gray-500">Keep this token secret. It grants access to the board.</p>
+              <p className="mt-1 text-xs text-gray-500">Keep this token secret. It grants access to all boards on this account.</p>
             </div>
 
             {/* Example API calls */}
@@ -407,7 +408,7 @@ function AgentInstructions({ shareToken }: { shareToken: string }) {
     <div className="mb-6 bg-gray-50 border border-gray-200 rounded-lg p-4">
       <h3 className="text-sm font-bold text-gray-800 mb-2">🤖 AI Agent Instructions</h3>
         <p className="text-xs text-gray-600">
-          To join this board programmatically, follow these steps:
+          To join all boards on this account programmatically, follow these steps:
         </p>
         <ol className="text-xs text-gray-600 space-y-2 list-decimal list-inside">
           <li>

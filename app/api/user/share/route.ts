@@ -3,30 +3,28 @@ import { prisma } from '@/lib/db/prisma';
 import { verifyAuth } from '@/lib/auth/helpers';
 import crypto from 'crypto';
 
-interface RouteContext {
-  params: Promise<{ id: string }>;
-}
+export const runtime = 'nodejs';
 
-export async function POST(request: NextRequest, context: RouteContext) {
+/**
+ * POST /api/user/share — Generate or return existing account-level share link
+ * DELETE /api/user/share — Revoke share link
+ */
+
+export async function POST(request: NextRequest) {
   try {
     const userId = await verifyAuth(request);
-    const { id: boardId } = await context.params;
 
-    // Verify board ownership
-    const board = await prisma.board.findFirst({
-      where: { id: boardId, ownerId: userId },
-    });
-
-    if (!board) {
-      return NextResponse.json({ error: 'Board not found' }, { status: 404 });
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
     // Generate share token if not exists
-    let shareToken = board.shareToken;
+    let shareToken = user.shareToken;
     if (!shareToken) {
       shareToken = crypto.randomUUID();
-      await prisma.board.update({
-        where: { id: boardId },
+      await prisma.user.update({
+        where: { id: userId },
         data: { shareToken },
       });
     }
@@ -46,21 +44,12 @@ export async function POST(request: NextRequest, context: RouteContext) {
   }
 }
 
-export async function DELETE(request: NextRequest, context: RouteContext) {
+export async function DELETE(request: NextRequest) {
   try {
     const userId = await verifyAuth(request);
-    const { id: boardId } = await context.params;
 
-    const board = await prisma.board.findFirst({
-      where: { id: boardId, ownerId: userId },
-    });
-
-    if (!board) {
-      return NextResponse.json({ error: 'Board not found' }, { status: 404 });
-    }
-
-    await prisma.board.update({
-      where: { id: boardId },
+    await prisma.user.update({
+      where: { id: userId },
       data: { shareToken: null },
     });
 

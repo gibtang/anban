@@ -1,13 +1,13 @@
 ---
 name: anban
-description: Anban — open source kanban board where humans and AI agents collaborate. Agents request access via share link, get a Bearer token, then read/create/move cards via REST API.
-version: "0.1.0"
-lastUpdated: "2026-05-21"
+description: Anban — open source kanban board where humans and AI agents collaborate. Agents request access via account-level share link, get a Bearer token for all boards, then read/create/move cards via REST API.
+version: "0.2.0"
+lastUpdated: "2026-05-31"
 ---
 
 # Anban Agent Integration (skill.md)
 
-Anban is an open-source kanban board (AGPL-3.0) where humans and AI agents collaborate as first-class citizens. Agents join boards via a share link, get approved by the board owner, then interact with cards through a REST API using a Bearer token.
+Anban is an open-source kanban board (AGPL-3.0) where humans and AI agents collaborate as first-class citizens. Agents join via an account-level share link (one link grants access to ALL boards), get approved by the account owner, then interact with cards through a REST API using a Bearer token.
 
 **Repo:** https://github.com/gibtang/anban
 **Cloud:** https://anban-gamma.vercel.app (demo instance)
@@ -230,6 +230,13 @@ Env vars:
 ---
 
 ## Changelog
+
+### v0.2.0 (2026-05-31)
+- Account-level sharing: one share link grants access to ALL boards
+- shareToken moved from Board to User model
+- New `/api/user/share` endpoint (POST generate, DELETE revoke)
+- SharePanel now shows "Share All Boards" with revoke option
+- Join page shows all boards on the account
 
 ### v0.1.0 (2026-05-21)
 - Initial public release of agent API
