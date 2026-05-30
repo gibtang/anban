@@ -40,23 +40,29 @@ export default function AgentsPage() {
   // Fetch user's boards
   const { data: boards, error: boardsError } = useSWR<Board[]>('/api/boards', fetcher);
 
-  // Fetch access requests for each board
+  // Fetch access requests for each board (resilient to individual failures)
   const boardRequests = useSWR(
     boards && boards.length > 0 ? boards.map(b => `/api/board-access/list?boardId=${b.id}`) : null,
     async (urls: string[]) => {
-      const results = await Promise.all(
+      const results = await Promise.allSettled(
         urls.map(async (url) => {
-          const res = await fetchWithRetry(url);
-          return res.json();
+          try {
+            const res = await fetchWithRetry(url);
+            return await res.json();
+          } catch {
+            return [];
+          }
         })
       );
-      // Flatten and attach board name
-      return results.flatMap((requests: BoardAccess[], i: number) =>
-        requests.map((r: BoardAccess) => ({
+      // Flatten and attach board name (skip failed fetches)
+      return results.flatMap((result, i) => {
+        const requests = result.status === 'fulfilled' ? result.value : [];
+        if (!Array.isArray(requests)) return [];
+        return requests.map((r: BoardAccess) => ({
           ...r,
           boardName: boards?.[i]?.name || 'Unknown',
-        }))
-      );
+        }));
+      });
     }
   );
 

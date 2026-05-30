@@ -5,7 +5,6 @@ import { useParams, useRouter } from 'next/navigation';
 import useSWR, { mutate } from 'swr';
 import { useEventSource } from '@/lib/hooks/useEventSource';
 import KanbanBoard from '@/components/kanban/KanbanBoard';
-import SharePanel from '@/components/board/SharePanel';
 import AccessRequests from '@/components/board/AccessRequests';
 import { useToast } from '@/components/toast/ToastProvider';
 import { Spinner } from '@/components/ui/Spinner';
@@ -215,10 +214,9 @@ export default function BoardDetailPage() {
           </div>
         </div>
 
-        {/* Share & Agent Access */}
+        {/* Agent Access */}
         <div className="flex items-center space-x-3">
           <AccessRequests boardId={boardId} />
-          <SharePanel boardId={boardId} />
         </div>
       </div>
 
