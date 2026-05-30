@@ -14,7 +14,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
 
     const { id } = await context.params;
     const body = await request.json();
-    const { title, description, columnId, position, assigneeId, tags, agentId } = body;
+    const { title, description, columnId, position, tags, agentId } = body;
 
     // Verify card exists and user has access
     const existingCard = await prisma.card.findFirst({
@@ -45,7 +45,6 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       description: existingCard.description,
       columnId: existingCard.columnId,
       position: existingCard.position,
-      assigneeId: existingCard.assigneeId,
       tags: existingCard.tags,
       agentId: existingCard.agentId,
     };
@@ -56,7 +55,6 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       description?: string | null;
       columnId?: string;
       position?: number;
-      assigneeId?: string | null;
       tags?: string[];
       agentId?: string | null;
     } = {};
@@ -80,10 +78,6 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       updateData.position = position;
     }
 
-    if (assigneeId !== undefined) {
-      updateData.assigneeId = assigneeId || null;
-    }
-
     if (tags !== undefined) {
       updateData.tags = tags;
     }
@@ -98,20 +92,6 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       data: updateData,
     });
 
-    // Manually fetch assignee if present
-    let assignee = null;
-    if (card.assigneeId) {
-      assignee = await prisma.user.findUnique({
-        where: { id: card.assigneeId },
-        select: { id: true, firebaseUid: true },
-      });
-    }
-
-    const cardWithAssignee = {
-      ...card,
-      assignee,
-    };
-
     // Log card update
     await logAuditEvent({
       userId,
@@ -124,7 +104,6 @@ export async function PUT(request: NextRequest, context: RouteContext) {
         description: card.description,
         columnId: card.columnId,
         position: card.position,
-        assigneeId: card.assigneeId,
         tags: card.tags,
         agentId: card.agentId,
       },
@@ -187,7 +166,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
 
     await Promise.all(activityPromises);
 
-    return NextResponse.json(cardWithAssignee);
+    return NextResponse.json(card);
   } catch (error) {
     console.error('Error updating card:', error);
     if (error instanceof Error && error.message === 'Unauthorized') {
@@ -232,7 +211,6 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
       description: existingCard.description,
       columnId: existingCard.columnId,
       position: existingCard.position,
-      assigneeId: existingCard.assigneeId,
       tags: existingCard.tags,
       agentId: existingCard.agentId,
     };

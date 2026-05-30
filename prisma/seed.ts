@@ -55,7 +55,6 @@ async function main() {
         description: 'Install Node.js, create project, setup git',
         columnId: createdColumns[0].id, // Backlog
         boardId: defaultBoard.id,
-        assigneeId: defaultUser.id,
         tags: ['setup', 'development'],
       },
       {
@@ -84,7 +83,6 @@ async function main() {
         description: 'Create responsive board layout with drag and drop',
         columnId: createdColumns[2].id, // In Progress
         boardId: defaultBoard.id,
-        assigneeId: defaultUser.id,
         tags: ['frontend', 'react', 'ui'],
       },
       {

@@ -46,26 +46,7 @@ export async function GET(request: NextRequest) {
       orderBy: { position: 'asc' },
     });
 
-    // Batch-fetch unique assignees in a single query
-    const uniqueAssigneeIds = Array.from(new Set(cards.filter((c: { assigneeId: string | null }) => c.assigneeId).map((c: { assigneeId: string | null }) => c.assigneeId!)));
-    const assigneeMap = new Map<string, { id: string; firebaseUid: string }>();
-
-    if (uniqueAssigneeIds.length > 0) {
-      const assignees = await prisma.user.findMany({
-        where: { id: { in: uniqueAssigneeIds } },
-        select: { id: true, firebaseUid: true },
-      });
-      for (const a of assignees) {
-        assigneeMap.set(a.id, a);
-      }
-    }
-
-    const cardsWithAssignees = cards.map((card: { assigneeId: string | null; [key: string]: unknown }) => ({
-      ...card,
-      assignee: card.assigneeId ? (assigneeMap.get(card.assigneeId) ?? null) : null,
-    }));
-
-    return NextResponse.json(cardsWithAssignees);
+    return NextResponse.json(cards);
   } catch (error) {
     console.error('Error fetching cards:', error);
     if (error instanceof Error && error.message === 'Unauthorized') {
@@ -80,7 +61,7 @@ export async function POST(request: NextRequest) {
     const userId = await verifyAuth(request);
 
     const body = await request.json();
-    const { title, description, columnId, boardId, assigneeId, tags = [], agentId } = body;
+    const { title, description, columnId, boardId, tags = [], agentId } = body;
 
     // Validation
     if (!title || typeof title !== 'string' || title.trim().length === 0) {
@@ -122,26 +103,11 @@ export async function POST(request: NextRequest) {
         description: description?.trim() || null,
         columnId,
         boardId,
-        assigneeId: assigneeId || null,
         tags,
         agentId: agentId || null,
         position: newPosition,
       },
     });
-
-    // Manually fetch assignee if present
-    let assignee = null;
-    if (card.assigneeId) {
-      assignee = await prisma.user.findUnique({
-        where: { id: card.assigneeId },
-        select: { id: true, firebaseUid: true },
-      });
-    }
-
-    const cardWithAssignee = {
-      ...card,
-      assignee,
-    };
 
     // Log card creation
     await logAuditEvent({
@@ -154,7 +120,6 @@ export async function POST(request: NextRequest) {
         description: card.description,
         columnId: card.columnId,
         boardId: card.boardId,
-        assigneeId: card.assigneeId,
         tags: card.tags,
         agentId: card.agentId,
         position: card.position,
@@ -171,7 +136,7 @@ export async function POST(request: NextRequest) {
       authorType: 'user',
     });
 
-    return NextResponse.json(cardWithAssignee, { status: 201 });
+    return NextResponse.json(card, { status: 201 });
   } catch (error) {
     console.error('Error creating card:', error);
     if (error instanceof Error && error.message === 'Unauthorized') {

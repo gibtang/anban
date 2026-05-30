@@ -5,7 +5,6 @@ export interface Card {
   position: number;
   columnId: string;
   boardId: string;
-  assigneeId: string | null;
   tags: string[];
   agentId: string | null;
   createdAt: string;
@@ -17,7 +16,6 @@ export interface CreateCardRequest {
   description?: string;
   columnId: string;
   boardId: string;
-  assigneeId?: string;
   tags?: string[];
   agentId?: string;
 }
@@ -27,7 +25,6 @@ export interface UpdateCardRequest {
   description?: string;
   columnId?: string;
   position?: number;
-  assigneeId?: string | null;
   tags?: string[];
   agentId?: string | null;
 }

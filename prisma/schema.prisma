@@ -74,7 +74,6 @@ model Card {
   position    Int
   columnId    String   @db.ObjectId
   boardId     String   @db.ObjectId
-  assigneeId  String?  @db.ObjectId
   tags        String[]
   agentId     String?  @db.ObjectId
   createdAt   DateTime  @default(now())
@@ -85,7 +84,6 @@ model Card {
 
   @@index([boardId])
   @@index([columnId])
-  @@index([assigneeId])
 }
 
 model AgentConfig {
