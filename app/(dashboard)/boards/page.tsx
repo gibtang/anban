@@ -108,6 +108,12 @@ export default function BoardsPage() {
     }
   };
 
+  const getOrdinal = (n: number): string => {
+    const s = ['th', 'st', 'nd', 'rd'];
+    const v = n % 100;
+    return n + (s[(v - 20) % 10] || s[v] || s[0]);
+  };
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
@@ -121,7 +127,7 @@ export default function BoardsPage() {
     if (diffMins < 60) return `${diffMins}m ago`;
     if (diffHours < 24) return `${diffHours}h ago`;
     if (diffDays < 7) return `${diffDays}d ago`;
-    return date.toLocaleDateString();
+    return `${getOrdinal(date.getDate())} ${date.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}`;
   };
 
   return (
