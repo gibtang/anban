@@ -72,11 +72,12 @@ export async function verifyAuth(request: NextRequest): Promise<string> {
 export interface AgentAuthResult {
   agentId: string;
   agentName: string;
+  ownerId: string | null;
 }
 
 /**
  * Verify agent token from Authorization header (account-level)
- * Returns agent identity only — callers must check board access separately
+ * Returns agent identity — callers no longer need board-level checks
  */
 export async function verifyAgentAuth(request: NextRequest): Promise<AgentAuthResult> {
   const authHeader = request.headers.get('Authorization');
@@ -100,22 +101,8 @@ export async function verifyAgentAuth(request: NextRequest): Promise<AgentAuthRe
   return {
     agentId: agent.id,
     agentName: agent.name,
+    ownerId: agent.ownerId,
   };
 }
 
-/**
- * Verify that an agent has approved access to a specific board
- */
-export async function verifyAgentBoardAccess(agentId: string, boardId: string): Promise<void> {
-  const access = await prisma.boardAccess.findFirst({
-    where: {
-      agentId,
-      boardId,
-      status: 'approved',
-    },
-  });
 
-  if (!access) {
-    throw new Error('Forbidden: No access to this board');
-  }
-}

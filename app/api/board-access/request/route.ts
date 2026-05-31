@@ -110,6 +110,7 @@ export async function POST(request: NextRequest) {
         data: {
           name: agentName.trim(),
           token: '__pending__' + Date.now(),
+          ownerId: user.id,
         },
       });
     }

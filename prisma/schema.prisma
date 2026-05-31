@@ -35,6 +35,7 @@ model Agent {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   name      String
   token     String   @unique
+  ownerId   String?  @db.ObjectId
   createdAt DateTime @default(now())
 
   accesses  BoardAccess[]

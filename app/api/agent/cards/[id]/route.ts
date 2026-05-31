@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
-import { verifyAgentAuth, verifyAgentBoardAccess } from '@/lib/auth/helpers';
+import { verifyAgentAuth } from '@/lib/auth/helpers';
 import { eventBus } from '@/lib/events/event-bus';
 import { logActivity } from '@/lib/db/activity';
 
@@ -27,7 +27,6 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: 'boardId is required' }, { status: 400 });
     }
 
-    await verifyAgentBoardAccess(agentId, boardId);
 
     // Verify card belongs to this board
     const existingCard = await prisma.card.findFirst({

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
-import { verifyAgentAuth, verifyAgentBoardAccess } from '@/lib/auth/helpers';
+import { verifyAgentAuth } from '@/lib/auth/helpers';
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -36,8 +36,6 @@ export async function POST(request: NextRequest, context: RouteContext) {
         { status: 400 }
       );
     }
-
-    await verifyAgentBoardAccess(agentId, boardId);
 
     // Verify card belongs to this board
     const card = await prisma.card.findFirst({
@@ -88,8 +86,6 @@ export async function GET(request: NextRequest, context: RouteContext) {
     if (!boardId) {
       return NextResponse.json({ error: 'boardId query parameter is required' }, { status: 400 });
     }
-
-    await verifyAgentBoardAccess(agentId, boardId);
 
     // Verify card belongs to this board
     const card = await prisma.card.findFirst({

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
-import { verifyAgentAuth, verifyAgentBoardAccess } from '@/lib/auth/helpers';
+import { verifyAgentAuth } from '@/lib/auth/helpers';
 
 export const runtime = 'nodejs';
 
@@ -20,7 +20,6 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'boardId query parameter is required' }, { status: 400 });
     }
 
-    await verifyAgentBoardAccess(callingAgentId, boardId);
 
     const accesses = await prisma.boardAccess.findMany({
       where: {

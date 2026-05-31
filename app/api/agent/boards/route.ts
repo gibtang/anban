@@ -5,30 +5,20 @@ import { verifyAgentAuth } from '@/lib/auth/helpers';
 export const runtime = 'nodejs';
 
 /**
- * Agent endpoint: list all boards the agent has approved access to
+ * Agent endpoint: list all boards on the agent's account
  * GET /api/agent/boards
  * Headers: Authorization: Bearer <agentToken>
  */
 export async function GET(request: NextRequest) {
   try {
-    const { agentId, agentName } = await verifyAgentAuth(request);
+    const { agentId, agentName, ownerId } = await verifyAgentAuth(request);
 
-    const accesses = await prisma.boardAccess.findMany({
-      where: {
-        agentId,
-        status: 'approved',
-      },
-      select: {
-        boardId: true,
-        approvedAt: true,
-      },
-      orderBy: { approvedAt: 'asc' },
-    });
-
-    const boardIds = accesses.map((a: { boardId: string }) => a.boardId);
+    if (!ownerId) {
+      return NextResponse.json({ error: 'Agent not linked to an account' }, { status: 400 });
+    }
 
     const boards = await prisma.board.findMany({
-      where: { id: { in: boardIds } },
+      where: { ownerId },
       select: { id: true, name: true, createdAt: true },
       orderBy: { name: 'asc' },
     });
