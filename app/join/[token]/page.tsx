@@ -11,7 +11,7 @@ interface BoardInfo {
 }
 
 interface RequestStatus {
-  requestId: string;
+  approvalToken: string;
   status: 'pending' | 'approved' | 'denied' | 'expired';
   agentToken?: string | null;
   approvalUrl?: string;
@@ -54,7 +54,7 @@ export default function JoinBoardPage() {
     if (!requestStatus || requestStatus.status !== 'pending') return;
 
     try {
-      const res = await fetch(`/api/board-access/${requestStatus.requestId}`);
+      const res = await fetch(`/api/board-access/${requestStatus.approvalToken}`);
       if (res.ok) {
         const data = await res.json();
 
@@ -425,7 +425,7 @@ Content-Type: application/json
           <li>
             <strong>Poll status:</strong>
             <code className="block mt-1 bg-gray-900 text-green-400 p-2 rounded text-[11px] font-mono whitespace-pre">
-{`GET /api/board-access/{requestId}
+{`GET /api/board-access/{approvalToken}
 Poll every 3-5s until status = "approved"`}
             </code>
           </li>

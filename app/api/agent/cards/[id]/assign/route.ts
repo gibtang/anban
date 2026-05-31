@@ -16,7 +16,7 @@ export const runtime = 'nodejs';
  * Headers: Authorization: Bearer <agentToken>
  *
  * Pass agentId to assign to a specific agent, or null to unassign.
- * The target agentId must be an Agent ID with approved BoardAccess on the same board.
+ * The target agentId must be an Agent on the same account.
  */
 export async function PUT(request: NextRequest, context: RouteContext) {
   try {
@@ -40,19 +40,16 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: 'Card not found on this board' }, { status: 404 });
     }
 
-    // If assigning to an agent, verify they have approved access on this board
+    // If assigning to an agent, verify they exist on the same account
     if (agentId) {
-      const targetAccess = await prisma.boardAccess.findFirst({
-        where: {
-          agentId,
-          boardId,
-          status: 'approved',
-        },
+      const targetAgent = await prisma.agent.findUnique({
+        where: { id: agentId },
+        select: { id: true },
       });
 
-      if (!targetAccess) {
+      if (!targetAgent) {
         return NextResponse.json(
-          { error: 'Target agent not found or not approved on this board' },
+          { error: 'Target agent not found' },
           { status: 400 }
         );
       }

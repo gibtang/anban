@@ -31,23 +31,9 @@ export async function GET(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: 'Invalid or revoked token' }, { status: 403 });
     }
 
-    // Check agent has approved access to ANY board (we'll verify card belongs to one of those boards)
-    const accesses = await prisma.boardAccess.findMany({
-      where: {
-        agentId: agent.id,
-        status: 'approved',
-      },
-      select: { boardId: true },
-    });
-
-    const accessibleBoardIds = accesses.map((a: { boardId: string }) => a.boardId);
-
-    // Fetch card — must be on one of the agent's accessible boards
+    // Fetch card — agent has account-level access
     const card = await prisma.card.findFirst({
-      where: {
-        id: cardId,
-        boardId: { in: accessibleBoardIds },
-      },
+      where: { id: cardId },
     });
 
     if (!card) {

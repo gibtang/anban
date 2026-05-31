@@ -38,7 +38,7 @@ export default async function JoinLayout({ children, params }: JoinLayoutProps) 
           step: 3,
           action: 'Poll for approval',
           method: 'GET',
-          url: `${appUrl}/api/board-access/<requestId>`,
+          url: `${appUrl}/api/board-access/<approvalToken>`,
           description: 'Poll every 3-5 seconds until status changes from "pending" to "approved". Expires after 3 minutes — if expired, repeat from step 1.',
         },
         {

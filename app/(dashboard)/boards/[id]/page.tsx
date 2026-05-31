@@ -5,7 +5,6 @@ import { useParams, useRouter } from 'next/navigation';
 import useSWR, { mutate } from 'swr';
 import { useEventSource } from '@/lib/hooks/useEventSource';
 import KanbanBoard from '@/components/kanban/KanbanBoard';
-import AccessRequests from '@/components/board/AccessRequests';
 import { useToast } from '@/components/toast/ToastProvider';
 import { Spinner } from '@/components/ui/Spinner';
 import { fetchWithRetry } from '@/lib/utils/retry';
@@ -212,11 +211,6 @@ export default function BoardDetailPage() {
               <span className="font-medium text-gray-700">{counts.total}</span> Total
             </span>
           </div>
-        </div>
-
-        {/* Agent Access */}
-        <div className="flex items-center space-x-3">
-          <AccessRequests boardId={boardId} />
         </div>
       </div>
 

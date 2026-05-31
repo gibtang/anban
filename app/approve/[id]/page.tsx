@@ -9,38 +9,36 @@ export default function ApprovePage() {
   const accessId = params.id as string;
 
   const [agentName, setAgentName] = useState('');
-  const [boardName, setBoardName] = useState('');
   const [status, setStatus] = useState<'loading' | 'pending' | 'approved' | 'denied' | 'expired' | 'error'>('loading');
   const [isActing, setIsActing] = useState(false);
   const [error, setError] = useState('');
 
-  // Fetch request details on mount
-  useEffect(() => {
-    const fetchDetails = async () => {
-      try {
-        const res = await fetch(`/api/board-access/details?id=${accessId}`);
-        if (!res.ok) {
+    // Fetch request details on mount
+    useEffect(() => {
+      const fetchDetails = async () => {
+        try {
+          const res = await fetch(`/api/board-access/${accessId}`);
+          if (!res.ok) {
+            setStatus('error');
+            return;
+          }
+          const data = await res.json();
+          setAgentName(data.agentName);
+
+          if (data.status === 'approved' || data.status === 'denied') {
+            setStatus(data.status);
+          } else if (data.status === 'expired') {
+            setStatus('expired');
+          } else {
+            setStatus('pending');
+          }
+        } catch {
           setStatus('error');
-          return;
         }
-        const data = await res.json();
-        setAgentName(data.agentName);
-        setBoardName(data.boardName);
+      };
 
-        if (data.status === 'approved' || data.status === 'denied') {
-          setStatus(data.status);
-        } else if (data.status === 'expired') {
-          setStatus('expired');
-        } else {
-          setStatus('pending');
-        }
-      } catch {
-        setStatus('error');
-      }
-    };
-
-    if (accessId) fetchDetails();
-  }, [accessId]);
+      if (accessId) fetchDetails();
+    }, [accessId]);
 
   const handleAction = async (action: 'approve' | 'deny') => {
     setIsActing(true);
@@ -93,7 +91,7 @@ export default function ApprovePage() {
             </svg>
           </div>
           <h1 className="text-xl font-semibold text-gray-900 mb-2">Access Approved</h1>
-          <p className="text-gray-500">{agentName} can now access your board.</p>
+          <p className="text-gray-500">{agentName} can now access your boards.</p>
           <p className="text-sm text-gray-400 mt-3">You can now proceed to close this tab.</p>
         </div>
       </div>
@@ -176,12 +174,6 @@ export default function ApprovePage() {
                 <span className="text-sm text-gray-500">Agent</span>
                 <span className="text-sm font-medium text-gray-900">{agentName || 'Unknown'}</span>
               </div>
-              {boardName && (
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-500">Board</span>
-                  <span className="text-sm font-medium text-gray-900">{boardName}</span>
-                </div>
-              )}
               <div className="flex justify-between">
                 <span className="text-sm text-gray-500">Expires</span>
                 <span className="text-sm text-yellow-700 font-medium">in 3 minutes</span>

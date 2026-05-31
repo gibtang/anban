@@ -10,12 +10,15 @@ export const runtime = 'nodejs';
  * Headers: Authorization: Bearer <agentToken>
  * Body: { name: string }
  *
- * Creates the board owned by the same user who owns the boards the agent
- * already has access to, then auto-approves the agent on the new board.
+ * Creates the board owned by the same user who owns the agent's account.
  */
 export async function POST(request: NextRequest) {
   try {
-    const { agentId } = await verifyAgentAuth(request);
+    const { agentId, ownerId } = await verifyAgentAuth(request);
+
+    if (!ownerId) {
+      return NextResponse.json({ error: 'Agent not linked to an account' }, { status: 400 });
+    }
 
     const body = await request.json();
     const { name } = body;
@@ -24,34 +27,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Name is required' }, { status: 400 });
     }
 
-    // Derive ownerId from any existing board the agent has access to
-    const existingAccess = await prisma.boardAccess.findFirst({
-      where: { agentId, status: 'approved' },
-      select: { boardId: true },
-    });
-
-    if (!existingAccess) {
-      return NextResponse.json(
-        { error: 'Agent has no approved board access — cannot determine owner' },
-        { status: 403 },
-      );
-    }
-
-    const existingBoard = await prisma.board.findUnique({
-      where: { id: existingAccess.boardId },
-      select: { ownerId: true },
-    });
-
-    if (!existingBoard) {
-      return NextResponse.json(
-        { error: 'Referenced board not found' },
-        { status: 500 },
-      );
-    }
-
-    // Check if board with same name already exists for this owner
+    // Check if board with same name already exists for this account
     const duplicate = await prisma.board.findFirst({
-      where: { name: name.trim(), ownerId: existingBoard.ownerId },
+      where: { name: name.trim(), ownerId },
     });
 
     if (duplicate) {
@@ -65,7 +43,7 @@ export async function POST(request: NextRequest) {
     const board = await prisma.board.create({
       data: {
         name: name.trim(),
-        ownerId: existingBoard.ownerId,
+        ownerId,
         columns: {
           create: [
             { name: 'To Do', position: 0 },
@@ -75,16 +53,6 @@ export async function POST(request: NextRequest) {
         },
       },
       include: { columns: true },
-    });
-
-    // Auto-approve agent access to the new board
-    await prisma.boardAccess.create({
-      data: {
-        boardId: board.id,
-        agentId,
-        status: 'approved',
-        approvedAt: new Date(),
-      },
     });
 
     return NextResponse.json(board, { status: 201 });

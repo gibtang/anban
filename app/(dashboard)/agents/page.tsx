@@ -1,87 +1,46 @@
 'use client';
 
 import { useState } from 'react';
-import useSWR, { mutate } from 'swr';
+import useSWR from 'swr';
 import { Spinner } from '@/components/ui/Spinner';
 import { useToast } from '@/components/toast/ToastProvider';
 import { fetchWithRetry } from '@/lib/utils/retry';
 
-interface BoardAccess {
-  id: string;
-  boardId: string;
-  agentName: string;
-  agentToken: string | null;
-  status: 'pending' | 'approved' | 'denied';
-  requestedAt: string;
-  approvedAt: string | null;
-}
-
-interface Board {
+interface Agent {
   id: string;
   name: string;
+  status: 'approved' | 'pending';
+  token: string | null;
+  createdAt: string;
 }
 
 const fetcher = async (url: string) => {
-  try {
-    const res = await fetchWithRetry(url);
-    return res.json();
-  } catch (error) {
-    console.error('Failed to fetch:', error);
-    throw error;
-  }
+  const res = await fetchWithRetry(url);
+  return res.json();
 };
 
 export default function AgentsPage() {
   const toast = useToast();
   const [revokingId, setRevokingId] = useState<string | null>(null);
   const [copyingTokenId, setCopyingTokenId] = useState<string | null>(null);
-  const [confirmRevoke, setConfirmRevoke] = useState<{ id: string; name: string; boardName: string } | null>(null);
+  const [confirmRevoke, setConfirmRevoke] = useState<{ id: string; name: string } | null>(null);
 
-  // Fetch user's boards
-  const { data: boards, error: boardsError } = useSWR<Board[]>('/api/boards', fetcher);
+  const { data: agents, error, isLoading, mutate } = useSWR<Agent[]>('/api/agents/all', fetcher);
 
-  // Fetch access requests for each board (resilient to individual failures)
-  const boardRequests = useSWR(
-    boards && boards.length > 0 ? boards.map(b => `/api/board-access/list?boardId=${b.id}`) : null,
-    async (urls: string[]) => {
-      const results = await Promise.allSettled(
-        urls.map(async (url) => {
-          try {
-            const res = await fetchWithRetry(url);
-            return await res.json();
-          } catch {
-            return [];
-          }
-        })
-      );
-      // Flatten and attach board name (skip failed fetches)
-      return results.flatMap((result, i) => {
-        const requests = result.status === 'fulfilled' ? result.value : [];
-        if (!Array.isArray(requests)) return [];
-        return requests.map((r: BoardAccess) => ({
-          ...r,
-          boardName: boards?.[i]?.name || 'Unknown',
-        }));
-      });
-    }
-  );
+  const approved = agents?.filter(a => a.status === 'approved') || [];
+  const pending = agents?.filter(a => a.status === 'pending') || [];
 
-  const agents = boardRequests.data || [];
-  const approved = agents.filter((a: BoardAccess & { boardName: string }) => a.status === 'approved');
-  const pending = agents.filter((a: BoardAccess & { boardName: string }) => a.status === 'pending');
-  const isLoading = !boards || (!boardRequests.data && !boardRequests.error);
-
-  const handleRevoke = async (accessId: string, agentName: string) => {
-    setRevokingId(accessId);
+  const handleRevoke = async (agentId: string, agentName: string) => {
+    setRevokingId(agentId);
     setConfirmRevoke(null);
     try {
-      const res = await fetchWithRetry('/api/board-access/list', {
+      const res = await fetchWithRetry('/api/agents/all', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ accessId }),
+        body: JSON.stringify({ agentId }),
       });
       if (!res.ok) throw new Error('Failed to revoke');
-      await mutate(boards?.map(b => `/api/board-access/list?boardId=${b.id}`) || null);
+      await mutate();
       toast.showToast(`Revoked access for ${agentName}`, 'success');
     } catch {
       toast.showToast('Failed to revoke access', 'error');
@@ -104,7 +63,6 @@ export default function AgentsPage() {
     return date.toLocaleDateString();
   };
 
-  // Loading
   if (isLoading) {
     return (
       <div>
@@ -121,41 +79,14 @@ export default function AgentsPage() {
     );
   }
 
-  // Error
-  if (boardsError || boardRequests.error) {
+  if (error) {
     return (
       <div>
         <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Agents</h1>
-          </div>
+          <h1 className="text-2xl font-bold text-gray-900">Agents</h1>
         </div>
         <div className="rounded-lg bg-red-50 border border-red-200 p-6 text-center">
           <p className="text-sm text-red-700">Failed to load agents. Please try again.</p>
-        </div>
-      </div>
-    );
-  }
-
-  // No boards yet
-  if (!boards || boards.length === 0) {
-    return (
-      <div>
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Agents</h1>
-          </div>
-        </div>
-        <div className="text-center py-16">
-          <div className="mx-auto w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
-            <svg className="h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-          </div>
-          <h3 className="text-lg font-semibold text-gray-900">No boards yet</h3>
-          <p className="mt-2 text-sm text-gray-500 max-w-sm mx-auto">
-            Create a board and share it with your AI agents. They&apos;ll appear here once approved.
-          </p>
         </div>
       </div>
     );
@@ -166,7 +97,7 @@ export default function AgentsPage() {
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Agents</h1>
         <p className="mt-1 text-sm text-gray-500">
-          AI agents that have access to your boards via share links
+          AI agents that have access to your account
         </p>
       </div>
 
@@ -174,8 +105,8 @@ export default function AgentsPage() {
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
         <h3 className="text-sm font-medium text-blue-900 mb-1">How agents connect</h3>
         <p className="text-xs text-blue-700">
-          Share a board link (e.g. <code className="bg-blue-100 px-1 rounded">/join/&lt;token&gt;</code>) with your AI agent. 
-          They request access, you approve, and they get an API token to read and modify cards on your board.
+          Share your account link (e.g. <code className="bg-blue-100 px-1 rounded">/join/&lt;token&gt;</code>) with an AI agent.
+          They request access, you approve, and they get an API token to manage cards across all your boards.
         </p>
       </div>
 
@@ -187,31 +118,22 @@ export default function AgentsPage() {
           </h2>
           <div className="bg-white rounded-lg border border-yellow-200 overflow-hidden">
             <ul className="divide-y divide-gray-100">
-              {pending.map((agent: BoardAccess & { boardName: string }) => (
+              {pending.map((agent) => (
                 <li key={agent.id} className="px-4 py-3 flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-900">{agent.agentName}</p>
-                    <p className="text-xs text-gray-500">
-                      {agent.boardName} · requested {formatDate(agent.requestedAt)}
-                    </p>
+                    <p className="text-sm font-medium text-gray-900">{agent.name}</p>
+                    <p className="text-xs text-gray-500">requested {formatDate(agent.createdAt)}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">
                       Awaiting approval
                     </span>
                     <button
-                      onClick={() => setConfirmRevoke({ id: agent.id, name: agent.agentName, boardName: agent.boardName })}
+                      onClick={() => setConfirmRevoke({ id: agent.id, name: agent.name })}
                       disabled={revokingId === agent.id}
-                      className="inline-flex items-center px-2.5 py-1.5 text-xs font-medium rounded text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      className="inline-flex items-center px-2.5 py-1.5 text-xs font-medium rounded text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 disabled:opacity-50 transition-colors"
                     >
-                      {revokingId === agent.id ? (
-                        <>
-                          <Spinner size="xs" className="mr-1 text-red-600" />
-                          Revoking...
-                        </>
-                      ) : (
-                        'Revoke'
-                      )}
+                      {revokingId === agent.id ? 'Revoking...' : 'Revoke'}
                     </button>
                   </div>
                 </li>
@@ -234,33 +156,33 @@ export default function AgentsPage() {
               </svg>
             </div>
             <p className="text-sm text-gray-500">No agents have been approved yet.</p>
-            <p className="text-xs text-gray-400 mt-1">Share a board link with an AI agent to get started.</p>
+            <p className="text-xs text-gray-400 mt-1">Share your account link with an AI agent to get started.</p>
           </div>
         ) : (
           <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
             <ul className="divide-y divide-gray-100">
-              {approved.map((agent: BoardAccess & { boardName: string }) => (
+              {approved.map((agent) => (
                 <li key={agent.id} className="px-4 py-3 flex items-center justify-between">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
                         <span className="text-xs font-semibold text-indigo-600">
-                          {agent.agentName[0]?.toUpperCase()}
+                          {agent.name[0]?.toUpperCase()}
                         </span>
                       </div>
                       <div className="min-w-0">
-                        <p className="text-sm font-medium text-gray-900 truncate">{agent.agentName}</p>
+                        <p className="text-sm font-medium text-gray-900 truncate">{agent.name}</p>
                         <p className="text-xs text-gray-500">
-                          {agent.boardName} · approved {agent.approvedAt ? formatDate(agent.approvedAt) : 'recently'}
+                          approved {formatDate(agent.createdAt)}
                         </p>
-                        {agent.agentToken && (
+                        {agent.token && (
                           <div className="flex items-center gap-1.5 mt-1">
                             <code className="text-[11px] font-mono text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">
-                              {agent.agentToken.slice(0, 5)}{'*'.repeat(Math.min(agent.agentToken.length - 5, 20))}
+                              {agent.token.slice(0, 5)}{'*'.repeat(Math.min(agent.token.length - 5, 20))}
                             </code>
                             <button
                               onClick={() => {
-                                navigator.clipboard.writeText(agent.agentToken!);
+                                navigator.clipboard.writeText(agent.token!);
                                 setCopyingTokenId(agent.id);
                                 setTimeout(() => setCopyingTokenId(null), 2000);
                               }}
@@ -283,18 +205,11 @@ export default function AgentsPage() {
                     </div>
                   </div>
                   <button
-                    onClick={() => setConfirmRevoke({ id: agent.id, name: agent.agentName, boardName: agent.boardName })}
+                    onClick={() => setConfirmRevoke({ id: agent.id, name: agent.name })}
                     disabled={revokingId === agent.id}
-                    className="ml-3 inline-flex items-center px-2.5 py-1.5 text-xs font-medium rounded text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="ml-3 inline-flex items-center px-2.5 py-1.5 text-xs font-medium rounded text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 disabled:opacity-50 transition-colors"
                   >
-                    {revokingId === agent.id ? (
-                      <>
-                        <Spinner size="xs" className="mr-1 text-red-600" />
-                        Revoking...
-                      </>
-                    ) : (
-                      'Revoke'
-                    )}
+                    {revokingId === agent.id ? 'Revoking...' : 'Revoke'}
                   </button>
                 </li>
               ))}
@@ -307,48 +222,22 @@ export default function AgentsPage() {
       {confirmRevoke && (
         <div className="fixed inset-0 z-50 overflow-y-auto">
           <div className="flex items-center justify-center min-h-screen px-4">
-            <div
-              className="fixed inset-0 bg-black/50 transition-opacity"
-              onClick={() => setConfirmRevoke(null)}
-            />
+            <div className="fixed inset-0 bg-black/50 transition-opacity" onClick={() => setConfirmRevoke(null)} />
             <div className="relative bg-white rounded-lg shadow-xl max-w-sm w-full p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
-                  <svg className="w-5 h-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="text-base font-semibold text-gray-900">Revoke Access</h3>
-                  <p className="text-sm text-gray-500">This action cannot be undone.</p>
-                </div>
-              </div>
-              <div className="bg-gray-50 rounded-lg p-3 mb-5">
-                <p className="text-sm text-gray-700">
-                  Remove <strong>{confirmRevoke.name}</strong>&apos;s access to <strong>{confirmRevoke.boardName}</strong>?
-                  They will need to request access again via the share link.
-                </p>
-              </div>
+              <h3 className="text-base font-semibold text-gray-900 mb-2">Revoke Access</h3>
+              <p className="text-sm text-gray-500 mb-5">
+                Remove <strong>{confirmRevoke.name}</strong>&apos;s access to your account? They will need to request access again.
+              </p>
               <div className="flex gap-3 justify-end">
-                <button
-                  onClick={() => setConfirmRevoke(null)}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
-                >
+                <button onClick={() => setConfirmRevoke(null)} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
                   Cancel
                 </button>
                 <button
                   onClick={() => handleRevoke(confirmRevoke.id, confirmRevoke.name)}
                   disabled={revokingId === confirmRevoke.id}
-                  className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 disabled:opacity-50"
                 >
-                  {revokingId === confirmRevoke.id ? (
-                    <>
-                      <Spinner size="xs" className="mr-2 text-white" />
-                      Revoking...
-                    </>
-                  ) : (
-                    'Revoke Access'
-                  )}
+                  {revokingId === confirmRevoke.id ? 'Revoking...' : 'Revoke Access'}
                 </button>
               </div>
             </div>

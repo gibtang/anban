@@ -70,16 +70,16 @@ export default function KanbanBoard({ boardId }: KanbanBoardProps) {
     }
   );
 
-  // Fetch approved agents for this board
-  const { data: accessList } = useSWR(
-    `/api/board-access/list?boardId=${boardId}`,
+  // Fetch approved agents for this account
+  const { data: agentsList } = useSWR(
+    '/api/agents/all',
     fetcher
   );
   const agents: AgentOption[] = useMemo(() =>
-    (accessList || [])
-      .filter((r: { status: string }) => r.status === 'approved')
-      .map((r: { agentId: string; agentName: string }) => ({ id: r.agentId, name: r.agentName })),
-    [accessList]
+    (agentsList || [])
+      .filter((a: { status: string }) => a.status === 'approved')
+      .map((a: { id: string; name: string }) => ({ id: a.id, name: a.name })),
+    [agentsList]
   );
 
   const agentNames: Record<string, string> = useMemo(() => {
@@ -92,13 +92,13 @@ export default function KanbanBoard({ boardId }: KanbanBoardProps) {
 
   const agentTokensMap: Record<string, string> = useMemo(() => {
     const map: Record<string, string> = {};
-    for (const r of (accessList || [])) {
-      if (r.status === 'approved' && r.agentToken) {
-        map[r.agentId] = r.agentToken;
+    for (const a of (agentsList || [])) {
+      if (a.status === 'approved' && a.token) {
+        map[a.id] = a.token;
       }
     }
     return map;
-  }, [accessList]);
+  }, [agentsList]);
 
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
   const [optimisticBoard, setOptimisticBoard] = useState<BoardData | null>(null);

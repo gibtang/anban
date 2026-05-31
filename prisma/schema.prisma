@@ -32,27 +32,13 @@ model Board {
 }
 
 model Agent {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  name      String
-  token     String   @unique
-  ownerId   String?  @db.ObjectId
-  createdAt DateTime @default(now())
-
-  accesses  BoardAccess[]
-}
-
-model BoardAccess {
-  id          String    @id @default(auto()) @map("_id") @db.ObjectId
-  boardId     String    @db.ObjectId
-  agentId     String    @db.ObjectId
-  status      String    @default("pending")
-  requestedAt DateTime  @default(now())
-  approvedAt  DateTime?
-
-  agent       Agent     @relation(fields: [agentId], references: [id])
-
-  @@unique([boardId, agentId])
-  @@index([boardId])
+  id                 String    @id @default(auto()) @map("_id") @db.ObjectId
+  name               String
+  token              String    @unique
+  ownerId            String?   @db.ObjectId
+  approvalToken      String?
+  approvalExpiresAt  DateTime?
+  createdAt          DateTime  @default(now())
 }
 
 model Column {
