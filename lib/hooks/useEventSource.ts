@@ -6,15 +6,17 @@ interface BoardEvent {
   [key: string]: any;
 }
 
+export type ConnectionState = 'connecting' | 'connected' | 'disconnected';
+
 export function useEventSource(boardId: string) {
   const [event, setEvent] = useState<BoardEvent | null>(null);
-  const [connected, setConnected] = useState(false);
+  const [connectionState, setConnectionState] = useState<ConnectionState>('connecting');
 
   useEffect(() => {
     const eventSource = new EventSource(`/api/events?boardId=${boardId}`);
 
-    eventSource.onopen = () => setConnected(true);
-    eventSource.onerror = () => setConnected(false);
+    eventSource.onopen = () => setConnectionState('connected');
+    eventSource.onerror = () => setConnectionState('disconnected');
 
     eventSource.onmessage = (e) => {
       const data = JSON.parse(e.data);
@@ -26,5 +28,5 @@ export function useEventSource(boardId: string) {
     return () => eventSource.close();
   }, [boardId]);
 
-  return { event, connected };
+  return { event, connectionState };
 }

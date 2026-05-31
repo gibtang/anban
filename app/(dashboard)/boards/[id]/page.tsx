@@ -32,7 +32,7 @@ export default function BoardDetailPage() {
   const toast = useToast();
   const boardId = params.id as string;
 
-  const { event, connected } = useEventSource(boardId);
+  const { event, connectionState } = useEventSource(boardId);
 
   // Fetch board name (full board data is fetched separately in KanbanBoard)
   const { data: board } = useSWR<BoardData>(`/api/boards/${boardId}`, boardFetcher);
@@ -188,11 +188,11 @@ export default function BoardDetailPage() {
           <div className="flex items-center space-x-2">
             <div
               className={`h-2 w-2 rounded-full ${
-                connected ? 'bg-green-500' : 'bg-gray-500'
+                connectionState === 'connected' ? 'bg-green-500' : connectionState === 'connecting' ? 'bg-yellow-500 animate-pulse' : 'bg-gray-500'
               }`}
             />
             <p className="text-sm text-gray-500">
-              {connected ? 'Live' : 'Disconnected'}
+              {connectionState === 'connected' ? 'Live' : connectionState === 'connecting' ? 'Connecting…' : 'Disconnected'}
             </p>
           </div>
 
