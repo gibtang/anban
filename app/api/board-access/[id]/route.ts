@@ -14,7 +14,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
   try {
     const { id: approvalToken } = await context.params;
 
-    const agent = await prisma.agent.findUnique({
+    const agent = await prisma.agent.findFirst({
       where: { approvalToken },
       select: {
         id: true,
@@ -63,7 +63,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: 'action must be "approve" or "deny"' }, { status: 400 });
     }
 
-    const agent = await prisma.agent.findUnique({
+    const agent = await prisma.agent.findFirst({
       where: { approvalToken },
     });
 
