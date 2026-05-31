@@ -16,6 +16,7 @@ export interface Board {
   createdAt: string;
   updatedAt: string;
   columns?: Column[];
+  openCardCount?: number;
   _count?: {
     cards: number;
   };

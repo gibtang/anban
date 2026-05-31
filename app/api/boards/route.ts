@@ -16,10 +16,36 @@ export async function GET(request: NextRequest) {
         _count: {
           select: { columns: true, cards: true },
         },
+        columns: {
+          select: { id: true, name: true },
+        },
       },
     });
 
-    return NextResponse.json(boards);
+    // Get "Done" column IDs per board
+    const doneColumnIds = boards.flatMap((b: { columns: { id: string; name: string }[] }) =>
+      b.columns.filter((c: { name: string }) => c.name === 'Done').map((c: { id: string }) => c.id),
+    );
+
+    // Count open (non-Done) cards in a single query
+    const openCounts = await prisma.card.groupBy({
+      by: ['boardId'],
+      where: {
+        boardId: { in: boards.map((b: { id: string }) => b.id) },
+        columnId: { notIn: doneColumnIds },
+      },
+      _count: true,
+    });
+
+    const openMap = new Map(openCounts.map((r: { boardId: string; _count: number }) => [r.boardId, r._count]));
+
+    // Strip columns from response, add openCardCount
+    const result = boards.map((b: { columns?: unknown; [key: string]: unknown }) => {
+      const { columns, ...rest } = b;
+      return { ...rest, openCardCount: openMap.get(b.id as string) ?? 0 };
+    });
+
+    return NextResponse.json(result);
   } catch (error) {
     console.error('Error fetching boards:', error);
     if (error instanceof Error && error.message === 'Unauthorized') {

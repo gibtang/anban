@@ -218,14 +218,23 @@ export default function BoardsPage() {
                   {board.name}
                 </h3>
 
-                {/* Card count */}
-                {(board._count?.cards ?? 0) > 0 ? (
-                  <p className="mt-2 text-sm text-gray-500">
-                    {board._count?.cards} {board._count?.cards === 1 ? 'card' : 'cards'}
-                  </p>
-                ) : (
-                  <p className="mt-2 text-sm text-gray-400 italic">No cards yet</p>
-                )}
+                {/* Card counts */}
+                <div className="mt-2 flex items-center gap-3 text-sm">
+                  {(board._count?.cards ?? 0) > 0 ? (
+                    <>
+                      <span className="text-gray-500">
+                        {board._count?.cards} {board._count?.cards === 1 ? 'card' : 'cards'}
+                      </span>
+                      {(board.openCardCount ?? 0) > 0 && (
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-700">
+                          {board.openCardCount} open
+                        </span>
+                      )}
+                    </>
+                  ) : (
+                    <span className="text-gray-400 italic">No cards yet</span>
+                  )}
+                </div>
 
                 {/* Timestamp */}
                 <p className="mt-3 text-xs text-gray-400">
