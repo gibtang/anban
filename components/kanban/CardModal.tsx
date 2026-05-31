@@ -44,6 +44,7 @@ export function CardModal({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [error, setError] = useState('');
   const [copiedLink, setCopiedLink] = useState(false);
+  const [isGeneratingTitle, setIsGeneratingTitle] = useState(false);
 
   const isEditMode = !!card;
 
@@ -159,6 +160,32 @@ export function CardModal({
     });
   };
 
+  const handleGenerateTitle = async () => {
+    if (!description.trim() || description.trim().length < 10) {
+      setError('Write at least 10 characters in the description first');
+      return;
+    }
+    setIsGeneratingTitle(true);
+    setError('');
+    try {
+      const res = await fetch('/api/ai/generate-title', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ description: description.trim() }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Failed to generate title');
+      }
+      const { title: generatedTitle } = await res.json();
+      setTitle(generatedTitle);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to generate title');
+    } finally {
+      setIsGeneratingTitle(false);
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -236,16 +263,33 @@ export function CardModal({
                       >
                         Title <span className="text-red-500">*</span>
                       </label>
-                      <input
-                        type="text"
-                        id="card-title"
-                        value={title}
-                        onChange={(e) => setTitle(e.target.value)}
-                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                        placeholder="Card title"
-                        autoFocus
-                        required
-                      />
+                      <div className="mt-1 flex gap-2">
+                        <input
+                          type="text"
+                          id="card-title"
+                          value={title}
+                          onChange={(e) => setTitle(e.target.value)}
+                          className="block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                          placeholder="Card title"
+                          autoFocus
+                          required
+                        />
+                        <button
+                          type="button"
+                          onClick={handleGenerateTitle}
+                          disabled={isGeneratingTitle || description.trim().length < 10}
+                          className="flex-shrink-0 inline-flex items-center px-2.5 py-2 rounded-md border border-gray-300 text-gray-500 hover:text-indigo-600 hover:border-indigo-300 hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                          title="AI-generate title from description"
+                        >
+                          {isGeneratingTitle ? (
+                            <Spinner size="sm" />
+                          ) : (
+                            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z" />
+                            </svg>
+                          )}
+                        </button>
+                      </div>
                     </div>
 
                     {/* Description */}
