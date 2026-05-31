@@ -3,7 +3,7 @@ import { prisma } from './prisma';
 export interface ActivityParams {
   cardId: string;
   boardId: string;
-  type: 'created' | 'moved' | 'updated' | 'assigned' | 'unassigned' | 'commented';
+  type: 'created' | 'moved' | 'updated' | 'assigned' | 'unassigned' | 'commented' | 'deleted';
   authorId?: string;
   authorName: string;
   authorType: 'user' | 'agent' | 'system';
