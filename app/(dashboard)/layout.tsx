@@ -56,7 +56,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             <img
               src="/logo.png"
               alt="Anban logo"
-              className="h-8 w-auto"
+              className="h-8 w-8 rounded-full object-cover"
             />
             <span className="text-xl font-bold text-gray-900">
               Anban
