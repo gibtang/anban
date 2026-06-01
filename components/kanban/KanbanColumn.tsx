@@ -15,6 +15,11 @@ interface Column {
   position: number;
 }
 
+interface AgentOption {
+  id: string;
+  name: string;
+}
+
 interface KanbanColumnProps {
   column: Column;
   cards: Card[];
@@ -22,6 +27,7 @@ interface KanbanColumnProps {
   boardId: string;
   agentNames: Record<string, string>;
   agentTokensMap: Record<string, string>;
+  agents?: AgentOption[];
   defaultCollapsed?: boolean;
   onEditCard?: (card: Card) => void;
   onAddCard?: (columnId: string) => void;
@@ -34,6 +40,7 @@ export default function KanbanColumn({
   boardId,
   agentNames,
   agentTokensMap,
+  agents,
   defaultCollapsed = false,
   onEditCard,
   onAddCard,
@@ -144,6 +151,8 @@ export default function KanbanColumn({
               onEdit={() => onEditCard?.(card)}
               agentName={card.agentId ? (agentNames[card.agentId] || null) : null}
               agentToken={card.agentId ? (agentTokensMap[card.agentId] || null) : (Object.values(agentTokensMap)[0] || null)}
+              agents={agents}
+              boardId={boardId}
             />
           ))}
         </SortableContext>

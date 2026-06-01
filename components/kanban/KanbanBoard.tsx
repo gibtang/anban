@@ -464,6 +464,7 @@ export default function KanbanBoard({ boardId }: KanbanBoardProps) {
                 boardId={boardId}
                 agentNames={agentNames}
                 agentTokensMap={agentTokensMap}
+                agents={agents}
                 defaultCollapsed={column.name === 'Done'}
                 onEditCard={handleEditCard}
                 onAddCard={handleAddCard}

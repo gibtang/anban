@@ -1,9 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { mutate } from 'swr';
 import type { Card } from '@/types/card';
+
+interface AgentOption {
+  id: string;
+  name: string;
+}
 
 interface KanbanCardProps {
   card: Card;
@@ -11,9 +17,11 @@ interface KanbanCardProps {
   onEdit?: () => void;
   agentName?: string | null;
   agentToken?: string | null;
+  agents?: AgentOption[];
+  boardId?: string;
 }
 
-export default function KanbanCard({ card, isDragging, onEdit, agentName, agentToken }: KanbanCardProps) {
+export default function KanbanCard({ card, isDragging, onEdit, agentName, agentToken, agents, boardId }: KanbanCardProps) {
   const {
     attributes,
     listeners,
@@ -30,6 +38,9 @@ export default function KanbanCard({ card, isDragging, onEdit, agentName, agentT
   });
 
   const [copied, setCopied] = useState(false);
+  const [agentDropdownOpen, setAgentDropdownOpen] = useState(false);
+  const [assigning, setAssigning] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -37,6 +48,54 @@ export default function KanbanCard({ card, isDragging, onEdit, agentName, agentT
   };
 
   const isDragActive = isDragging ?? isSortableDragging;
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    if (!agentDropdownOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setAgentDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [agentDropdownOpen]);
+
+  const handleAssignAgent = useCallback(async (agentId: string | null) => {
+    if (!boardId || assigning) return;
+    setAssigning(true);
+    setAgentDropdownOpen(false);
+
+    // Optimistic: update the local SWR cache
+    mutate(`/api/boards/${boardId}`, (current: any) => {
+      if (!current) return current;
+      return {
+        ...current,
+        columns: current.columns.map((col: any) => ({
+          ...col,
+          cards: col.cards.map((c: any) =>
+            c.id === card.id ? { ...c, agentId } : c
+          ),
+        })),
+      };
+    }, { revalidate: false });
+
+    try {
+      const res = await fetch(`/api/cards/${card.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ agentId }),
+      });
+      if (!res.ok) throw new Error('Failed to assign agent');
+      mutate(`/api/boards/${boardId}`);
+    } catch (error) {
+      console.error('Failed to assign agent:', error);
+      // Revert on error
+      mutate(`/api/boards/${boardId}`);
+    } finally {
+      setAssigning(false);
+    }
+  }, [boardId, card.id, assigning]);
 
   const handleCopyUrl = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -121,8 +180,68 @@ export default function KanbanCard({ card, isDragging, onEdit, agentName, agentT
       {/* Card metadata row */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-1.5 flex-wrap">
-          {/* Agent badge */}
-          {agentName ? (
+          {/* Agent badge — clickable dropdown */}
+          {agents && agents.length > 0 ? (
+            <div className="relative" ref={dropdownRef}>
+              <button
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setAgentDropdownOpen(!agentDropdownOpen);
+                }}
+                disabled={assigning}
+                className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors cursor-pointer ${
+                  agentName
+                    ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
+                    : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                } ${assigning ? 'opacity-50' : ''}`}
+              >
+                {assigning ? '...' : (agentName || 'Unassigned')}
+                <svg className="ml-0.5 h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              {agentDropdownOpen && (
+                <div
+                  onPointerDown={(e) => e.stopPropagation()}
+                  className="absolute z-[100] top-full left-0 mt-1 w-36 bg-white rounded-md shadow-lg border border-gray-200 py-0.5"
+                >
+                  {agents.map((agent) => (
+                    <button
+                      key={agent.id}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleAssignAgent(agent.id);
+                      }}
+                      className={`w-full text-left px-2.5 py-1 text-[11px] hover:bg-indigo-50 transition-colors ${
+                        card.agentId === agent.id ? 'bg-emerald-50 text-emerald-800 font-medium' : 'text-gray-700'
+                      }`}
+                    >
+                      {agent.name}
+                      {card.agentId === agent.id && (
+                        <span className="ml-1 text-emerald-500">✓</span>
+                      )}
+                    </button>
+                  ))}
+                  {card.agentId && (
+                    <>
+                      <div className="border-t border-gray-100 my-0.5" />
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleAssignAgent(null);
+                        }}
+                        className="w-full text-left px-2.5 py-1 text-[11px] text-gray-500 hover:bg-red-50 hover:text-red-600 transition-colors"
+                      >
+                        Unassign
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+          ) : agentName ? (
             <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-100 text-emerald-800">
               {agentName}
             </span>
