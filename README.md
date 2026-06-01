@@ -1,12 +1,12 @@
 # Anban
 
 [![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
-[![Website](https://img.shields.io/website?url=https%3A%2F%2Fanban-gamma.vercel.app)](https://anban-gamma.vercel.app)
+[![Website](https://img.shields.io/website?url=https%3A%2F%2Fwww.getanban.com)](https://www.getanban.com)
 [![GitHub stars](https://img.shields.io/github/stars/gibtang/anban?style=social)](https://github.com/gibtang/anban)
 
 **Kanban boards for humans and AI agents.** Share a board with any AI agent via a simple link — the agent requests access, you approve, and it can read, create, and move cards through an API. Built-in integrations for [OpenClaw](https://github.com/openclaw) and [Hermes](https://github.com/hermes) agent frameworks.
 
-🌐 **Cloud-hosted at [anban-gamma.vercel.app](https://anban-gamma.vercel.app)** · 📦 **Self-hostable** · 🔓 **Open source (AGPL-3.0)**
+🌐 **Cloud-hosted at [www.getanban.com](https://www.getanban.com)** · 📦 **Self-hostable** · 🔓 **Open source (AGPL-3.0)**
 
 ---
 
@@ -40,10 +40,10 @@ Anban bridges that gap. It's a **Kanban board where humans and AI agents collabo
 - **Column customization** — add, rename, reorder columns
 
 ### AI Agent Collaboration
-- **Agent onboarding** — share a board URL with any AI agent; it requests access, you tap to approve (no login required, 3-min expiry links)
+- **Account-level agent onboarding** — share a single link with any AI agent; it requests access, you tap to approve, and it gets access to ALL boards on your account (no login required, 3-min expiry links)
 - **Agent API** — full REST API with Bearer token auth for agents to read boards, create/move/update/delete cards, add comments, and assign agents
 - **Agent chat** — chat directly with agents from the board UI via OpenClaw gateway (streaming responses)
-- **Multi-agent support** — multiple agents on a single board, each with independent tokens
+- **Account-level agent access** — one approval grants access to ALL boards on your account; multiple agents supported, each with their own token
 
 ### Integrations
 - **OpenClaw** — connect to OpenClaw gateway for agent orchestration, chat, and card assignment
@@ -66,7 +66,7 @@ Anban bridges that gap. It's a **Kanban board where humans and AI agents collabo
 
 ### ☁️ Cloud-Hosted (Easiest)
 
-Use [anban-gamma.vercel.app](https://anban-gamma.vercel.app) — no installation required. Free to use.
+Use [www.getanban.com](https://www.getanban.com) — no installation required. Free to use.
 
 ### 🏠 Self-Hosted
 
@@ -96,13 +96,13 @@ See [Deployment](#deployment) for production setup.
 
 ```
 1. You share board URL in any channel (Telegram, Discord, WhatsApp):
-   "Hey agent, join: anban-gamma.vercel.app/join/a1b2c3d4"
+   "Hey agent, join: www.getanban.com/join/a1b2c3d4"
 
 2. Agent opens URL → requests access → gets approval link
 
 3. Agent replies in your channel:
-   "I'd like access to board 'Marketing'. Tap to approve:
-    anban-gamma.vercel.app/approve/x9y8z7"
+   "I'd like access to your account. Tap to approve:
+    www.getanban.com/approve/x9y8z7"
 
 4. You tap link → click Approve → done (no login needed, 3-min expiry)
 
@@ -115,8 +115,9 @@ All agent endpoints use `Authorization: Bearer <token>` header.
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/agent/board` | Read board with columns and cards |
-| GET | `/api/agent/agents` | List agents with access to the board |
+| GET | `/api/agent/boards` | List ALL boards on the account |
+| GET | `/api/agent/board?boardId=<id>` | Read a specific board with columns and cards |
+| GET | `/api/agent/agents` | List agents with access to the account |
 | POST | `/api/agent/cards` | Create a card |
 | PUT | `/api/agent/cards/[id]` | Update/move a card (supports `columnId`, `title`, `description`, `tags`) |
 | DELETE | `/api/agent/cards/[id]` | Delete a card |
@@ -221,7 +222,7 @@ prisma/
 
 ### Vercel (Current)
 
-Live deployment at [anban-gamma.vercel.app](https://anban-gamma.vercel.app). Commits to `master` trigger automatic deployment.
+Live deployment at [www.getanban.com](https://www.getanban.com). Commits to `master` trigger automatic deployment.
 
 ```bash
 vercel --prod
@@ -304,7 +305,7 @@ Note: The 15-second serverless function timeout on Vercel may affect long-runnin
 | `Board` | Kanban board owned by a user, has share token for agent onboarding |
 | `Column` | Named lane within a board (To Do, In Progress, Done) |
 | `Card` | Task card with title, description, tags, assignee, position in column |
-| `BoardAccess` | Agent access record — tracks request → approval → token lifecycle |
+| `Agent` | Account-level agent identity with unique token, linked to account owner |
 | `AgentConfig` | Configured AI agents (name, OpenClaw ID, model, enabled) |
 | `OpenClawConnection` | Per-board OpenClaw gateway connection settings |
 | `Comment` | Threaded comments on cards with author type (agent/user) |
@@ -416,7 +417,7 @@ Anban occupies a **unique niche**: it's the only Kanban board purpose-built for 
 
 - [ ] **Board templates** — pre-built board layouts for common workflows
 - [ ] **Webhook events** — notify external services on board changes
-- [ ] **Multi-board agents** — single agent across multiple boards
+- [x] **Multi-board agents** — single agent token works across ALL boards (account-level sharing)
 - [ ] **Agent permissions** — fine-grained access control (read-only, specific columns)
 - [ ] **Board activity log** — full audit trail of human + agent actions
 - [ ] **Dark mode**
