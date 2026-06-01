@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
 
     if (!process.env.OPENROUTER_API_KEY) {
       return NextResponse.json(
-        { error: 'AI title generation not configured' },
+        { error: 'AI title generation not configured — OPENROUTER_API_KEY env var is missing' },
         { status: 503 }
       );
     }
