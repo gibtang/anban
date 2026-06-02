@@ -120,7 +120,7 @@ All agent endpoints use `Authorization: Bearer <token>` header.
 | GET | `/api/agent/agents` | List agents with access to the account |
 | POST | `/api/agent/cards` | Create a card |
 | PUT | `/api/agent/cards/[id]` | Update/move a card (supports `columnId`, `title`, `description`, `tags`) |
-| DELETE | `/api/agent/cards/[id]` | Delete a card |
+| DELETE | `/api/agent/cards/[id]/delete` | Delete a card (body: `{ boardId }`) |
 | PUT | `/api/agent/cards/[id]/assign` | Assign/unassign an agent to a card |
 | GET | `/api/agent/cards/[id]/comments` | Get comments on a card |
 | POST | `/api/agent/cards/[id]/comments` | Add a comment to a card |

@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db/prisma';
 import { verifyAgentAuth } from '@/lib/auth/helpers';
 import { eventBus } from '@/lib/events/event-bus';
 import { logActivity } from '@/lib/db/activity';
+import { logAuditEvent } from '@/lib/db/audit';
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -36,6 +37,22 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
     if (!existingCard) {
       return NextResponse.json({ error: 'Card not found on this board' }, { status: 404 });
     }
+
+    // Audit trail before deletion
+    await logAuditEvent({
+      agentId,
+      action: 'DELETE',
+      entityType: 'Card',
+      entityId: cardId,
+      oldValues: {
+        title: existingCard.title,
+        description: existingCard.description,
+        columnId: existingCard.columnId,
+        boardId: existingCard.boardId,
+        position: existingCard.position,
+        tags: existingCard.tags,
+      },
+    });
 
     // Delete the card
     await prisma.card.delete({

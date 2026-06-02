@@ -22,6 +22,7 @@ model Board {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
   name       String
   ownerId    String   @db.ObjectId
+  favorited  Boolean  @default(false)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
@@ -96,7 +97,8 @@ model OpenClawConnection {
 
 model AuditLog {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId     String   @db.ObjectId
+  userId     String?  @db.ObjectId
+  agentId    String?  @db.ObjectId
   action     String
   entityType String
   entityId   String
@@ -105,6 +107,7 @@ model AuditLog {
   timestamp  DateTime @default(now())
 
   @@index([userId])
+  @@index([agentId])
   @@index([entityType, entityId])
   @@index([timestamp])
 }

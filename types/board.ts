@@ -13,6 +13,7 @@ export interface Board {
   id: string;
   name: string;
   ownerId: string;
+  favorited?: boolean;
   createdAt: string;
   updatedAt: string;
   columns?: Column[];

@@ -11,7 +11,10 @@ export async function GET(request: NextRequest) {
     // Get all boards for the user with column/card counts in a single query
     const boards = await prisma.board.findMany({
       where: { ownerId: userId },
-      orderBy: { updatedAt: 'desc' },
+      orderBy: [
+        { favorited: 'desc' },
+        { updatedAt: 'desc' },
+      ],
       include: {
         _count: {
           select: { columns: true, cards: true },

@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db/prisma';
 import { verifyAgentAuth } from '@/lib/auth/helpers';
 import { eventBus } from '@/lib/events/event-bus';
 import { logActivity } from '@/lib/db/activity';
+import { logAuditEvent } from '@/lib/db/audit';
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -73,6 +74,28 @@ export async function PUT(request: NextRequest, context: RouteContext) {
         toColumnId: columnId,
       });
 
+      // Audit trail for column move
+      await logAuditEvent({
+        agentId,
+        action: 'UPDATE',
+        entityType: 'Card',
+        entityId: cardId,
+        oldValues: {
+          title: existingCard.title,
+          description: existingCard.description,
+          columnId: existingCard.columnId,
+          position: existingCard.position,
+          tags: existingCard.tags,
+        },
+        newValues: {
+          title: updatedCard.title,
+          description: updatedCard.description,
+          columnId: updatedCard.columnId,
+          position: updatedCard.position,
+          tags: updatedCard.tags,
+        },
+      });
+
       // Log activity
       const fromCol = await prisma.column.findUnique({ where: { id: existingCard.columnId } });
       const toCol = await prisma.column.findUnique({ where: { id: columnId } });
@@ -102,6 +125,27 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       where: { id: cardId },
       data: updateData,
     });
+
+    // Audit trail for simple update
+    const hasChanges = Object.keys(updateData).length > 0;
+    if (hasChanges) {
+      await logAuditEvent({
+        agentId,
+        action: 'UPDATE',
+        entityType: 'Card',
+        entityId: cardId,
+        oldValues: {
+          title: existingCard.title,
+          description: existingCard.description,
+          tags: existingCard.tags,
+        },
+        newValues: {
+          title: updatedCard.title,
+          description: updatedCard.description,
+          tags: updatedCard.tags,
+        },
+      });
+    }
 
     // Emit real-time event
     eventBus.emitEvent({

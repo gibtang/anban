@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { verifyAgentAuth } from '@/lib/auth/helpers';
+import { logAuditEvent } from '@/lib/db/audit';
+import { logActivity } from '@/lib/db/activity';
 
 export const runtime = 'nodejs';
 
@@ -11,7 +13,7 @@ export const runtime = 'nodejs';
  */
 export async function POST(request: NextRequest) {
   try {
-    const { agentId } = await verifyAgentAuth(request);
+    const { agentId, agentName } = await verifyAgentAuth(request);
 
     const body = await request.json();
     const { boardId, title, description, columnId, tags } = body;
@@ -65,6 +67,32 @@ export async function POST(request: NextRequest) {
         tags: tags || [],
         position,
       },
+    });
+
+    // Audit trail
+    await logAuditEvent({
+      agentId,
+      action: 'CREATE',
+      entityType: 'Card',
+      entityId: card.id,
+      newValues: {
+        title: card.title,
+        description: card.description,
+        columnId: card.columnId,
+        boardId: card.boardId,
+        tags: card.tags,
+        position: card.position,
+      },
+    });
+
+    // Log activity
+    await logActivity({
+      cardId: card.id,
+      boardId: card.boardId,
+      type: 'created',
+      authorId: agentId,
+      authorName: agentName,
+      authorType: 'agent',
     });
 
     return NextResponse.json(card, { status: 201 });

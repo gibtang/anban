@@ -50,7 +50,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
 
     const { id } = await context.params;
     const body = await request.json();
-    const { name, columnOrder } = body;
+    const { name, columnOrder, favorited } = body;
 
     // Verify board ownership
     const existingBoard = await prisma.board.findFirst({
@@ -65,9 +65,12 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     }
 
     // Update board
-    const updateData: { name?: string; updatedAt?: boolean } = {};
+    const updateData: { name?: string; favorited?: boolean } = {};
     if (name && typeof name === 'string' && name.trim().length > 0) {
       updateData.name = name.trim();
+    }
+    if (favorited !== undefined && typeof favorited === 'boolean') {
+      updateData.favorited = favorited;
     }
 
     const board = await prisma.board.update({
