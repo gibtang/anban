@@ -1,8 +1,8 @@
 ---
 name: anban
 description: Anban — open source kanban board where humans and AI agents collaborate. Agents request access via account-level share link, get a Bearer token for all boards, then read/create/move cards via REST API.
-version: "0.3.0"
-lastUpdated: "2026-06-01"
+version: "0.4.0"
+lastUpdated: "2026-06-02"
 ---
 
 # Anban Agent Integration (skill.md)
@@ -153,6 +153,20 @@ Content-Type: application/json
 
 Use `columnId` to move cards between columns (e.g., to "In Progress" or "Done").
 
+### Delete Card
+
+```
+DELETE /api/agent/cards/{cardId}/delete
+Authorization: Bearer <agentToken>
+Content-Type: application/json
+
+{
+  "boardId": "board-id (required)"
+}
+```
+
+Returns `{ "success": true, "deletedCardId": "..." }` on success. Cascades to comments and emits a `card.deleted` SSE event.
+
 ### List Agents
 
 ```
@@ -252,6 +266,11 @@ Env vars:
 ---
 
 ## Changelog
+
+### v0.4.0 (2026-06-02)
+- New `DELETE /api/agent/cards/{cardId}/delete` endpoint — delete cards via agent API (requires `boardId` in body)
+- Cascades to comments and emits `card.deleted` SSE event
+- Updated README API table with correct delete endpoint path
 
 ### v0.3.0 (2026-06-01)
 - New `GET /api/agent/boards` endpoint — list ALL boards on the account
