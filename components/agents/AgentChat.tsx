@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import apiFetch from '@/lib/apiFetch';
 
 interface ChatMessage {
   role: string;
@@ -46,7 +47,7 @@ export function AgentChat({ agentId, agentName, boardId }: AgentChatProps) {
     abortControllerRef.current = new AbortController();
 
     try {
-      const response = await fetch(`/api/agents/${agentId}/chat`, {
+      const response = await apiFetch(`/api/agents/${agentId}/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { Spinner } from '@/components/ui/Spinner';
+import apiFetch from '@/lib/apiFetch';
 
 export default function ApprovePage() {
   const params = useParams();
@@ -17,7 +18,7 @@ export default function ApprovePage() {
     useEffect(() => {
       const fetchDetails = async () => {
         try {
-          const res = await fetch(`/api/board-access/${accessId}`);
+          const res = await apiFetch(`/api/board-access/${accessId}`);
           if (!res.ok) {
             setStatus('error');
             return;
@@ -45,7 +46,7 @@ export default function ApprovePage() {
     setError('');
 
     try {
-      const res = await fetch(`/api/board-access/${accessId}`, {
+      const res = await apiFetch(`/api/board-access/${accessId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action }),

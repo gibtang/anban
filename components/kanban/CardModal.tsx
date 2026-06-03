@@ -5,6 +5,7 @@ import type { Card, CreateCardRequest, UpdateCardRequest } from '@/types/card';
 import { Spinner } from '@/components/ui/Spinner';
 import { ActivityLog } from './ActivityLog';
 import { CommentSection } from './CommentSection';
+import apiFetch from '@/lib/apiFetch';
 
 interface AgentOption {
   id: string;
@@ -168,7 +169,7 @@ export function CardModal({
     setIsGeneratingTitle(true);
     setError('');
     try {
-      const res = await fetch('/api/ai/generate-title', {
+      const res = await apiFetch('/api/ai/generate-title', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ description: description.trim() }),
