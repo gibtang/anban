@@ -5,6 +5,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { mutate } from 'swr';
 import type { Card } from '@/types/card';
+import apiFetch from '@/lib/apiFetch';
 
 interface AgentOption {
   id: string;
@@ -81,7 +82,7 @@ export default function KanbanCard({ card, isDragging, onEdit, agentName, agentT
     }, { revalidate: false });
 
     try {
-      const res = await fetch(`/api/cards/${card.id}`, {
+      const res = await apiFetch(`/api/cards/${card.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ agentId }),
