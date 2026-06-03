@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
-import { Spinner } from '@/components/ui/Spinner';
 import apiFetch from '@/lib/apiFetch';
 
 interface BoardInfo {
@@ -147,7 +146,6 @@ export default function JoinBoardPage() {
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="max-w-md w-full">
           <div className="text-center mb-6">
-            <Spinner size="lg" className="text-indigo-600 mx-auto" />
             <p className="mt-3 text-sm text-gray-500">Loading board info...</p>
           </div>
 
@@ -211,12 +209,7 @@ export default function JoinBoardPage() {
                 disabled={isSubmitting || !agentName.trim()}
                 className="w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isSubmitting ? (
-                  <>
-                    <Spinner size="sm" className="mr-2" />
-                    Sending request...
-                  </>
-                ) : (
+                {isSubmitting ? 'Sending request...' : (
                   'Request Access'
                 )}
               </button>
@@ -229,7 +222,9 @@ export default function JoinBoardPage() {
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <div className="text-center mb-6">
               <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-yellow-100 flex items-center justify-center">
-                <Spinner size="md" className="text-yellow-600" />
+                <svg className="w-6 h-6 text-yellow-600 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
               </div>
               <h2 className="text-lg font-semibold text-gray-900 mb-2">Waiting for Approval</h2>
             </div>
@@ -372,7 +367,9 @@ export default function JoinBoardPage() {
         {requestStatus?.status === 'expired' && (
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 text-center">
             <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-yellow-100 flex items-center justify-center">
-              <Spinner size="md" className="text-yellow-600" />
+              <svg className="w-6 h-6 text-yellow-600 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
             </div>
             <h2 className="text-lg font-semibold text-gray-900 mb-2">Link Expired</h2>
             <p className="text-sm text-gray-500 mb-3">

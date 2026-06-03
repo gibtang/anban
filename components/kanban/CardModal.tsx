@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import type { Card, CreateCardRequest, UpdateCardRequest } from '@/types/card';
-import { Spinner } from '@/components/ui/Spinner';
 import { ActivityLog } from './ActivityLog';
 import { CommentSection } from './CommentSection';
 import apiFetch from '@/lib/apiFetch';
@@ -283,7 +282,9 @@ export function CardModal({
                           title="AI-generate title from description"
                         >
                           {isGeneratingTitle ? (
-                            <Spinner size="sm" />
+                            <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
                           ) : (
                             <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                               <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z" />
@@ -432,12 +433,7 @@ export function CardModal({
                     disabled={isDeleting}
                     className="inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {isDeleting ? (
-                      <>
-                        <Spinner size="sm" className="mr-2 text-white" />
-                        Deleting...
-                      </>
-                    ) : (
+                    {isDeleting ? 'Deleting...' : (
                       'Confirm Delete'
                     )}
                   </button>
@@ -457,12 +453,7 @@ export function CardModal({
                     disabled={isSaving || !title.trim()}
                     className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {isSaving ? (
-                      <>
-                        <Spinner size="sm" className="mr-2 text-white" />
-                        Saving...
-                      </>
-                    ) : isEditMode ? (
+                    {isSaving ? 'Saving...' : isEditMode ? (
                       'Update Card'
                     ) : (
                       'Create Card'

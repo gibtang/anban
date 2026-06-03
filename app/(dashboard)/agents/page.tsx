@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import useSWR from 'swr';
-import { Spinner } from '@/components/ui/Spinner';
 import { useToast } from '@/components/toast/ToastProvider';
 import { fetchWithRetry } from '@/lib/utils/retry';
 
@@ -64,19 +63,7 @@ export default function AgentsPage() {
   };
 
   if (isLoading) {
-    return (
-      <div>
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Agents</h1>
-            <p className="mt-1 text-sm text-gray-500">Loading...</p>
-          </div>
-        </div>
-        <div className="flex items-center justify-center py-12">
-          <Spinner size="lg" className="text-indigo-600" />
-        </div>
-      </div>
-    );
+    return null;
   }
 
   if (error) {
