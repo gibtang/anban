@@ -3,7 +3,6 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import apiFetch from '@/lib/apiFetch';
-import { Spinner } from '@/components/ui/Spinner';
 import { useSearchParams } from 'next/navigation';
 
 interface OpenClawConfig {
@@ -141,11 +140,7 @@ function SettingsContent() {
   }
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Spinner size="lg" className="text-indigo-600" />
-      </div>
-    );
+    return null;
   }
 
   return (
@@ -256,12 +251,7 @@ function SettingsContent() {
               disabled={isTestingConnection || !settings.openClaw.gatewayUrl}
               className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isTestingConnection ? (
-                <>
-                  <Spinner size="sm" className="mr-2 text-gray-700" />
-                  Testing...
-                </>
-              ) : (
+              {isTestingConnection ? 'Testing...' : (
                 'Test Connection'
               )}
             </button>
@@ -292,12 +282,7 @@ function SettingsContent() {
           disabled={isSaving}
           className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isSaving ? (
-            <>
-              <Spinner size="sm" className="mr-2 text-white" />
-              Saving...
-            </>
-          ) : (
+          {isSaving ? 'Saving...' : (
             'Save Settings'
           )}
         </button>
@@ -308,11 +293,7 @@ function SettingsContent() {
 
 export default function SettingsPage() {
   return (
-    <Suspense fallback={
-      <div className="flex items-center justify-center h-64">
-        <Spinner size="lg" className="text-indigo-600" />
-      </div>
-    }>
+    <Suspense fallback={null}>
       <SettingsContent />
     </Suspense>
   );

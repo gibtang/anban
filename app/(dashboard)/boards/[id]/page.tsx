@@ -6,7 +6,6 @@ import useSWR, { mutate } from 'swr';
 import { useEventSource } from '@/lib/hooks/useEventSource';
 import KanbanBoard from '@/components/kanban/KanbanBoard';
 import { useToast } from '@/components/toast/ToastProvider';
-import { Spinner } from '@/components/ui/Spinner';
 import { fetchWithRetry } from '@/lib/utils/retry';
 
 interface BoardData {
@@ -159,7 +158,6 @@ export default function BoardDetailPage() {
                 disabled={isSaving}
                 className="text-xl font-bold border-b-2 border-indigo-500 bg-transparent outline-none py-0.5 min-w-[120px] text-gray-900"
               />
-              {isSaving && <Spinner size="sm" className="text-indigo-600" />}
             </div>
           ) : (
             <button

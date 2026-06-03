@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/app/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { Spinner } from '@/components/ui/Spinner';
 import { LoadingProvider } from '@/app/contexts/LoadingContext';
 import { GlobalOverlay } from '@/components/ui/GlobalOverlay';
 
@@ -146,12 +145,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                 className="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm font-medium rounded-md text-gray-600 bg-white hover:bg-gray-50 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 transition-colors"
                 disabled={isLoggingOut}
               >
-                {isLoggingOut ? (
-                  <>
-                    <Spinner size="xs" className="mr-1.5" />
-                    Logging out...
-                  </>
-                ) : (
+                {isLoggingOut ? 'Logging out...' : (
                   'Logout'
                 )}
               </button>
