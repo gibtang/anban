@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import apiFetch from '@/lib/apiFetch';
 
 interface Activity {
   id: string;
@@ -73,7 +74,7 @@ export function ActivityLog({ cardId }: ActivityLogProps) {
     if (!cardId) return;
 
     setLoading(true);
-    fetch(`/api/activities?cardId=${cardId}`)
+    apiFetch(`/api/activities?cardId=${cardId}`)
       .then((res) => res.ok ? res.json() : [])
       .then((data) => {
         setActivities(data);

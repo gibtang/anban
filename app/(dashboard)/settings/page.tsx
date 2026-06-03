@@ -2,6 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import apiFetch from '@/lib/apiFetch';
 import { Spinner } from '@/components/ui/Spinner';
 import { useSearchParams } from 'next/navigation';
 
@@ -46,7 +47,7 @@ function SettingsContent() {
 
     try {
       setIsLoading(true);
-      const response = await fetch(`/api/settings?boardId=${boardId}`);
+      const response = await apiFetch(`/api/settings?boardId=${boardId}`);
       if (response.ok) {
         const data = await response.json();
         setSettings(data);
@@ -69,7 +70,7 @@ function SettingsContent() {
     setConnectionTestResult(null);
 
     try {
-      const response = await fetch('/api/settings', {
+      const response = await apiFetch('/api/settings', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -93,7 +94,7 @@ function SettingsContent() {
     setConnectionTestResult(null);
 
     try {
-      const response = await fetch('/api/settings/test-connection', {
+      const response = await apiFetch('/api/settings/test-connection', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

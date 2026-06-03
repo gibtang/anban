@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import apiFetch from '@/lib/apiFetch';
 
 interface Comment {
   id: string;
@@ -39,7 +40,7 @@ export function CommentSection({ cardId }: CommentSectionProps) {
 
   const fetchComments = useCallback(() => {
     setLoading(true);
-    fetch(`/api/cards/${cardId}/comments`)
+    apiFetch(`/api/cards/${cardId}/comments`)
       .then((res) => (res.ok ? res.json() : []))
       .then((data) => {
         setComments(data);
@@ -62,7 +63,7 @@ export function CommentSection({ cardId }: CommentSectionProps) {
     setError('');
 
     try {
-      const res = await fetch(`/api/cards/${cardId}/comments`, {
+      const res = await apiFetch(`/api/cards/${cardId}/comments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content: trimmed }),

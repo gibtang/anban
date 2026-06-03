@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import { Spinner } from '@/components/ui/Spinner';
+import apiFetch from '@/lib/apiFetch';
 
 interface BoardInfo {
   boards: { id: string; name: string }[];
@@ -34,7 +35,7 @@ export default function JoinBoardPage() {
   useEffect(() => {
     const fetchBoard = async () => {
       try {
-        const res = await fetch(`/api/board-access/board?shareToken=${shareToken}`);
+        const res = await apiFetch(`/api/board-access/board?shareToken=${shareToken}`);
         if (!res.ok) {
           setError('This invite link is invalid or has expired.');
           return;
@@ -54,13 +55,13 @@ export default function JoinBoardPage() {
     if (!requestStatus || requestStatus.status !== 'pending') return;
 
     try {
-      const res = await fetch(`/api/board-access/${requestStatus.approvalToken}`);
+      const res = await apiFetch(`/api/board-access/${requestStatus.approvalToken}`);
       if (res.ok) {
         const data = await res.json();
 
         // If expired, auto-re-request to get a fresh approval URL
         if (data.status === 'expired') {
-          const retryRes = await fetch('/api/board-access/request', {
+          const retryRes = await apiFetch('/api/board-access/request', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ shareToken, agentName: agentName.trim() }),
@@ -94,7 +95,7 @@ export default function JoinBoardPage() {
     setError('');
 
     try {
-      const res = await fetch('/api/board-access/request', {
+      const res = await apiFetch('/api/board-access/request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ shareToken, agentName: agentName.trim() }),

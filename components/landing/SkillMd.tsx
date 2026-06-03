@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import apiFetch from '@/lib/apiFetch';
 
 interface Frontmatter {
   version: string;
@@ -34,7 +35,7 @@ export function SkillMd() {
   const [meta, setMeta] = useState<Frontmatter | null>(null);
 
   useEffect(() => {
-    fetch('/skill.md')
+    apiFetch('/skill.md')
       .then((res) => res.ok ? res.text() : null)
       .then((text) => {
         if (!text) return;

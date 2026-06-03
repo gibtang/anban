@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import apiFetch from '@/lib/apiFetch';
 import { useToast } from '@/components/toast/ToastProvider';
 import { Spinner } from '@/components/ui/Spinner';
 
@@ -14,7 +15,7 @@ export default function SharePanel() {
   const handleShare = async () => {
     setIsLoading(true);
     try {
-      const res = await fetch('/api/user/share', { method: 'POST' });
+      const res = await apiFetch('/api/user/share', { method: 'POST' });
       if (!res.ok) throw new Error('Failed to generate share link');
       const data = await res.json();
       setShareUrl(data.shareUrl);
@@ -38,7 +39,7 @@ export default function SharePanel() {
 
   const handleRevoke = async () => {
     try {
-      const res = await fetch('/api/user/share', { method: 'DELETE' });
+      const res = await apiFetch('/api/user/share', { method: 'DELETE' });
       if (!res.ok) throw new Error('Failed to revoke');
       setShareUrl(null);
       setShowPanel(false);

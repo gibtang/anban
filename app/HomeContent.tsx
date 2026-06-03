@@ -1,6 +1,7 @@
 'use client';
 
 import { useAuth } from './contexts/AuthContext';
+import apiFetch from '@/lib/apiFetch';
 import { useEffect, useState } from 'react';
 import { Navbar } from '@/components/landing/Navbar';
 import { Hero } from '@/components/landing/Hero';
@@ -18,7 +19,7 @@ export default function HomeContent() {
   const [stars, setStars] = useState(0);
 
   useEffect(() => {
-    fetch('/api/github/stars')
+    apiFetch('/api/github/stars')
       .then((res) => res.json())
       .then((data) => setStars(data.stars ?? 0))
       .catch(() => {});

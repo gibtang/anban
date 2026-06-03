@@ -13,6 +13,7 @@ import {
   IdTokenResult,
 } from 'firebase/auth';
 import { firebaseInitializationPromise } from '../firebase';
+import apiFetch from '@/lib/apiFetch';
 
 interface AuthContextType {
   user: User | null;
@@ -43,7 +44,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             if (firebaseUser) {
               try {
                 const idTokenResult: IdTokenResult = await firebaseUser.getIdTokenResult(true);
-                await fetch('/api/auth/set-cookie', {
+                await apiFetch('/api/auth/set-cookie', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({ idToken: idTokenResult.token }),
@@ -53,7 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               }
             } else {
               // Clear cookie when user signs out
-              await fetch('/api/auth/set-cookie', {
+              await apiFetch('/api/auth/set-cookie', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ idToken: '' }),
@@ -117,7 +118,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await firebaseSignOut(auth);
     // Clear cookie
     try {
-      await fetch('/api/auth/set-cookie', {
+      await apiFetch('/api/auth/set-cookie', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ idToken: '' }),
