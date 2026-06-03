@@ -6,6 +6,8 @@ import { usePathname } from 'next/navigation';
 import { useAuth } from '@/app/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { Spinner } from '@/components/ui/Spinner';
+import { LoadingProvider } from '@/app/contexts/LoadingContext';
+import { GlobalOverlay } from '@/components/ui/GlobalOverlay';
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const { user, logout } = useAuth();
@@ -32,7 +34,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <LoadingProvider>
+      <GlobalOverlay />
+      <div className="min-h-screen bg-gray-50">
       {/* Mobile sidebar backdrop */}
       {sidebarOpen && (
         <div
@@ -160,6 +164,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           {children}
         </main>
       </div>
-    </div>
+      </div>
+    </LoadingProvider>
   );
 }
