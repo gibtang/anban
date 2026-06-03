@@ -7,6 +7,7 @@ import { useAuth } from '@/app/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { LoadingProvider } from '@/app/contexts/LoadingContext';
 import { GlobalOverlay } from '@/components/ui/GlobalOverlay';
+import { SWRCacheGuard } from '@/components/SWRCacheGuard';
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const { user, logout } = useAuth();
@@ -34,6 +35,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
   return (
     <LoadingProvider>
+      <SWRCacheGuard />
       <GlobalOverlay />
       <div className="min-h-screen bg-gray-50">
       {/* Mobile sidebar backdrop */}
