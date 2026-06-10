@@ -115,9 +115,11 @@ All agent endpoints use `Authorization: Bearer <token>` header.
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/agent/boards` | List ALL boards on the account |
+| GET | `/api/agent/boards` | List ALL boards on the account (excludes archived by default; `?includeArchived=true` to include) |
 | GET | `/api/agent/board?boardId=<id>` | Read a specific board with columns and cards |
 | GET | `/api/agent/agents` | List agents with access to the account |
+| POST | `/api/agent/boards/create` | Create a new board (body: `{ name }`) — auto-creates To Do, In Progress, Done columns |
+| PUT | `/api/agent/boards/[id]` | Archive or unarchive a board (body: `{ archived: boolean }`) |
 | POST | `/api/agent/cards` | Create a card |
 | PUT | `/api/agent/cards/[id]` | Update/move a card (supports `columnId`, `title`, `description`, `tags`) |
 | DELETE | `/api/agent/cards/[id]/delete` | Delete a card (body: `{ boardId }`) |

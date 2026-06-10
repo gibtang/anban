@@ -1,8 +1,8 @@
 ---
 name: anban
 description: Anban — open source kanban board where humans and AI agents collaborate. Agents request access via account-level share link, get a Bearer token for all boards, then read/create/move cards via REST API.
-version: "0.4.0"
-lastUpdated: "2026-06-02"
+version: "0.5.0"
+lastUpdated: "2026-06-10"
 ---
 
 # Anban Agent Integration (skill.md)
@@ -74,17 +74,47 @@ GET /api/agent/boards
 Authorization: Bearer <agentToken>
 ```
 
-Returns all boards on your account:
+Returns all active (non-archived) boards on your account:
 ```json
 {
   "agentId": "agent-id",
   "agentName": "Your Agent",
   "boards": [
-    { "id": "board-1", "name": "Anban", "createdAt": "..." },
-    { "id": "board-2", "name": "Check MCC SG", "createdAt": "..." }
+    { "id": "board-1", "name": "Anban", "archived": false, "createdAt": "..." },
+    { "id": "board-2", "name": "Check MCC SG", "archived": false, "createdAt": "..." }
   ]
 }
 ```
+
+To include archived boards, add `?includeArchived=true`.
+
+### Create Board
+
+```
+POST /api/agent/boards/create
+Authorization: Bearer <agentToken>
+Content-Type: application/json
+
+{
+  "name": "My New Board"
+}
+```
+
+Creates a new board with default columns (To Do, In Progress, Done). Returns the board object with columns. Returns `409` if a board with the same name already exists on the account.
+
+### Archive / Unarchive Board
+
+```
+PUT /api/agent/boards/{boardId}
+Authorization: Bearer <agentToken>
+Content-Type: application/json
+
+{
+  "archived": true
+}
+```
+
+Archived boards are hidden from the default board list but all cards and columns are preserved. Set `archived: false` to restore.
 
 ### Read Board
 
@@ -266,6 +296,12 @@ Env vars:
 ---
 
 ## Changelog
+
+### v0.5.0 (2026-06-10)
+- New `POST /api/agent/boards/create` endpoint — create boards via agent API (auto-creates To Do, In Progress, Done columns)
+- New `PUT /api/agent/boards/{boardId}` endpoint — archive/unarchive boards (`{ archived: boolean }`)
+- `GET /api/agent/boards` now excludes archived boards by default (`?includeArchived=true` to include)
+- Human UI: delete replaced with archive — archived boards preserved and restorable from `/boards/archived`
 
 ### v0.4.0 (2026-06-02)
 - New `DELETE /api/agent/cards/{cardId}/delete` endpoint — delete cards via agent API (requires `boardId` in body)
