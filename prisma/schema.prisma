@@ -23,6 +23,7 @@ model Board {
   name       String
   ownerId    String   @db.ObjectId
   favorited  Boolean  @default(false)
+  archived   Boolean  @default(false)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 

@@ -8,9 +8,14 @@ export async function GET(request: NextRequest) {
   try {
     const userId = await verifyAuth(request);
 
+    const showArchived = request.nextUrl.searchParams.get('includeArchived') === 'true';
+
     // Get all boards for the user with column/card counts in a single query
     const boards = await prisma.board.findMany({
-      where: { ownerId: userId },
+      where: {
+        ownerId: userId,
+        ...(showArchived ? {} : { archived: false }),
+      },
       orderBy: [
         { favorited: 'desc' },
         { updatedAt: 'desc' },

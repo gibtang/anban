@@ -29,9 +29,9 @@ export default function BoardsPage() {
   const [isCreating, setIsCreating] = useState(false);
   const [createError, setCreateError] = useState('');
   const [isRetrying, setIsRetrying] = useState(false);
-  const [deleteBoardId, setDeleteBoardId] = useState<string | null>(null);
-  const [deleteBoardName, setDeleteBoardName] = useState('');
-  const [isDeleting, setIsDeleting] = useState(false);
+  const [archiveBoardId, setArchiveBoardId] = useState<string | null>(null);
+  const [archiveBoardName, setArchiveBoardName] = useState('');
+  const [isArchiving, setIsArchiving] = useState(false);
   const [togglingFavId, setTogglingFavId] = useState<string | null>(null);
 
   const { data: boards, error, isLoading, mutate: mutateBoards } = useSWR<Board[]>('/api/boards', fetcher, {
@@ -85,26 +85,28 @@ export default function BoardsPage() {
     }
   };
 
-  const handleDeleteBoard = async () => {
-    if (!deleteBoardId) return;
-    setIsDeleting(true);
+  const handleArchiveBoard = async () => {
+    if (!archiveBoardId) return;
+    setIsArchiving(true);
     try {
-      const res = await fetchWithRetry(`/api/boards/${deleteBoardId}`, {
-        method: 'DELETE',
+      const res = await fetchWithRetry(`/api/boards/${archiveBoardId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ archived: true }),
       });
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || 'Failed to delete board');
+        throw new Error(data.error || 'Failed to archive board');
       }
       await mutateBoards();
-      toast.showToast(`"${deleteBoardName}" deleted`, 'success');
-      setDeleteBoardId(null);
-      setDeleteBoardName('');
+      toast.showToast(`"${archiveBoardName}" archived`, 'success');
+      setArchiveBoardId(null);
+      setArchiveBoardName('');
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to delete board';
+      const errorMessage = err instanceof Error ? err.message : 'Failed to archive board';
       toast.showToast(errorMessage, 'error');
     } finally {
-      setIsDeleting(false);
+      setIsArchiving(false);
     }
   };
 
@@ -165,6 +167,15 @@ export default function BoardsPage() {
         </div>
         <div className="flex items-center gap-2">
           <SharePanel />
+          <Link
+            href="/boards/archived"
+            className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-600 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+          >
+            <svg className="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+            </svg>
+            Archived
+          </Link>
           <button
             onClick={() => setShowCreateModal(true)}
             className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
@@ -241,14 +252,14 @@ export default function BoardsPage() {
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    setDeleteBoardId(board.id);
-                    setDeleteBoardName(board.name);
+                    setArchiveBoardId(board.id);
+                    setArchiveBoardName(board.name);
                   }}
-                  className="p-1.5 rounded-md text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
-                  title="Delete board"
+                  className="p-1.5 rounded-md text-gray-400 hover:text-amber-500 hover:bg-amber-50 transition-colors"
+                  title="Archive board"
                 >
                   <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
                   </svg>
                 </button>
               </div>
@@ -352,27 +363,27 @@ export default function BoardsPage() {
         </div>
       )}
 
-      {/* Delete Board Confirmation Modal */}
-      {deleteBoardId && (
+      {/* Archive Board Confirmation Modal */}
+      {archiveBoardId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div
             className="absolute inset-0 bg-gray-900/50 transition-opacity"
             onClick={() => {
-              setDeleteBoardId(null);
-              setDeleteBoardName('');
+              setArchiveBoardId(null);
+              setArchiveBoardName('');
             }}
           />
           <div className="relative bg-white rounded-xl shadow-xl w-full max-w-sm p-6">
             <div className="flex items-center gap-3 mb-4">
-              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
-                <svg className="h-5 w-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
+                <svg className="h-5 w-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
                 </svg>
               </div>
               <div>
-                <h2 className="text-lg font-semibold text-gray-900">Delete Board</h2>
+                <h2 className="text-lg font-semibold text-gray-900">Archive Board</h2>
                 <p className="mt-1 text-sm text-gray-500">
-                  Are you sure you want to delete <span className="font-medium text-gray-700">"{deleteBoardName}"</span>? All cards and columns will be permanently removed.
+                  Archive <span className="font-medium text-gray-700">"{archiveBoardName}"</span>? It will be hidden from your boards list but can be restored anytime from the Archived page.
                 </p>
               </div>
             </div>
@@ -380,22 +391,22 @@ export default function BoardsPage() {
               <button
                 type="button"
                 onClick={() => {
-                  setDeleteBoardId(null);
-                  setDeleteBoardName('');
+                  setArchiveBoardId(null);
+                  setArchiveBoardName('');
                 }}
-                disabled={isDeleting}
+                disabled={isArchiving}
                 className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 transition-colors"
               >
                 Cancel
               </button>
               <button
                 type="button"
-                onClick={handleDeleteBoard}
-                disabled={isDeleting}
-                className="px-4 py-2 text-sm font-medium rounded-lg text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                onClick={handleArchiveBoard}
+                disabled={isArchiving}
+                className="px-4 py-2 text-sm font-medium rounded-lg text-white bg-amber-600 hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                {isDeleting ? 'Deleting...' : (
-                  'Delete Board'
+                {isArchiving ? 'Archiving...' : (
+                  'Archive Board'
                 )}
               </button>
             </div>

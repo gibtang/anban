@@ -17,9 +17,14 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Agent not linked to an account' }, { status: 400 });
     }
 
+    const showArchived = request.nextUrl.searchParams.get('includeArchived') === 'true';
+
     const boards = await prisma.board.findMany({
-      where: { ownerId },
-      select: { id: true, name: true, createdAt: true },
+      where: {
+        ownerId,
+        ...(showArchived ? {} : { archived: false }),
+      },
+      select: { id: true, name: true, archived: true, createdAt: true },
       orderBy: { name: 'asc' },
     });
 

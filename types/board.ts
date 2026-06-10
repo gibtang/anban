@@ -14,6 +14,7 @@ export interface Board {
   name: string;
   ownerId: string;
   favorited?: boolean;
+  archived?: boolean;
   createdAt: string;
   updatedAt: string;
   columns?: Column[];
