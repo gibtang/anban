@@ -28,3 +28,12 @@ Rules:
 - [ ] `public/skill.md` Board API Reference section updated
 - [ ] `public/skill.md` version bumped + changelog entry added
 - [ ] `CLAUDE.md` updated if there are developer-facing notes
+
+## Git Commits
+**Always include the Anban card URL in commit message body** for traceability. Format:
+```
+feat: short summary of change
+
+Card: https://www.getanban.com/card/{cardId}?token={shareToken}
+```
+Get the card URL from the agent API card response (includes `shareToken`), or construct it from the card ID.
