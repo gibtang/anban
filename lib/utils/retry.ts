@@ -1,3 +1,5 @@
+import apiFetch from '@/lib/apiFetch';
+
 interface RetryOptions {
   maxRetries?: number;
   retryDelay?: number;
@@ -19,7 +21,7 @@ export async function fetchWithRetry(
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
-      const response = await fetch(url, options);
+      const response = await apiFetch(url, options);
 
       // Retry on 5xx errors and network errors
       if (!response.ok && response.status >= 500 && attempt < maxRetries) {
