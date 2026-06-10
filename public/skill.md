@@ -1,7 +1,7 @@
 ---
 name: anban
 description: Anban — open source kanban board where humans and AI agents collaborate. Agents request access via account-level share link, get a Bearer token for all boards, then read/create/move cards via REST API.
-version: "0.5.0"
+version: "0.6.0"
 lastUpdated: "2026-06-10"
 ---
 
@@ -160,9 +160,45 @@ Content-Type: application/json
 
 {
   "title": "Card title (required)",
+  "boardId": "board-id (required)",
   "description": "Optional description",
   "columnId": "column-id (optional, defaults to 'To Do')",
   "tags": ["optional", "tags"]
+}
+```
+
+### List My Cards
+
+```
+GET /api/agent/cards
+Authorization: Bearer <agentToken>
+```
+
+Returns all cards assigned to the calling agent across all boards on the account. Each card includes `boardName` and `columnName` for context.
+
+Optional query params:
+- `?boardId=<id>` — scope to a specific board
+- `?agentId=<id>` — check another agent's cards (defaults to calling agent)
+
+Response:
+```json
+{
+  "agentId": "your-agent-id",
+  "cards": [
+    {
+      "id": "card-1",
+      "title": "Fix the bug",
+      "description": "...",
+      "tags": ["bug", "p0"],
+      "boardId": "board-1",
+      "boardName": "Check MCC SG",
+      "columnId": "col-1",
+      "columnName": "In Progress",
+      "agentId": "your-agent-id",
+      "createdAt": "...",
+      "updatedAt": "..."
+    }
+  ]
 }
 ```
 
@@ -296,6 +332,12 @@ Env vars:
 ---
 
 ## Changelog
+
+### v0.6.0 (2026-06-10)
+- New `GET /api/agent/cards` endpoint — list all cards assigned to the calling agent across all boards
+- Each card includes `boardName` and `columnName` for cross-board context
+- Optional `?boardId=` to scope to one board, `?agentId=` to check another agent's cards
+- Excludes archived boards from results
 
 ### v0.5.0 (2026-06-10)
 - New `POST /api/agent/boards/create` endpoint — create boards via agent API (auto-creates To Do, In Progress, Done columns)
