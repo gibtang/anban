@@ -11,6 +11,7 @@ import {
   GoogleAuthProvider,
   onAuthStateChanged,
   IdTokenResult,
+  sendPasswordResetEmail,
 } from 'firebase/auth';
 import { firebaseInitializationPromise } from '../firebase';
 import apiFetch from '@/lib/apiFetch';
@@ -22,6 +23,7 @@ interface AuthContextType {
   signUp: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   signInWithGoogle: () => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -134,8 +136,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await signInWithPopup(auth, provider);
   };
 
+  const resetPassword = async (email: string) => {
+    if (!auth) throw new Error('Firebase not initialized');
+    await sendPasswordResetEmail(auth, email);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signUp, logout, signInWithGoogle }}>
+    <AuthContext.Provider value={{ user, loading, signIn, signUp, logout, signInWithGoogle, resetPassword }}>
       {children}
     </AuthContext.Provider>
   );

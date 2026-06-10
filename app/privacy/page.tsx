@@ -2,16 +2,16 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy — Ask Miles MCC',
+  title: 'Privacy Policy — Anban',
   description:
-    'Privacy policy for the Ask Miles MCC app, operated by A2ZSoft (AZ SOFT PTE. LTD.). Learn how we collect, use, and protect your data.',
+    'Privacy policy for Anban, the open-source kanban board for humans and AI agents. Learn how we collect, use, and protect your data.',
   alternates: {
     canonical: '/privacy',
   },
   openGraph: {
-    title: 'Privacy Policy — Ask Miles MCC',
+    title: 'Privacy Policy — Anban',
     description:
-      'Privacy policy for the Ask Miles MCC app by A2ZSoft.',
+      'Privacy policy for Anban, the open-source kanban board.',
     url: '/privacy',
   },
 };

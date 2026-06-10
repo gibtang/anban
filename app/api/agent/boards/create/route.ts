@@ -27,6 +27,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Name is required' }, { status: 400 });
     }
 
+    if (name.trim().length > 100) {
+      return NextResponse.json({ error: 'Name must be 100 characters or fewer' }, { status: 400 });
+    }
+
     // Check if board with same name already exists for this account
     const duplicate = await prisma.board.findFirst({
       where: { name: name.trim(), ownerId },

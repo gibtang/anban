@@ -27,6 +27,11 @@ export async function GET(request: NextRequest) {
     const boardId = request.nextUrl.searchParams.get('boardId') || undefined;
     const agentId = request.nextUrl.searchParams.get('agentId') || callerAgentId;
 
+    // Validate boardId format (24-char hex for MongoDB ObjectId)
+    if (boardId && !/^[a-fA-F0-9]{24}$/.test(boardId)) {
+      return NextResponse.json({ error: 'Invalid boardId format' }, { status: 400 });
+    }
+
     // Get all board IDs on this account
     const accountBoards = await prisma.board.findMany({
       where: {

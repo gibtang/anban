@@ -12,7 +12,7 @@ export function CTASection({ cloudHref }: CTASectionProps) {
           Start collaborating with your AI agents today
         </h2>
         <p className="mt-4 text-lg text-indigo-200">
-          Free to use on anban.app. Or self-host with full control over your data.
+          Free to use on getanban.com. Or self-host with full control over your data.
         </p>
         <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
           <Link

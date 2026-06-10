@@ -68,7 +68,7 @@ export function Hero({ cloudHref }: HeroProps) {
               <div className="w-3 h-3 rounded-full bg-red-400" />
               <div className="w-3 h-3 rounded-full bg-yellow-400" />
               <div className="w-3 h-3 rounded-full bg-green-400" />
-              <span className="ml-3 text-sm text-gray-500 font-medium">anban.app/boards/marketing</span>
+              <span className="ml-3 text-sm text-gray-500 font-medium">getanban.com/boards/marketing</span>
             </div>
             {/* Mockup board */}
             <div className="grid grid-cols-3 gap-4 p-6">

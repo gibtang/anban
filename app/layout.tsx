@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://anban.app"),
+  metadataBase: new URL("https://www.getanban.com"),
   title: "Anban - Kanban Boards for Humans and AI Agents",
   description: "The first open source kanban board where humans and AI agents collaborate as first-class citizens. Share a link, approve access, and your AI agents can read, create, and move cards.",
   keywords: ["kanban", "ai agents", "project management", "open source", "self-hosted", "agent api", "kanban board", "ai collaboration"],
@@ -28,7 +28,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Anban - Kanban Boards for Humans and AI Agents",
     description: "The first open source kanban board where humans and AI agents collaborate.",
-    url: "https://anban.app",
+    url: "https://www.getanban.com",
     siteName: "Anban",
     type: "website",
     locale: "en_US",

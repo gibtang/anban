@@ -11,7 +11,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { user, signIn, signInWithGoogle } = useAuth();
+  const { user, signIn, signInWithGoogle, resetPassword } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
@@ -127,6 +127,28 @@ export default function LoginPage() {
                 )}
               </button>
             </div>
+          </div>
+
+          <div className="flex items-center justify-end">
+            <button
+              type="button"
+              onClick={async () => {
+                if (!email) {
+                  setError('Enter your email above, then click "Forgot password?"');
+                  return;
+                }
+                try {
+                  await resetPassword(email);
+                  setError('');
+                  alert('Password reset email sent. Check your inbox.');
+                } catch {
+                  setError('Could not send reset email. Check your email address.');
+                }
+              }}
+              className="text-sm text-indigo-600 hover:text-indigo-500"
+            >
+              Forgot password?
+            </button>
           </div>
 
           <div>
