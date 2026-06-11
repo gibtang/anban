@@ -3,6 +3,7 @@
 import { useState, FormEvent, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../contexts/AuthContext';
+import { getFriendlyAuthError } from '@/lib/auth-errors';
 import Link from 'next/link';
 
 export default function SignupPage() {
@@ -44,7 +45,7 @@ export default function SignupPage() {
       // after onAuthStateChanged fires and the cookie is set
     } catch (err: unknown) {
       if (err instanceof Error) {
-        setError(err.message);
+        setError(getFriendlyAuthError(err));
       } else {
         setError('Failed to create an account. Please try again.');
       }
@@ -62,7 +63,7 @@ export default function SignupPage() {
       // Redirect handled by useEffect watching `user`
     } catch (err: unknown) {
       if (err instanceof Error) {
-        setError(err.message);
+        setError(getFriendlyAuthError(err));
       } else {
         setError('Failed to sign in with Google.');
       }
