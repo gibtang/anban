@@ -56,7 +56,7 @@ export default function PrivacyPage() {
               Privacy <span className="text-indigo-600">Policy</span>
             </h1>
             <p className="mt-4 text-lg text-gray-600">
-              For the <strong>Ask Miles MCC</strong> app
+              For the <strong>Anban</strong> web application
             </p>
           </div>
 
@@ -65,11 +65,11 @@ export default function PrivacyPage() {
             <dl className="space-y-2 text-gray-700">
               <div className="flex justify-between">
                 <dt className="font-medium">App Name</dt>
-                <dd>Ask Miles MCC</dd>
+                <dd>Anban</dd>
               </div>
               <div className="flex justify-between">
                 <dt className="font-medium">Package ID</dt>
-                <dd className="font-mono text-sm">com.azukisoft.askmiles</dd>
+                <dd className="font-mono text-sm">getanban.com</dd>
               </div>
               <div className="flex justify-between">
                 <dt className="font-medium">Developer</dt>
@@ -89,9 +89,8 @@ export default function PrivacyPage() {
               <h2 className="text-2xl font-bold text-gray-900 mb-4">1. Introduction</h2>
               <p>
                 A2ZSoft (&quot;we,&quot; &quot;us,&quot; or &quot;our&quot;), operating as{' '}
-                <strong>AZ SOFT PTE. LTD.</strong>, built the <strong>Ask Miles MCC</strong> app as
-                a free tool to help users look up Merchant Category Codes (MCC) for credit card
-                transactions. This privacy policy explains how we handle your data when you use our
+                <strong>AZ SOFT PTE. LTD.</strong>, built the <strong>Anban</strong> application as
+                an open-source kanban board for humans and AI agents. This privacy policy explains how we handle your data when you use our
                 app.
               </p>
             </div>
@@ -100,7 +99,7 @@ export default function PrivacyPage() {
             <div>
               <h2 className="text-2xl font-bold text-gray-900 mb-4">2. Information We Collect</h2>
               <p className="mb-4">
-                Ask Miles MCC is designed with privacy in mind. We collect minimal data:
+                Anban is designed with privacy in mind. We collect minimal data:
               </p>
               <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
                 <table className="w-full text-sm">
@@ -113,18 +112,18 @@ export default function PrivacyPage() {
                   </thead>
                   <tbody className="divide-y divide-gray-100">
                     <tr>
-                      <td className="px-4 py-3">MCC search queries</td>
+                      <td className="px-4 py-3">Board and card data</td>
                       <td className="px-4 py-3">
                         <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">Minimal</span>
                       </td>
-                      <td className="px-4 py-3">To improve search relevance</td>
+                      <td className="px-4 py-3">To provide kanban board functionality</td>
                     </tr>
                     <tr>
-                      <td className="px-4 py-3">Device info (OS, model)</td>
+                      <td className="px-4 py-3">Authentication data (Firebase)</td>
                       <td className="px-4 py-3">
                         <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">Minimal</span>
                       </td>
-                      <td className="px-4 py-3">Crash reporting &amp; compatibility</td>
+                      <td className="px-4 py-3">Secure account access</td>
                     </tr>
                     <tr>
                       <td className="px-4 py-3">Usage analytics</td>
@@ -167,7 +166,7 @@ export default function PrivacyPage() {
                   <svg className="w-5 h-5 text-indigo-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
                   </svg>
-                  <span>Provide and improve MCC lookup functionality</span>
+                  <span>Provide kanban board and agent management features</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <svg className="w-5 h-5 text-indigo-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -244,7 +243,7 @@ export default function PrivacyPage() {
             <div>
               <h2 className="text-2xl font-bold text-gray-900 mb-4">7. Children&apos;s Privacy</h2>
               <p>
-                Ask Miles MCC does not knowingly collect personal information from children under
+                Anban does not knowingly collect personal information from children under
                 13. If you believe a child has provided us with personal data, please contact us
                 and we will take steps to remove it.
               </p>
@@ -278,7 +277,7 @@ export default function PrivacyPage() {
               </p>
               <div className="mt-4 bg-gray-50 border border-gray-200 rounded-xl p-6">
                 <p className="font-semibold text-gray-900">A2ZSoft (AZ SOFT PTE. LTD.)</p>
-                <p className="text-gray-600 mt-1">Developer of Ask Miles MCC</p>
+                <p className="text-gray-600 mt-1">Developer of Anban</p>
                 <p className="text-gray-600 mt-1">
                   Email:{' '}
                   <a href="mailto:admin@a2z-soft.co" className="text-indigo-600 hover:underline">

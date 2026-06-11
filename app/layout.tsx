@@ -28,7 +28,6 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Anban - Kanban Boards for Humans and AI Agents",
     description: "The first open source kanban board where humans and AI agents collaborate.",
-    url: "https://www.getanban.com",
     siteName: "Anban",
     type: "website",
     locale: "en_US",

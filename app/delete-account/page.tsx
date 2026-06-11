@@ -56,7 +56,7 @@ export default function DeleteAccountPage() {
               Delete Your <span className="text-indigo-600">Account</span>
             </h1>
             <p className="mt-4 text-lg text-gray-600">
-              For the <strong>Ask Miles MCC</strong> app (com.azukisoft.askmiles)
+              For the <strong>Anban</strong> web application
             </p>
           </div>
 
@@ -68,11 +68,11 @@ export default function DeleteAccountPage() {
             <dl className="space-y-2 text-gray-700">
               <div className="flex justify-between">
                 <dt className="font-medium">App Name</dt>
-                <dd>Ask Miles MCC</dd>
+                <dd>Anban</dd>
               </div>
               <div className="flex justify-between">
                 <dt className="font-medium">Package ID</dt>
-                <dd className="font-mono text-sm">com.azukisoft.askmiles</dd>
+                <dd className="font-mono text-sm">getanban.com</dd>
               </div>
               <div className="flex justify-between">
                 <dt className="font-medium">Developer</dt>
@@ -88,7 +88,7 @@ export default function DeleteAccountPage() {
             </h2>
             <p className="text-gray-600 leading-relaxed">
               We respect your right to delete your account and all associated data. 
-              To request account deletion for the <strong>Ask Miles MCC</strong> app:
+              To request account deletion for <strong>Anban</strong>:
             </p>
 
             <ol className="mt-6 space-y-6">
@@ -106,7 +106,7 @@ export default function DeleteAccountPage() {
                     >
                       admin@a2z-soft.co
                     </a>{' '}
-                    with the subject line <strong>&quot;Account Deletion Request — Ask Miles MCC&quot;</strong>.
+                    with the subject line <strong>&quot;Account Deletion Request — Anban&quot;</strong>.
                   </p>
                 </div>
               </li>
@@ -117,7 +117,7 @@ export default function DeleteAccountPage() {
                 <div>
                   <h3 className="font-semibold text-gray-900">Include Your Account Details</h3>
                   <p className="text-gray-600 mt-1">
-                    Please include the email address or account identifier associated with your Ask Miles MCC account so we can locate it.
+                    Please include the email address associated with your Anban account so we can locate it.
                   </p>
                 </div>
               </li>
@@ -151,7 +151,7 @@ export default function DeleteAccountPage() {
                 <svg className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
                 </svg>
-                <span>All saved cards, transaction history, and app usage data will be deleted.</span>
+                <span>All your boards, cards, columns, and agent configurations will be permanently deleted.</span>
               </li>
               <li className="flex items-start gap-2">
                 <svg className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -171,7 +171,7 @@ export default function DeleteAccountPage() {
               </a>
             </p>
             <p className="text-gray-400 text-xs mt-2">
-              A2ZSoft (AZ SOFT PTE. LTD.) — Developer of Ask Miles MCC
+              A2ZSoft (AZ SOFT PTE. LTD.) — Developer of Anban
             </p>
           </div>
         </section>

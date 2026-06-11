@@ -61,7 +61,17 @@ export default function AgentsPage() {
     if (mins < 60) return `${mins}m ago`;
     if (hours < 24) return `${hours}h ago`;
     if (days < 7) return `${days}d ago`;
-    return date.toLocaleDateString();
+    return formatDateOrdinal(date);
+  };
+
+  const formatDateOrdinal = (date: Date) => {
+    const day = date.getDate();
+    const suffix = day === 1 || day === 21 || day === 31 ? 'st'
+      : day === 2 || day === 22 ? 'nd'
+      : day === 3 || day === 23 ? 'rd'
+      : 'th';
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return `${day}${suffix} ${months[date.getMonth()]} ${date.getFullYear()}`;
   };
 
   if (isLoading) {
