@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db/prisma';
 import { verifyAgentAuth } from '@/lib/auth/helpers';
+import { getAgentCards } from '@/lib/db/agentCards';
 import { logAuditEvent } from '@/lib/db/audit';
 import { logActivity } from '@/lib/db/activity';
+import { prisma } from '@/lib/db/prisma';
 
 export const runtime = 'nodejs';
 
@@ -13,8 +14,6 @@ export const runtime = 'nodejs';
  * Query params:
  *   - boardId (optional): scope to a specific board
  *   - agentId (optional): scope to a specific agent (defaults to calling agent)
- *
- * Returns cards with board and column info so the agent knows where each card lives.
  */
 export async function GET(request: NextRequest) {
   try {
@@ -27,61 +26,16 @@ export async function GET(request: NextRequest) {
     const boardId = request.nextUrl.searchParams.get('boardId') || undefined;
     const agentId = request.nextUrl.searchParams.get('agentId') || callerAgentId;
 
-    // Validate boardId format (24-char hex for MongoDB ObjectId)
-    if (boardId && !/^[a-fA-F0-9]{24}$/.test(boardId)) {
-      return NextResponse.json({ error: 'Invalid boardId format' }, { status: 400 });
-    }
+    const cards = await getAgentCards(agentId, ownerId, boardId);
 
-    // Get all board IDs on this account
-    const accountBoards = await prisma.board.findMany({
-      where: {
-        ownerId,
-        archived: false,
-        ...(boardId ? { id: boardId } : {}),
-      },
-      select: { id: true, name: true },
-    });
-
-    const boardIds = accountBoards.map((b: { id: string }) => b.id);
-    const boardNameMap = new Map(accountBoards.map((b: { id: string; name: string }) => [b.id, b.name]));
-
-    if (boardIds.length === 0) {
-      return NextResponse.json({ cards: [] });
-    }
-
-    // Find cards assigned to this agent across all account boards
-    const cards = await prisma.card.findMany({
-      where: {
-        agentId,
-        boardId: { in: boardIds },
-      },
-      include: {
-        column: { select: { id: true, name: true } },
-      },
-      orderBy: { updatedAt: 'desc' },
-    });
-
-    // Enrich with board name
-    const result = cards.map((card: { id: string; title: string; description: string | null; tags: string[]; position: number; boardId: string; columnId: string; agentId: string | null; createdAt: Date; updatedAt: Date; column: { id: string; name: string } }) => ({
-      id: card.id,
-      title: card.title,
-      description: card.description,
-      tags: card.tags,
-      position: card.position,
-      boardId: card.boardId,
-      boardName: boardNameMap.get(card.boardId) || 'Unknown',
-      columnId: card.columnId,
-      columnName: card.column.name,
-      agentId: card.agentId,
-      createdAt: card.createdAt,
-      updatedAt: card.updatedAt,
-    }));
-
-    return NextResponse.json({ agentId, cards: result });
+    return NextResponse.json({ agentId, cards });
   } catch (error) {
     console.error('Error listing agent cards:', error);
     if (error instanceof Error && error.message.startsWith('Unauthorized')) {
       return NextResponse.json({ error: error.message }, { status: 401 });
+    }
+    if (error instanceof Error && error.message === 'Invalid boardId format') {
+      return NextResponse.json({ error: error.message }, { status: 400 });
     }
     return NextResponse.json({ error: 'Failed to list cards' }, { status: 500 });
   }
@@ -106,7 +60,6 @@ export async function POST(request: NextRequest) {
     if (!title || typeof title !== 'string' || title.trim().length === 0) {
       return NextResponse.json({ error: 'Title is required' }, { status: 400 });
     }
-
 
     // If no column specified, find or create "To Do" column
     let targetColumnId = columnId;

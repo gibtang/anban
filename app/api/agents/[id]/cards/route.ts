@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { verifyAuth } from '@/lib/auth/helpers';
+import { getAgentCards } from '@/lib/db/agentCards';
 
 export const runtime = 'nodejs';
 
 /**
- * Get cards assigned to a specific agent
+ * Get cards assigned to a specific agent (human auth)
  * GET /api/agents/[id]/cards
  */
 export async function GET(
@@ -25,35 +26,11 @@ export async function GET(
       return NextResponse.json({ error: 'Agent not found' }, { status: 404 });
     }
 
-    // Get cards assigned to this agent with board and column info
-    const cards = await prisma.card.findMany({
-      where: { agentId },
-      include: {
-        board: { select: { id: true, name: true, archived: true } },
-        column: { select: { id: true, name: true } },
-      },
-      orderBy: { updatedAt: 'desc' },
-    });
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const formattedCards = cards.map((card: any) => ({
-      id: card.id,
-      title: card.title,
-      description: card.description,
-      tags: card.tags,
-      position: card.position,
-      boardId: card.boardId,
-      boardName: card.board.name,
-      boardArchived: card.board.archived,
-      columnId: card.columnId,
-      columnName: card.column.name,
-      createdAt: card.createdAt.toISOString(),
-      updatedAt: card.updatedAt.toISOString(),
-    }));
+    const cards = await getAgentCards(agentId, userId);
 
     return NextResponse.json({
       agent: { id: agent.id, name: agent.name },
-      cards: formattedCards,
+      cards,
     });
   } catch (error) {
     console.error('Error fetching agent cards:', error);
