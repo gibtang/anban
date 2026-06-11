@@ -24,6 +24,11 @@ const publicRoutes = [
 export function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
+  // Always allow static file requests (public/ assets like logo.png, og-image.png, etc.)
+  if (/\.(png|svg|jpg|jpeg|gif|webp|ico|xml|json|txt|webmanifest)$/i.test(pathname)) {
+    return NextResponse.next();
+  }
+
   // Content negotiation for /join/[token]: return JSON for curl/AI agents
   const joinMatch = pathname.match(/^\/join\/([^/]+)$/);
   if (joinMatch) {
@@ -79,8 +84,7 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
-     * - static file extensions (png, svg, jpg, etc.) in public/
      */
-    '/((?!api|_next/static|_next/image|favicon\\.ico|.*\\.(?:png|svg|jpg|jpeg|gif|webp|ico|xml|json|txt|webmanifest)$).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico).*)',
   ],
 };
