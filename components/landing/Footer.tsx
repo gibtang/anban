@@ -22,6 +22,7 @@ export function Footer() {
             <ul className="space-y-2 text-sm">
               <li><a href="#features" className="hover:text-white transition-colors">Features</a></li>
               <li><a href="#integrations" className="hover:text-white transition-colors">Integrations</a></li>
+              <li><a href="/about" className="hover:text-white transition-colors">About</a></li>
               <li><a href="https://github.com/gibtang/anban#agent-api-endpoints" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">API Docs</a></li>
             </ul>
           </div>
@@ -41,6 +42,8 @@ export function Footer() {
             <h4 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">Legal</h4>
             <ul className="space-y-2 text-sm">
               <li><a href="https://www.gnu.org/licenses/agpl-3.0" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">AGPL-3.0 License</a></li>
+              <li><a href="/privacy" className="hover:text-white transition-colors">Privacy Policy</a></li>
+              <li><a href="/terms" className="hover:text-white transition-colors">Terms of Service</a></li>
             </ul>
           </div>
         </div>
