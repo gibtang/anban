@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import type { Card, CreateCardRequest, UpdateCardRequest } from '@/types/card';
 import { ActivityLog } from './ActivityLog';
 import { CommentSection } from './CommentSection';
-import { PromptControlPanel } from './PromptControlPanel';
 import apiFetch from '@/lib/apiFetch';
 
 interface AgentOption {
@@ -46,7 +45,6 @@ export function CardModal({
   const [error, setError] = useState('');
   const [copiedLink, setCopiedLink] = useState(false);
   const [isGeneratingTitle, setIsGeneratingTitle] = useState(false);
-  const [showControls, setShowControls] = useState(false);
 
   const isEditMode = !!card;
 
@@ -315,27 +313,6 @@ export function CardModal({
                       />
                     </div>
 
-                    {/* Extract Controls */}
-                    <div>
-                      <button
-                        type="button"
-                        onClick={() => setShowControls(prev => !prev)}
-                        className="flex items-center gap-1.5 text-sm font-medium text-indigo-600 hover:text-indigo-700 transition-colors"
-                      >
-                        <svg
-                          className={`h-4 w-4 transition-transform ${showControls ? 'rotate-90' : ''}`}
-                          fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
-                        >
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                        </svg>
-                        Extract Search Controls
-                      </button>
-                      {showControls && (
-                        <div className="mt-3">
-                          <PromptControlPanel initialPrompt={description} />
-                        </div>
-                      )}
-                    </div>
 
                     {/* Tags */}
                     <div>
