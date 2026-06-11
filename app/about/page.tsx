@@ -15,6 +15,12 @@ export const metadata: Metadata = {
     url: '/about',
     images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'Anban Logo' }],
   },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'About Anban',
+    description: 'The first kanban board built for human-AI collaboration. Pronounced "Un Bun".',
+    images: ['/og-image.png'],
+  },
 };
 
 export default function AboutPage() {
