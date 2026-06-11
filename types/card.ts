@@ -7,6 +7,7 @@ export interface Card {
   boardId: string;
   tags: string[];
   agentId: string | null;
+  archived: boolean;
   createdAt: string;
   updatedAt: string;
 }

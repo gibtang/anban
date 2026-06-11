@@ -409,6 +409,41 @@ export default function KanbanBoard({ boardId }: KanbanBoardProps) {
     }
   }, [displayBoard, boardId, toast]);
 
+  const handleArchiveCard = useCallback(async (cardId: string, archived: boolean) => {
+    // Optimistic: remove card from board state (same as delete visually)
+    setOptimisticBoard((prev) => {
+      const base = prev ?? displayBoard;
+      if (!base) return prev;
+      return {
+        ...base,
+        columns: base.columns.map((col) => ({
+          ...col,
+          cards: col.cards.filter((c) => c.id !== cardId),
+        })),
+      };
+    });
+
+    try {
+      const res = await fetchWithRetry(`/api/cards/${cardId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ archived }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to archive card');
+      }
+      toast.showToast(archived ? 'Card archived' : 'Card unarchived', 'success');
+      setOptimisticBoard(null);
+      mutate(`/api/boards/${boardId}`);
+    } catch (err) {
+      toast.showToast(err instanceof Error ? err.message : 'Failed to archive card', 'error');
+      setOptimisticBoard(null);
+      mutate(`/api/boards/${boardId}`);
+      throw err;
+    }
+  }, [displayBoard, boardId, toast]);
+
   const handleDragCancel = useCallback(() => {
     setActiveCardId(null);
     setOptimisticBoard(null);
@@ -496,6 +531,7 @@ export default function KanbanBoard({ boardId }: KanbanBoardProps) {
         onClose={() => setModalState(null)}
         onSave={handleSaveCard}
         onDelete={handleDeleteCard}
+        onArchive={handleArchiveCard}
         card={modalState?.mode === 'edit' ? modalState.card : undefined}
         columnId={modalState?.mode === 'add' ? modalState.columnId : (modalState?.mode === 'edit' ? modalState.card.columnId : '')}
         boardId={boardId}

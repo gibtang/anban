@@ -16,6 +16,7 @@ interface CardModalProps {
   onClose: () => void;
   onSave: (cardData: CreateCardRequest | UpdateCardRequest) => Promise<void>;
   onDelete?: (cardId: string) => Promise<void>;
+  onArchive?: (cardId: string, archived: boolean) => Promise<void>;
   card?: Card;
   columnId: string;
   boardId: string;
@@ -28,6 +29,7 @@ export function CardModal({
   onClose,
   onSave,
   onDelete,
+  onArchive,
   card,
   columnId,
   boardId,
@@ -45,6 +47,8 @@ export function CardModal({
   const [error, setError] = useState('');
   const [copiedLink, setCopiedLink] = useState(false);
   const [isGeneratingTitle, setIsGeneratingTitle] = useState(false);
+  const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
+  const [isArchiving, setIsArchiving] = useState(false);
 
   const isEditMode = !!card;
 
@@ -64,6 +68,7 @@ export function CardModal({
     setError('');
     setIsSaving(false);
     setShowDeleteConfirm(false);
+    setShowArchiveConfirm(false);
   }, [card, isOpen, agents]);
 
   const handleAddTag = () => {
@@ -141,6 +146,21 @@ export function CardModal({
       setError(errorMessage);
       setShowDeleteConfirm(false);
       setIsDeleting(false);
+    }
+  };
+
+  const handleArchive = async () => {
+    if (!card || !onArchive) return;
+    setIsArchiving(true);
+    setError('');
+    try {
+      await onArchive(card.id, !(card.archived ?? false));
+      onClose();
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to archive card';
+      setError(errorMessage);
+      setShowArchiveConfirm(false);
+      setIsArchiving(false);
     }
   };
 
@@ -249,6 +269,18 @@ export function CardModal({
                         >
                           <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      )}
+                      {isEditMode && onArchive && !showArchiveConfirm && (
+                        <button
+                          type="button"
+                          onClick={() => setShowArchiveConfirm(true)}
+                          className="p-1.5 rounded-md text-gray-400 hover:text-amber-600 hover:bg-amber-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-colors"
+                          title="Archive card"
+                        >
+                          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
                           </svg>
                         </button>
                       )}
@@ -442,6 +474,30 @@ export function CardModal({
                     type="button"
                     onClick={() => setShowDeleteConfirm(false)}
                     disabled={isDeleting}
+                    className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                </>
+              ) : showArchiveConfirm ? (
+                <>
+                  <span className="text-sm text-amber-700 self-center mr-auto">
+                    {card?.archived ? 'Unarchive this card?' : 'Archive this card? It will be hidden from the board.'}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleArchive}
+                    disabled={isArchiving}
+                    className="inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-amber-600 text-base font-medium text-white hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isArchiving ? 'Archiving...' : (
+                      card?.archived ? 'Confirm Unarchive' : 'Confirm Archive'
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowArchiveConfirm(false)}
+                    disabled={isArchiving}
                     className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50"
                   >
                     Cancel

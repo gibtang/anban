@@ -13,12 +13,19 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const boardId = searchParams.get('boardId');
     const columnId = searchParams.get('columnId');
+    const showArchived = searchParams.get('showArchived') === 'true';
 
     // Build where clause
     const where: {
       boardId?: string;
       columnId?: string;
+      archived?: boolean;
     } = {};
+
+    // Hide archived cards by default
+    if (!showArchived) {
+      where.archived = false;
+    }
 
     if (boardId) {
       // Verify board ownership

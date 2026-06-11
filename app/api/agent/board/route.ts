@@ -28,6 +28,7 @@ export async function GET(request: NextRequest) {
           orderBy: { position: 'asc' },
           include: {
             cards: {
+              where: { archived: false },
               orderBy: { position: 'asc' },
             },
           },

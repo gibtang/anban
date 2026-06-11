@@ -14,7 +14,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
 
     const { id } = await context.params;
     const body = await request.json();
-    const { title, description, columnId, position, tags, agentId } = body;
+    const { title, description, columnId, position, tags, agentId, archived } = body;
 
     // Verify card exists and user has access
     const existingCard = await prisma.card.findFirst({
@@ -47,6 +47,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       position: existingCard.position,
       tags: existingCard.tags,
       agentId: existingCard.agentId,
+      archived: (existingCard as any).archived ?? false,
     };
 
     // Build update data
@@ -57,6 +58,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       position?: number;
       tags?: string[];
       agentId?: string | null;
+      archived?: boolean;
     } = {};
 
     if (title !== undefined) {
@@ -86,6 +88,13 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       updateData.agentId = agentId || null;
     }
 
+    if (archived !== undefined) {
+      if (typeof archived !== 'boolean') {
+        return NextResponse.json({ error: 'archived must be a boolean' }, { status: 400 });
+      }
+      updateData.archived = archived;
+    }
+
     // Update card
     const card = await prisma.card.update({
       where: { id },
@@ -106,6 +115,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
         position: card.position,
         tags: card.tags,
         agentId: card.agentId,
+        archived: (card as any).archived ?? false,
       },
     });
 

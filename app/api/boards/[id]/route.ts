@@ -23,6 +23,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
           orderBy: { position: 'asc' },
           include: {
             cards: {
+              where: { archived: false },
               orderBy: { position: 'asc' },
             },
           },
