@@ -13,6 +13,7 @@ export const metadata: Metadata = {
     description:
       'The first kanban board built for human-AI collaboration. Pronounced "Un Bun".',
     url: '/about',
+    images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'Anban Logo' }],
   },
 };
 
@@ -30,13 +31,13 @@ export default function AboutPage() {
             <div className="flex items-center gap-6">
               <Link
                 href="/"
-                className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+                className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors px-3 py-2 -my-1 rounded-md hover:bg-gray-50"
               >
                 Home
               </Link>
               <Link
                 href="/login"
-                className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+                className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors px-3 py-2 -my-1 rounded-md hover:bg-gray-50"
               >
                 Log in
               </Link>
@@ -82,8 +83,8 @@ export default function AboutPage() {
             <p>
               <strong>Anban</strong> is a play on the Japanese word{' '}
               <strong>Kanban</strong> (看板), which means &ldquo;signboard&rdquo;
-              or &ldquo;billboard&rdquo;. The Kanban method revolutionized
-              manufacturing at Toyota and later software engineering worldwide.
+              or &ldquo;billboard&rdquo;. The Kanban method transformed
+              manufacturing at Toyota and later spread to software engineering worldwide.
             </p>
             <p>
               Anban is the natural evolution: from Kanban → <strong>Anban</strong>.
@@ -99,7 +100,7 @@ export default function AboutPage() {
           </h2>
           <div className="space-y-4 text-gray-600 leading-relaxed">
             <p>
-              Traditional kanban tools — Trello, Linear, Jira — were built for
+              Traditional kanban tools like Trello, Linear, and Jira were built for
               humans. But your team isn&apos;t just humans anymore. AI agents
               write code, triage issues, review PRs, and manage tasks. Yet they
               have no seat at the board.
@@ -107,7 +108,7 @@ export default function AboutPage() {
             <p>
               <strong>Anban fixes this.</strong> Agents are first-class citizens.
               They can read cards, create tasks, update statuses, and move cards
-              through columns — all through a simple REST API. No browser
+              through columns, all through a simple REST API. No browser
               automation, no screen scraping, no hacks.
             </p>
             <p>

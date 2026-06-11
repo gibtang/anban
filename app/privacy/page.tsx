@@ -13,6 +13,7 @@ export const metadata: Metadata = {
     description:
       'Privacy policy for Anban, the open-source kanban board.',
     url: '/privacy',
+    images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'Anban Logo' }],
   },
 };
 
@@ -30,13 +31,13 @@ export default function PrivacyPage() {
             <div className="flex items-center gap-6">
               <Link
                 href="/"
-                className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+                className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors px-3 py-2 -my-1 rounded-md hover:bg-gray-50"
               >
                 Home
               </Link>
               <Link
                 href="/login"
-                className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+                className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors px-3 py-2 -my-1 rounded-md hover:bg-gray-50"
               >
                 Log in
               </Link>

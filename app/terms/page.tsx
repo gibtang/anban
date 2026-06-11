@@ -7,6 +7,12 @@ export const metadata: Metadata = {
   alternates: {
     canonical: '/terms',
   },
+  openGraph: {
+    title: 'Terms of Service — Anban',
+    description: 'Terms of service for Anban, the open-source kanban board for humans and AI agents.',
+    url: '/terms',
+    images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'Anban Logo' }],
+  },
 };
 
 export default function TermsPage() {
@@ -20,10 +26,10 @@ export default function TermsPage() {
               <span className="text-xl font-bold text-gray-900">Anban</span>
             </Link>
             <div className="flex items-center gap-6">
-              <Link href="/" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
+              <Link href="/" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors px-3 py-2 -my-1 rounded-md hover:bg-gray-50">
                 Home
               </Link>
-              <Link href="/login" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
+              <Link href="/login" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors px-3 py-2 -my-1 rounded-md hover:bg-gray-50">
                 Log in
               </Link>
             </div>
