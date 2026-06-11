@@ -6,6 +6,11 @@ export const metadata: Metadata = {
   alternates: {
     canonical: 'https://www.getanban.com/login',
   },
+  openGraph: {
+    title: 'Sign In — Anban',
+    description: 'Sign in to your Anban account.',
+    url: 'https://www.getanban.com/login',
+  },
 };
 
 export default function LoginPage() {

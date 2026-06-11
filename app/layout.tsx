@@ -31,7 +31,7 @@ export const metadata: Metadata = {
     siteName: "Anban",
     type: "website",
     locale: "en_US",
-    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "Anban Logo" }],
+    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "Anban — Kanban Boards for Humans and AI Agents" }],
   },
   twitter: {
     card: "summary_large_image",
