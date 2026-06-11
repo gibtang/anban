@@ -86,7 +86,7 @@ export function Navbar({ cloudHref }: NavbarProps) {
 
           {/* Mobile hamburger */}
           <button
-            className="md:hidden p-2 text-gray-600"
+            className="md:hidden p-2.5 text-gray-600"
             onClick={() => setMobileOpen(!mobileOpen)}
             aria-label="Toggle menu"
           >
