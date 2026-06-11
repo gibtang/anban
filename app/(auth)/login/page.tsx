@@ -11,6 +11,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
   const { user, signIn, signInWithGoogle, resetPassword } = useAuth();
   const router = useRouter();
@@ -24,6 +25,7 @@ export default function LoginPage() {
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError('');
+    setSuccess('');
     setLoading(true);
 
     try {
@@ -73,6 +75,12 @@ export default function LoginPage() {
           {error && (
             <div className="rounded-md bg-red-50 p-4">
               <p className="text-sm text-red-800">{error}</p>
+            </div>
+          )}
+
+          {success && (
+            <div className="rounded-md bg-green-50 p-4">
+              <p className="text-sm text-green-800">{success}</p>
             </div>
           )}
 
@@ -136,7 +144,7 @@ export default function LoginPage() {
                 try {
                   await resetPassword(email);
                   setError('');
-                  alert('Password reset email sent. Check your inbox.');
+                  setSuccess('Password reset email sent. Check your inbox.');
                 } catch {
                   setError('Could not send reset email. Check your email address.');
                 }
