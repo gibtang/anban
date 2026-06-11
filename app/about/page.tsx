@@ -189,8 +189,9 @@ export default function AboutPage() {
             Built by
           </h2>
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-full bg-indigo-600 flex items-center justify-center">
-              <span className="text-white font-bold text-lg">A2</span>
+            <div className="w-12 h-12 rounded-full overflow-hidden bg-indigo-600 flex items-center justify-center">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/logo.png" alt="A2Z Soft" className="w-10 h-10 object-contain" />
             </div>
             <div>
               <p className="font-semibold text-gray-900">
