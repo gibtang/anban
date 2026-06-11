@@ -11,6 +11,7 @@ interface Agent {
   name: string;
   status: 'approved' | 'pending';
   token: string | null;
+  lastAccessAt: string | null;
   createdAt: string;
 }
 
@@ -162,6 +163,9 @@ export default function AgentsPage() {
                         <p className="text-sm font-medium text-gray-900 truncate">{agent.name}</p>
                         <p className="text-xs text-gray-500">
                           approved {formatDate(agent.createdAt)}
+                          {agent.lastAccessAt && (
+                            <> · last active {formatDate(agent.lastAccessAt)}</>
+                          )}
                         </p>
                         {agent.token && (
                           <div className="flex items-center gap-1.5 mt-1">

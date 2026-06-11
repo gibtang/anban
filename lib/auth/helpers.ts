@@ -98,6 +98,12 @@ export async function verifyAgentAuth(request: NextRequest): Promise<AgentAuthRe
     throw new Error('Unauthorized: Invalid or revoked token');
   }
 
+  // Track last access asynchronously (fire-and-forget)
+  prisma.agent.update({
+    where: { id: agent.id },
+    data: { lastAccessAt: new Date() },
+  }).catch(() => {}); // ignore errors
+
   return {
     agentId: agent.id,
     agentName: agent.name,

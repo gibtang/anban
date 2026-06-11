@@ -20,16 +20,18 @@ export async function GET(request: NextRequest) {
         token: true,
         approvalToken: true,
         approvalExpiresAt: true,
+        lastAccessAt: true,
         createdAt: true,
       },
       orderBy: { createdAt: 'desc' },
     });
 
-    const result = agents.map((a: { id: string; name: string; token: string | null; createdAt: Date }) => ({
+    const result = agents.map((a: { id: string; name: string; token: string | null; createdAt: Date; lastAccessAt: Date | null }) => ({
       id: a.id,
       name: a.name,
       status: a.token && !a.token.startsWith('__pending__') ? 'approved' as const : 'pending' as const,
       token: a.token && !a.token.startsWith('__pending__') ? a.token : null,
+      lastAccessAt: a.lastAccessAt ? a.lastAccessAt.toISOString() : null,
       createdAt: a.createdAt.toISOString(),
     }));
 
