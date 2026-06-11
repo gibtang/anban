@@ -47,7 +47,7 @@ export function Footer() {
 
         <div className="mt-12 pt-8 border-t border-gray-800 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-xs text-gray-500">
-            © 2025 A2Z Soft. Open source under AGPL-3.0.
+            © 2026 A2Z Soft. Open source under AGPL-3.0.
           </p>
           <a
             href="https://github.com/gibtang/anban"

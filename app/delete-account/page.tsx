@@ -2,16 +2,16 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'Delete Your Account — Ask Miles MCC',
+  title: 'Delete Your Account — Anban',
   description:
-    'Request account deletion for the Ask Miles MCC app. Operated by A2ZSoft (AZ SOFT PTE. LTD.).',
+    'Request account deletion for Anban. Operated by A2ZSoft (AZ SOFT PTE. LTD.).',
   alternates: {
     canonical: '/delete-account',
   },
   openGraph: {
-    title: 'Delete Your Account — Ask Miles MCC',
+    title: 'Delete Your Account — Anban',
     description:
-      'Request account deletion for the Ask Miles MCC app.',
+      'Request account deletion for Anban.',
     url: '/delete-account',
   },
 };
@@ -182,7 +182,7 @@ export default function DeleteAccountPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <p className="text-xs text-gray-500">
-              © 2025 A2Z Soft. Open source under AGPL-3.0.
+              © 2026 A2Z Soft. Open source under AGPL-3.0.
             </p>
             <Link
               href="/"

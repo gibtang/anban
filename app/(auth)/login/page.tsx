@@ -3,6 +3,7 @@
 import { useState, FormEvent, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../contexts/AuthContext';
+import { getFriendlyAuthError } from '@/lib/auth-errors';
 import Link from 'next/link';
 
 export default function LoginPage() {
@@ -30,11 +31,7 @@ export default function LoginPage() {
       // Don't router.push here — the useEffect watching `user` will handle redirect
       // after onAuthStateChanged fires and the cookie is set
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError('Failed to sign in. Please check your credentials.');
-      }
+      setError(getFriendlyAuthError(err));
     } finally {
       setLoading(false);
     }
@@ -48,11 +45,7 @@ export default function LoginPage() {
       await signInWithGoogle();
       // Redirect handled by useEffect watching `user`
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError('Failed to sign in with Google.');
-      }
+      setError(getFriendlyAuthError(err));
     } finally {
       setLoading(false);
     }
@@ -62,9 +55,12 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+          <Link href="/" className="flex justify-center mb-6">
+            <span className="font-[Playfair_Display] text-3xl font-bold text-indigo-600">Anban</span>
+          </Link>
+          <h1 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
             Sign in to your account
-          </h2>
+          </h1>
           <p className="mt-2 text-center text-sm text-gray-600">
             Or{' '}
             <Link href="/signup" className="font-medium text-indigo-600 hover:text-indigo-500">

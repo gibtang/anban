@@ -13,6 +13,8 @@ const publicRoutes = [
   '/privacy',
   '/terms',
   '/delete-account',
+  '/robots.txt',
+  '/sitemap.xml',
   '/api/firebase-config',
   '/api/auth',
   '/api/board-access/board',

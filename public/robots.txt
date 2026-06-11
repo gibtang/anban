@@ -1,7 +1,9 @@
 User-agent: *
 Allow: /
-Disallow: /boards/
-Disallow: /agents
 Disallow: /api/
+Disallow: /boards/
+Disallow: /agents/
+Disallow: /settings/
+Disallow: /dashboard/
 
 Sitemap: https://www.getanban.com/sitemap.xml

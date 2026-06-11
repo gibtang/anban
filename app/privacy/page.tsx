@@ -296,7 +296,7 @@ export default function PrivacyPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <p className="text-xs text-gray-500">
-              © 2025 A2Z Soft. Open source under AGPL-3.0.
+              © 2026 A2Z Soft. Open source under AGPL-3.0.
             </p>
             <div className="flex items-center gap-6">
               <Link
