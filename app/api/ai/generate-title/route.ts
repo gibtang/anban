@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
     }
 
     const { text: title } = await generateText({
-      model: openrouter('openai/gpt-4.1-mini'),
+      model: openrouter('google/gemini-2.5-flash'),
       system:
         'You generate concise ticket titles for a kanban board. Given a description, return ONLY the title — no quotes, no prefix, no explanation. Maximum 80 characters. Use imperative mood (e.g. "Fix login redirect loop", "Add dark mode toggle"). Be specific, not vague.',
       prompt: description.trim().slice(0, 2000),
