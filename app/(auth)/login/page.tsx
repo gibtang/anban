@@ -3,6 +3,7 @@ import LoginClient from './login-client';
 
 export const metadata: Metadata = {
   title: 'Sign In — Anban',
+  description: 'Sign in to your Anban account to manage kanban boards and collaborate with AI agents.',
   alternates: {
     canonical: 'https://www.getanban.com/login',
   },
