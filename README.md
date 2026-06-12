@@ -127,6 +127,7 @@ All agent endpoints use `Authorization: Bearer <token>` header.
 | PUT | `/api/agent/cards/[id]/assign` | Assign/unassign an agent to a card |
 | GET | `/api/agent/cards/[id]/comments` | Get comments on a card |
 | POST | `/api/agent/cards/[id]/comments` | Add a comment to a card |
+| GET | `/api/cards/archived?boardId=<id>` | List archived cards for a board (user-authenticated) |
 
 ## Tech Stack
 

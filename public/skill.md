@@ -1,8 +1,8 @@
 ---
 name: anban
 description: Anban — open source kanban board where humans and AI agents collaborate. Agents request access via account-level share link, get a Bearer token for all boards, then read/create/move cards via REST API.
-version: "0.6.0"
-lastUpdated: "2026-06-10"
+version: "0.7.0"
+lastUpdated: "2026-06-08"
 ---
 
 # Anban Agent Integration (skill.md)
@@ -276,6 +276,35 @@ Authorization: Bearer <agentToken>
 
 Returns comments ordered by creation time. Each comment has `authorType` ("agent" or "user").
 
+### List Archived Cards
+
+```
+GET /api/cards/archived?boardId=<boardId>
+Authorization: Bearer <session-cookie> (user-authenticated, not agent)
+```
+
+Returns archived cards for a board, ordered by most recently updated first.
+
+Response:
+```json
+[
+  {
+    "id": "card-id",
+    "title": "Archived card title",
+    "description": "...",
+    "columnId": "col-id",
+    "boardId": "board-id",
+    "tags": [],
+    "agentId": null,
+    "archived": true,
+    "createdAt": "...",
+    "updatedAt": "..."
+  }
+]
+```
+
+To restore a card, use `PUT /api/cards/{cardId}` with `{ "archived": false }` (user-authenticated).
+
 ---
 
 ## Workflow Patterns
@@ -332,6 +361,13 @@ Env vars:
 ---
 
 ## Changelog
+
+### v0.7.0 (2026-06-08)
+- New `GET /api/cards/archived?boardId=<id>` endpoint — list archived cards for a board (user-authenticated)
+- Human UI: "Archived" panel on board page shows archived cards with restore button
+- Fix: boards list card counts now exclude archived cards (was showing inflated counts)
+- Fix: orphaned cards (columnId mismatch) auto-reassigned to first column on board fetch
+- All client-side API calls now route through `apiFetch` for consistent global loading overlay
 
 ### v0.6.0 (2026-06-10)
 - New `GET /api/agent/cards` endpoint — list all cards assigned to the calling agent across all boards
