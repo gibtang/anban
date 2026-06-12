@@ -285,7 +285,7 @@ export default function BoardsPage() {
                       )}
                     </>
                   ) : (
-                    <span className="text-gray-400 italic">No cards yet</span>
+                    <span className="text-emerald-600 font-medium">0 cards</span>
                   )}
                 </div>
 
