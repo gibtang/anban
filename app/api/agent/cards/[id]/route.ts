@@ -21,11 +21,19 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     const { agentId, agentName } = await verifyAgentAuth(request);
     const { id: cardId } = await context.params;
 
+    if (!/^[a-fA-F0-9]{24}$/.test(cardId)) {
+      return NextResponse.json({ error: 'Invalid card ID format' }, { status: 400 });
+    }
+
     const body = await request.json();
     const { boardId, title, description, columnId, tags } = body;
 
     if (!boardId) {
       return NextResponse.json({ error: 'boardId is required' }, { status: 400 });
+    }
+
+    if (!/^[a-fA-F0-9]{24}$/.test(boardId)) {
+      return NextResponse.json({ error: 'Invalid boardId format' }, { status: 400 });
     }
 
 
