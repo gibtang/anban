@@ -22,6 +22,7 @@ export function Navbar({ cloudHref }: NavbarProps) {
     { label: 'How it Works', href: '#how-it-works' },
     { label: 'Integrations', href: '#integrations' },
     { label: 'Open Source', href: '#open-source' },
+    { label: "Getting Started", href: "/getting-started" },
   ];
 
   const aboutLink = { label: 'About', href: '/about' };

@@ -15,6 +15,7 @@ model User {
   firebaseUid String   @unique
   email       String?
   shareToken  String?  @unique
+  onboardingCompleted Boolean  @default(false)
   createdAt   DateTime @default(now())
 }
 
