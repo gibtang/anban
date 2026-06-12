@@ -50,7 +50,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
         const defaultColumnId = columnIds[0];
         await prisma.card.updateMany({
           where: {
-            id: { in: orphanedCards.map((c) => c.id) },
+            id: { in: orphanedCards.map((c: { id: string }) => c.id) },
           },
           data: { columnId: defaultColumnId },
         });
