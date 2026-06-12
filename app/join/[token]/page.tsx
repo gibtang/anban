@@ -168,7 +168,7 @@ export default function JoinBoardPage() {
           </div>
           <h1 className="text-2xl font-bold text-gray-900">Join Boards</h1>
           <p className="mt-2 text-gray-600">
-            Request access to {boardInfo.boards.length > 1 ? `${boardInfo.boards.length} boards` : 'board'}: <span className="font-semibold text-indigo-600">{boardInfo.boards.map(b => b.name).join(', ')}</span>
+            Request access to {boardInfo.boards.length > 1 ? `${boardInfo.boards.length} boards` : 'board'}: <span className="font-semibold text-indigo-600 break-words">{boardInfo.boards.map(b => b.name).join(', ')}</span>
           </p>
         </div>
 
