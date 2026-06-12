@@ -35,6 +35,40 @@ export async function GET(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: 'Board not found' }, { status: 404 });
     }
 
+    // Fix orphaned cards: cards with boardId matching but columnId not in any column
+    const columnIds = board.columns.map((c) => c.id);
+    if (columnIds.length > 0) {
+      const orphanedCards = await prisma.card.findMany({
+        where: {
+          boardId: id,
+          columnId: { notIn: columnIds },
+        },
+      });
+
+      if (orphanedCards.length > 0) {
+        // Reassign to first column (usually "To Do")
+        const defaultColumnId = columnIds[0];
+        await prisma.card.updateMany({
+          where: {
+            id: { in: orphanedCards.map((c) => c.id) },
+          },
+          data: { columnId: defaultColumnId },
+        });
+
+        // Re-fetch to include repaired cards
+        const repaired = await prisma.board.findFirst({
+          where: { id, ownerId: userId },
+          include: {
+            columns: {
+              orderBy: { position: 'asc' },
+              include: { cards: { orderBy: { position: 'asc' } } },
+            },
+          },
+        });
+        return NextResponse.json(repaired);
+      }
+    }
+
     return NextResponse.json(board);
   } catch (error) {
     console.error('Error fetching board:', error);

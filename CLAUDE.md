@@ -1,5 +1,17 @@
 @AGENTS.md
 
+## Test Credentials
+- Email: gibtang+2@gmail.com
+- Password: woodfire952
+- Board: https://www.getanban.com/boards/6a0efcd77539a25f060f9530
+
+## API Calls
+**ALL client-side fetch calls MUST use `apiFetch` (from `lib/apiFetch`) or `fetchWithRetry` (from `lib/utils/retry`)**
+- `fetchWithRetry` wraps `apiFetch` internally — retry logic + global overlay
+- `apiFetch` triggers `GlobalOverlay` spinner (300ms debounce)
+- Raw `fetch()` = no overlay = broken UX. ONLY exception: `firebase.ts` (pre-mount config)
+- New API call? Use `apiFetch` or `fetchWithRetry`. Never raw `fetch()`.
+
 ## API Endpoint Docs
 **Any API endpoint added/deleted/updated → MUST update ALL THREE doc files immediately:**
 1. **`README.md`** — API table in the "Agent API Endpoints" section
