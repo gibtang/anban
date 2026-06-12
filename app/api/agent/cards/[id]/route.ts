@@ -14,7 +14,7 @@ export const runtime = 'nodejs';
 /**
  * Agent endpoint: update a card (move column, update description, etc.)
  * PUT /api/agent/cards/:cardId
- * Body: { boardId, title?, description?, columnId?, tags? }
+ * Body: { boardId, title?, description?, columnId?, tags?, archived? }
  */
 export async function PUT(request: NextRequest, context: RouteContext) {
   try {
@@ -22,7 +22,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     const { id: cardId } = await context.params;
 
     const body = await request.json();
-    const { boardId, title, description, columnId, tags } = body;
+    const { boardId, title, description, columnId, tags, archived } = body;
 
     if (!boardId) {
       return NextResponse.json({ error: 'boardId is required' }, { status: 400 });
@@ -62,6 +62,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
           ...(title !== undefined && { title: title.trim() }),
           ...(description !== undefined && { description: description?.trim() || null }),
           ...(tags !== undefined && { tags }),
+          ...(archived !== undefined && { archived }),
         },
       });
 
@@ -86,6 +87,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
           columnId: existingCard.columnId,
           position: existingCard.position,
           tags: existingCard.tags,
+          archived: (existingCard as any).archived ?? false,
         },
         newValues: {
           title: updatedCard.title,
@@ -93,6 +95,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
           columnId: updatedCard.columnId,
           position: updatedCard.position,
           tags: updatedCard.tags,
+          archived: (updatedCard as any).archived ?? false,
         },
       });
 
@@ -120,6 +123,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     if (title !== undefined) updateData.title = title.trim();
     if (description !== undefined) updateData.description = description?.trim() || null;
     if (tags !== undefined) updateData.tags = tags;
+    if (archived !== undefined) updateData.archived = archived;
 
     const updatedCard = await prisma.card.update({
       where: { id: cardId },
@@ -138,11 +142,13 @@ export async function PUT(request: NextRequest, context: RouteContext) {
           title: existingCard.title,
           description: existingCard.description,
           tags: existingCard.tags,
+          archived: (existingCard as any).archived ?? false,
         },
         newValues: {
           title: updatedCard.title,
           description: updatedCard.description,
           tags: updatedCard.tags,
+          archived: (updatedCard as any).archived ?? false,
         },
       });
     }
@@ -159,6 +165,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     if (title !== undefined && existingCard.title !== title.trim()) fieldsChanged.push('title');
     if (description !== undefined && existingCard.description !== (description?.trim() || null)) fieldsChanged.push('description');
     if (tags !== undefined && JSON.stringify(existingCard.tags) !== JSON.stringify(tags)) fieldsChanged.push('tags');
+    if (archived !== undefined && (existingCard as any).archived !== archived) fieldsChanged.push('archived');
     if (fieldsChanged.length > 0) {
       await logActivity({
         cardId,
