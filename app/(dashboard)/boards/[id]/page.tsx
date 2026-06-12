@@ -7,6 +7,7 @@ import { useEventSource } from '@/lib/hooks/useEventSource';
 import KanbanBoard from '@/components/kanban/KanbanBoard';
 import { useToast } from '@/components/toast/ToastProvider';
 import { fetchWithRetry } from '@/lib/utils/retry';
+import type { Card } from '@/types/card';
 
 interface BoardData {
   id: string;
@@ -31,6 +32,29 @@ export default function BoardDetailPage() {
   const boardId = params.id as string;
 
   const { event, connectionState } = useEventSource(boardId);
+
+  // Archived cards
+  const [showArchived, setShowArchived] = useState(false);
+  const { data: archivedCards, mutate: mutateArchived } = useSWR<Card[]>(
+    showArchived ? `/api/cards/archived?boardId=${boardId}` : null,
+    boardFetcher
+  );
+
+  const handleUnarchiveCard = async (cardId: string) => {
+    try {
+      const res = await fetchWithRetry(`/api/cards/${cardId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ archived: false }),
+      });
+      if (!res.ok) throw new Error('Failed to unarchive');
+      toast.showToast('Card restored to board', 'success');
+      mutateArchived();
+      mutate(`/api/boards/${boardId}`);
+    } catch {
+      toast.showToast('Failed to unarchive card', 'error');
+    }
+  };
 
   // Fetch board name (full board data is fetched separately in KanbanBoard)
   const { data: board } = useSWR<BoardData>(`/api/boards/${boardId}`, boardFetcher);
@@ -119,6 +143,7 @@ export default function BoardDetailPage() {
       event.type === 'card.deleted')
   ) {
     mutate(`/api/boards/${boardId}`);
+    mutateArchived();
   }
 
   return (
@@ -211,6 +236,60 @@ export default function BoardDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Archived cards toggle */}
+      <button
+        onClick={() => setShowArchived(!showArchived)}
+        className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border transition-colors mb-3 ${showArchived ? 'bg-amber-50 text-amber-700 border-amber-200' : 'text-gray-500 border-gray-200 hover:bg-gray-50 hover:text-gray-700'}`}
+      >
+        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8" />
+        </svg>
+        Archived
+        {showArchived && archivedCards && (
+          <span className="bg-amber-200 text-amber-800 rounded-full px-1.5 py-0.5 text-[10px] font-semibold">
+            {archivedCards.length}
+          </span>
+        )}
+        <svg className={`h-3 w-3 transition-transform ${showArchived ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+
+      {/* Archived cards panel */}
+      {showArchived && (
+        <div className="mb-4 bg-amber-50/50 border border-amber-200 rounded-lg p-3">
+          {!archivedCards ? (
+            <p className="text-sm text-gray-500">Loading...</p>
+          ) : archivedCards.length === 0 ? (
+            <p className="text-sm text-gray-400">No archived cards</p>
+          ) : (
+            <div className="space-y-2">
+              {archivedCards.map((card: Card) => (
+                <div
+                  key={card.id}
+                  className="flex items-center justify-between bg-white rounded-md border border-amber-200/60 px-3 py-2"
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="text-sm text-gray-700 truncate">{card.title}</span>
+                    {card.agentId && (
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-100 text-emerald-800">
+                        Agent
+                      </span>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => handleUnarchiveCard(card.id)}
+                    className="flex-shrink-0 text-xs font-medium text-indigo-600 hover:text-indigo-800 transition-colors ml-3"
+                  >
+                    Restore
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Kanban Board with Drag-and-Drop */}
       <div className="flex-1 overflow-hidden">
