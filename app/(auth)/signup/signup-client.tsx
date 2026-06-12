@@ -19,7 +19,7 @@ export default function SignupClient() {
 
   useEffect(() => {
     if (user) {
-      router.push('/boards');
+      router.push('/getting-started');
     }
   }, [user, router]);
 
