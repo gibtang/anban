@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
       ],
       include: {
         _count: {
-          select: { columns: true, cards: true },
+          select: { columns: true, cards: { where: { archived: false } } },
         },
         columns: {
           select: { id: true, name: true },
@@ -35,12 +35,13 @@ export async function GET(request: NextRequest) {
       b.columns.filter((c: { name: string }) => c.name === 'Done').map((c: { id: string }) => c.id),
     );
 
-    // Count open (non-Done) cards in a single query
+    // Count open (non-Done, non-archived) cards in a single query
     const openCounts = await prisma.card.groupBy({
       by: ['boardId'],
       where: {
         boardId: { in: boards.map((b: { id: string }) => b.id) },
         columnId: { notIn: doneColumnIds },
+        archived: false,
       },
       _count: true,
     });
