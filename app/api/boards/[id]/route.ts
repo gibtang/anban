@@ -36,7 +36,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
     }
 
     // Fix orphaned cards: cards with boardId matching but columnId not in any column
-    const columnIds = board.columns.map((c) => c.id);
+    const columnIds = board.columns.map((c: { id: string }) => c.id);
     if (columnIds.length > 0) {
       const orphanedCards = await prisma.card.findMany({
         where: {
