@@ -7,6 +7,7 @@ export interface Card {
   boardId: string;
   tags: string[];
   agentId: string | null;
+  blocked: string | null;
   archived: boolean;
   createdAt: string;
   updatedAt: string;
@@ -19,6 +20,7 @@ export interface CreateCardRequest {
   boardId: string;
   tags?: string[];
   agentId?: string;
+  blocked?: string | null;
 }
 
 export interface UpdateCardRequest {
@@ -28,4 +30,5 @@ export interface UpdateCardRequest {
   position?: number;
   tags?: string[];
   agentId?: string | null;
+  blocked?: string | null;
 }

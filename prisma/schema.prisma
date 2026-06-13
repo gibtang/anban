@@ -67,6 +67,7 @@ model Card {
   boardId     String   @db.ObjectId
   tags        String[]
   agentId     String?  @db.ObjectId
+  blocked     String?  // null = not blocked, "Blocked" = blocked
   archived    Boolean  @default(false)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt

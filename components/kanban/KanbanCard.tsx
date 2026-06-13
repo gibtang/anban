@@ -40,8 +40,10 @@ export default function KanbanCard({ card, isDragging, onEdit, agentName, agentT
 
   const [copied, setCopied] = useState(false);
   const [agentDropdownOpen, setAgentDropdownOpen] = useState(false);
+  const [blockedDropdownOpen, setBlockedDropdownOpen] = useState(false);
   const [assigning, setAssigning] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const blockedDropdownRef = useRef<HTMLDivElement>(null);
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -52,15 +54,18 @@ export default function KanbanCard({ card, isDragging, onEdit, agentName, agentT
 
   // Close dropdown when clicking outside
   useEffect(() => {
-    if (!agentDropdownOpen) return;
+    if (!agentDropdownOpen && !blockedDropdownOpen) return;
     const handleClickOutside = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setAgentDropdownOpen(false);
       }
+      if (blockedDropdownRef.current && !blockedDropdownRef.current.contains(e.target as Node)) {
+        setBlockedDropdownOpen(false);
+      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [agentDropdownOpen]);
+  }, [agentDropdownOpen, blockedDropdownOpen]);
 
   const handleAssignAgent = useCallback(async (agentId: string | null) => {
     if (!boardId || assigning) return;
@@ -97,6 +102,38 @@ export default function KanbanCard({ card, isDragging, onEdit, agentName, agentT
       setAssigning(false);
     }
   }, [boardId, card.id, assigning]);
+
+  const handleSetBlocked = useCallback(async (blocked: string | null) => {
+    if (!boardId) return;
+    setBlockedDropdownOpen(false);
+
+    // Optimistic update
+    mutate(`/api/boards/${boardId}`, (current: any) => {
+      if (!current) return current;
+      return {
+        ...current,
+        columns: current.columns.map((col: any) => ({
+          ...col,
+          cards: col.cards.map((c: any) =>
+            c.id === card.id ? { ...c, blocked } : c
+          ),
+        })),
+      };
+    }, { revalidate: false });
+
+    try {
+      const res = await apiFetch(`/api/cards/${card.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ blocked }),
+      });
+      if (!res.ok) throw new Error('Failed to update blocked status');
+      mutate(`/api/boards/${boardId}`);
+    } catch (error) {
+      console.error('Failed to update blocked status:', error);
+      mutate(`/api/boards/${boardId}`);
+    }
+  }, [boardId, card.id]);
 
   const handleCopyUrl = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -181,6 +218,60 @@ export default function KanbanCard({ card, isDragging, onEdit, agentName, agentT
       {/* Card metadata row */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-1.5 flex-wrap">
+          {/* Blocked badge — clickable dropdown */}
+          <div className="relative" ref={blockedDropdownRef}>
+            <button
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.stopPropagation();
+                setBlockedDropdownOpen(!blockedDropdownOpen);
+                setAgentDropdownOpen(false);
+              }}
+              className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors cursor-pointer ${
+                card.blocked
+                  ? 'bg-red-100 text-red-800 hover:bg-red-200'
+                  : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
+              }`}
+            >
+              {card.blocked || '—'}
+              <svg className="ml-0.5 h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+
+            {blockedDropdownOpen && (
+              <div
+                onPointerDown={(e) => e.stopPropagation()}
+                className="absolute z-[100] top-full left-0 mt-1 w-28 bg-white rounded-md shadow-lg border border-gray-200 py-0.5"
+              >
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleSetBlocked(null);
+                  }}
+                  className={`w-full text-left px-2.5 py-1 text-[11px] hover:bg-gray-50 transition-colors ${
+                    !card.blocked ? 'bg-gray-50 text-gray-800 font-medium' : 'text-gray-700'
+                  }`}
+                >
+                  —
+                  {!card.blocked && <span className="ml-1 text-gray-400">✓</span>}
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleSetBlocked('Blocked');
+                  }}
+                  className={`w-full text-left px-2.5 py-1 text-[11px] hover:bg-red-50 transition-colors ${
+                    card.blocked === 'Blocked' ? 'bg-red-50 text-red-800 font-medium' : 'text-red-700'
+                  }`}
+                >
+                  Blocked
+                  {card.blocked === 'Blocked' && <span className="ml-1 text-red-500">✓</span>}
+                </button>
+              </div>
+            )}
+          </div>
+
           {/* Agent badge — clickable dropdown */}
           {agents && agents.length > 0 ? (
             <div className="relative" ref={dropdownRef}>

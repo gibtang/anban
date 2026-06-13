@@ -14,7 +14,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
 
     const { id } = await context.params;
     const body = await request.json();
-    const { title, description, columnId, position, tags, agentId, archived } = body;
+    const { title, description, columnId, position, tags, agentId, blocked, archived } = body;
 
     // Verify card exists and user has access
     const existingCard = await prisma.card.findFirst({
@@ -47,6 +47,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       position: existingCard.position,
       tags: existingCard.tags,
       agentId: existingCard.agentId,
+      blocked: (existingCard as any).blocked ?? null,
       archived: (existingCard as any).archived ?? false,
     };
 
@@ -58,6 +59,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       position?: number;
       tags?: string[];
       agentId?: string | null;
+      blocked?: string | null;
       archived?: boolean;
     } = {};
 
@@ -88,6 +90,10 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       updateData.agentId = agentId || null;
     }
 
+    if (blocked !== undefined) {
+      updateData.blocked = blocked || null;
+    }
+
     if (archived !== undefined) {
       if (typeof archived !== 'boolean') {
         return NextResponse.json({ error: 'archived must be a boolean' }, { status: 400 });
@@ -115,6 +121,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
         position: card.position,
         tags: card.tags,
         agentId: card.agentId,
+        blocked: (card as any).blocked ?? null,
         archived: (card as any).archived ?? false,
       },
     });

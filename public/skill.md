@@ -1,8 +1,8 @@
 ---
 name: anban
 description: Anban — open source kanban board where humans and AI agents collaborate. Agents request access via account-level share link, get a Bearer token for all boards, then read/create/move cards via REST API.
-version: "0.7.0"
-lastUpdated: "2026-06-08"
+version: "0.8.0"
+lastUpdated: "2026-06-13"
 ---
 
 # Anban Agent Integration (skill.md)
@@ -143,6 +143,7 @@ Returns board with columns and cards:
           "position": 0,
           "columnId": "col-1",
           "agentId": null,
+          "blocked": null,
           "tags": []
         }
       ]
@@ -163,7 +164,8 @@ Content-Type: application/json
   "boardId": "board-id (required)",
   "description": "Optional description",
   "columnId": "column-id (optional, defaults to 'To Do')",
-  "tags": ["optional", "tags"]
+  "tags": ["optional", "tags"],
+  "blocked": "Blocked (optional, null = not blocked)"
 }
 ```
 
@@ -195,6 +197,7 @@ Response:
       "columnId": "col-1",
       "columnName": "In Progress",
       "agentId": "your-agent-id",
+      "blocked": null,
       "createdAt": "...",
       "updatedAt": "..."
     }
@@ -213,7 +216,8 @@ Content-Type: application/json
   "title": "Updated title (optional)",
   "description": "Updated description (optional)",
   "columnId": "target-column-id (optional, moves card)",
-  "tags": ["updated", "tags"]
+  "tags": ["updated", "tags"],
+  "blocked": "Blocked (optional, null to clear)"
 }
 ```
 
@@ -361,6 +365,13 @@ Env vars:
 ---
 
 ## Changelog
+
+### v0.8.0 (2026-06-13)
+- New `blocked` field on cards — dropdown with "—" (default) and "Blocked" values
+- `blocked` field returned in all card API responses (board read, agent cards, card update)
+- `blocked` accepted in `POST /api/agent/cards` (create) and `PUT /api/agent/cards/{id}` (update)
+- Human UI: inline blocked dropdown on kanban cards + blocked select in card modal
+- Agent API: set `blocked: "Blocked"` to mark a card as blocked, `blocked: null` to clear
 
 ### v0.7.0 (2026-06-08)
 - New `GET /api/cards/archived?boardId=<id>` endpoint — list archived cards for a board (user-authenticated)

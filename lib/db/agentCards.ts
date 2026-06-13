@@ -12,6 +12,7 @@ interface AgentCardResult {
   columnId: string;
   columnName: string;
   agentId: string | null;
+  blocked: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -89,6 +90,7 @@ export async function getAgentCards(
         columnId: card.columnId,
         columnName: card.column.name,
         agentId: card.agentId,
+        blocked: (card as any).blocked ?? null,
         createdAt: card.createdAt,
         updatedAt: card.updatedAt,
       };

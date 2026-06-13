@@ -26,7 +26,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     }
 
     const body = await request.json();
-    const { boardId, title, description, columnId, tags, archived } = body;
+    const { boardId, title, description, columnId, tags, blocked, archived } = body;
 
     if (!boardId) {
       return NextResponse.json({ error: 'boardId is required' }, { status: 400 });
@@ -70,6 +70,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
           ...(title !== undefined && { title: title.trim() }),
           ...(description !== undefined && { description: description?.trim() || null }),
           ...(tags !== undefined && { tags }),
+          ...(blocked !== undefined && { blocked: blocked || null }),
           ...(archived !== undefined && { archived }),
         },
       });
@@ -95,6 +96,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
           columnId: existingCard.columnId,
           position: existingCard.position,
           tags: existingCard.tags,
+          blocked: (existingCard as any).blocked ?? null,
           archived: (existingCard as any).archived ?? false,
         },
         newValues: {
@@ -103,6 +105,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
           columnId: updatedCard.columnId,
           position: updatedCard.position,
           tags: updatedCard.tags,
+          blocked: (updatedCard as any).blocked ?? null,
           archived: (updatedCard as any).archived ?? false,
         },
       });
@@ -131,6 +134,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     if (title !== undefined) updateData.title = title.trim();
     if (description !== undefined) updateData.description = description?.trim() || null;
     if (tags !== undefined) updateData.tags = tags;
+    if (blocked !== undefined) updateData.blocked = blocked || null;
     if (archived !== undefined) updateData.archived = archived;
 
     const updatedCard = await prisma.card.update({
@@ -150,12 +154,14 @@ export async function PUT(request: NextRequest, context: RouteContext) {
           title: existingCard.title,
           description: existingCard.description,
           tags: existingCard.tags,
+          blocked: (existingCard as any).blocked ?? null,
           archived: (existingCard as any).archived ?? false,
         },
         newValues: {
           title: updatedCard.title,
           description: updatedCard.description,
           tags: updatedCard.tags,
+          blocked: (updatedCard as any).blocked ?? null,
           archived: (updatedCard as any).archived ?? false,
         },
       });
@@ -174,6 +180,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     if (description !== undefined && existingCard.description !== (description?.trim() || null)) fieldsChanged.push('description');
     if (tags !== undefined && JSON.stringify(existingCard.tags) !== JSON.stringify(tags)) fieldsChanged.push('tags');
     if (archived !== undefined && (existingCard as any).archived !== archived) fieldsChanged.push('archived');
+    if (blocked !== undefined && ((existingCard as any).blocked ?? null) !== (blocked || null)) fieldsChanged.push('blocked');
     if (fieldsChanged.length > 0) {
       await logActivity({
         cardId,

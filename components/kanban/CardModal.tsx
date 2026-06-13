@@ -41,6 +41,7 @@ export function CardModal({
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
   const [agentId, setAgentId] = useState<string>('');
+  const [blocked, setBlocked] = useState<string>('');
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -58,12 +59,14 @@ export function CardModal({
       setDescription(card.description || '');
       setTags(card.tags || []);
       setAgentId(card.agentId && agents.some(a => a.id === card.agentId) ? card.agentId : '');
+      setBlocked(card.blocked || '');
     } else {
       setTitle('');
       setDescription('');
       setTags([]);
       setTagInput('');
       setAgentId('');
+      setBlocked('');
     }
     setError('');
     setIsSaving(false);
@@ -114,6 +117,7 @@ export function CardModal({
             description: description.trim() || undefined,
             tags,
             agentId: agentId || undefined,
+            blocked: blocked || null,
           }
         : ({
             title: title.trim(),
@@ -122,6 +126,7 @@ export function CardModal({
             boardId,
             tags,
             agentId: agentId || undefined,
+            blocked: blocked || null,
           } as CreateCardRequest);
 
       await onSave(cardData);
@@ -425,6 +430,25 @@ export function CardModal({
                             {agent.name}
                           </option>
                         ))}
+                      </select>
+                    </div>
+
+                    {/* Blocked Status */}
+                    <div>
+                      <label
+                        htmlFor="card-blocked"
+                        className="block text-sm font-medium text-gray-700"
+                      >
+                        Status
+                      </label>
+                      <select
+                        id="card-blocked"
+                        value={blocked}
+                        onChange={(e) => setBlocked(e.target.value)}
+                        className="mt-1 block w-full pl-3 pr-10 py-2 text-base text-gray-900 border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+                      >
+                        <option value="">—</option>
+                        <option value="Blocked">Blocked</option>
                       </select>
                     </div>
 

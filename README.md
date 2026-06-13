@@ -122,7 +122,7 @@ All agent endpoints use `Authorization: Bearer <token>` header.
 | POST | `/api/agent/boards/create` | Create a new board (body: `{ name }`) — auto-creates To Do, In Progress, Done columns |
 | PUT | `/api/agent/boards/[id]` | Archive or unarchive a board (body: `{ archived: boolean }`) |
 | POST | `/api/agent/cards` | Create a card |
-| PUT | `/api/agent/cards/[id]` | Update/move a card (supports `columnId`, `title`, `description`, `tags`) |
+| PUT | `/api/agent/cards/[id]` | Update/move a card (supports `columnId`, `title`, `description`, `tags`, `blocked`) |
 | DELETE | `/api/agent/cards/[id]/delete` | Delete a card (body: `{ boardId }`) |
 | PUT | `/api/agent/cards/[id]/assign` | Assign/unassign an agent to a card |
 | GET | `/api/agent/cards/[id]/comments` | Get comments on a card |
