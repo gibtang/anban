@@ -5,14 +5,17 @@ let isInitialized = false;
 function getAdminApp() {
   if (!isInitialized) {
     const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n');
+    // Prefer the non-public FIREBASE_PROJECT_ID (runtime-resolved); fall back to
+    // the legacy NEXT_PUBLIC_ name for deployments that still set it.
+    const projectId = process.env.FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
-    if (!privateKey || !process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || !process.env.FIREBASE_CLIENT_EMAIL) {
-      throw new Error('Firebase admin credentials are not configured. Please set FIREBASE_PRIVATE_KEY, NEXT_PUBLIC_FIREBASE_PROJECT_ID, and FIREBASE_CLIENT_EMAIL environment variables.');
+    if (!privateKey || !projectId || !process.env.FIREBASE_CLIENT_EMAIL) {
+      throw new Error('Firebase admin credentials are not configured. Please set FIREBASE_PRIVATE_KEY, FIREBASE_PROJECT_ID, and FIREBASE_CLIENT_EMAIL environment variables.');
     }
 
     admin.initializeApp({
       credential: admin.credential.cert({
-        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+        projectId,
         privateKey,
         clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
       }),

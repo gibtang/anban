@@ -165,23 +165,35 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ### Required Environment Variables
 
+> **Use the server-only (non-`NEXT_PUBLIC_`) names below.** The client reads its
+> Firebase config from `GET /api/firebase-config`, which evaluates these vars at
+> **runtime**. `NEXT_PUBLIC_*` vars are inlined at **build** time, so a value
+> missing at build gets baked in as `""` and won't be picked up by a restart.
+> The `NEXT_PUBLIC_*` aliases still work as a fallback, but the non-public names
+> are preferred (change them → restart, no rebuild needed).
+
 ```env
 DATABASE_URL=mongodb+srv://...
 NEXT_PUBLIC_APP_URL=https://your-domain.com
 
-# Firebase (Client)
-NEXT_PUBLIC_FIREBASE_API_KEY=
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=
-NEXT_PUBLIC_FIREBASE_PROJECT_ID=
-NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=
-NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=
-NEXT_PUBLIC_FIREBASE_APP_ID=
+# Firebase Web Client (served to browser via /api/firebase-config)
+FIREBASE_API_KEY=
+FIREBASE_AUTH_DOMAIN=
+FIREBASE_PROJECT_ID=
 
 # Firebase Admin (Server)
-FIREBASE_PROJECT_ID=
 FIREBASE_CLIENT_EMAIL=
 FIREBASE_PRIVATE_KEY=
 ```
+
+Optional (only if you use Storage / Messaging — not required for auth):
+```env
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=
+NEXT_PUBLIC_FIREBASE_APP_ID=
+```
+
+See [`.env.example`](./.env.example) for a ready-to-copy template.
 
 ## Project Structure
 
