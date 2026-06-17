@@ -8,9 +8,10 @@ export const runtime = 'nodejs';
  * Agent endpoint: create a new board
  * POST /api/agent/boards/create
  * Headers: Authorization: Bearer <agentToken>
- * Body: { name: string }
+ * Body: { name: string, description?: string }
  *
  * Creates the board owned by the same user who owns the agent's account.
+ * description is optional.
  */
 export async function POST(request: NextRequest) {
   try {
@@ -21,7 +22,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { name } = body;
+    const { name, description } = body;
 
     if (!name || typeof name !== 'string' || name.trim().length === 0) {
       return NextResponse.json({ error: 'Name is required' }, { status: 400 });
@@ -47,6 +48,7 @@ export async function POST(request: NextRequest) {
     const board = await prisma.board.create({
       data: {
         name: name.trim(),
+        description: description?.trim(),
         ownerId,
         columns: {
           create: [

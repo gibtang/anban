@@ -80,8 +80,8 @@ Returns all active (non-archived) boards on your account:
   "agentId": "agent-id",
   "agentName": "Your Agent",
   "boards": [
-    { "id": "board-1", "name": "Anban", "archived": false, "createdAt": "..." },
-    { "id": "board-2", "name": "Check MCC SG", "archived": false, "createdAt": "..." }
+    { "id": "board-1", "name": "Anban", "description": "Project management", "archived": false, "createdAt": "..." },
+    { "id": "board-2", "name": "Check MCC SG", "description": null, "archived": false, "createdAt": "..." }
   ]
 }
 ```
@@ -96,11 +96,12 @@ Authorization: Bearer <agentToken>
 Content-Type: application/json
 
 {
-  "name": "My New Board"
+  "name": "My New Board",
+  "description": "Optional description of the board's purpose"
 }
 ```
 
-Creates a new board with default columns (To Do, In Progress, Done). Returns the board object with columns. Returns `409` if a board with the same name already exists on the account.
+Creates a new board with default columns (To Do, In Progress, Done). Returns the board object with columns. Returns `409` if a board with the same name already exists on the account. `description` is optional.
 
 ### Archive / Unarchive Board
 
@@ -130,6 +131,7 @@ Returns board with columns and cards:
 {
   "id": "board-id",
   "name": "My Board",
+  "description": "Optional board description",
   "columns": [
     {
       "id": "col-1",
