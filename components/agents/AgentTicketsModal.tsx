@@ -123,7 +123,7 @@ export function AgentTicketsModal({ isOpen, onClose, agentId, agentName }: Agent
                     {data?.cards.map((card) => (
                       <tr
                         key={card.id}
-                        onClick={() => window.open(`/boards/${card.boardId}`, '_blank')}
+                        onClick={() => window.open(`/card/${card.id}`, '_blank')}
                         className="hover:bg-gray-50 cursor-pointer transition-colors"
                       >
                         <td className="px-4 py-4 whitespace-nowrap">
