@@ -26,6 +26,7 @@ export default function BoardsPage() {
   const toast = useToast();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [boardName, setBoardName] = useState('');
+  const [boardDescription, setBoardDescription] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [createError, setCreateError] = useState('');
   const [isRetrying, setIsRetrying] = useState(false);
@@ -50,7 +51,7 @@ export default function BoardsPage() {
       const res = await fetchWithRetry('/api/boards', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: boardName }),
+        body: JSON.stringify({ name: boardName, description: boardDescription }),
       });
 
       if (!res.ok) {
@@ -62,6 +63,7 @@ export default function BoardsPage() {
       await mutateBoards();
       setShowCreateModal(false);
       setBoardName('');
+      setBoardDescription('');
       toast.showToast('Board created successfully!', 'success');
       router.push(`/boards/${newBoard.id}`);
     } catch (err) {
@@ -308,6 +310,7 @@ export default function BoardsPage() {
             onClick={() => {
               setShowCreateModal(false);
               setBoardName('');
+              setBoardDescription('');
               setCreateError('');
             }}
           />
@@ -336,12 +339,28 @@ export default function BoardsPage() {
                 <p className="mt-2 text-sm text-red-600">{createError}</p>
               )}
 
+              <label htmlFor="board-description" className="block mt-4 text-sm font-medium text-gray-700">
+                Board Description <span className="text-gray-400 font-normal">(optional)</span>
+              </label>
+              <textarea
+                id="board-description"
+                value={boardDescription}
+                onChange={(e) => setBoardDescription(e.target.value)}
+                rows={3}
+                className="mt-1.5 block w-full border border-gray-300 rounded-lg shadow-sm py-2.5 px-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm resize-none"
+                placeholder="e.g. This is for a mobile project using React Native"
+              />
+              <p className="mt-1 text-xs text-gray-500">
+                Add details about this board to help others understand its purpose.
+              </p>
+
               <div className="mt-5 flex justify-end gap-3">
                 <button
                   type="button"
                   onClick={() => {
                     setShowCreateModal(false);
                     setBoardName('');
+                    setBoardDescription('');
                     setCreateError('');
                   }}
                   className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"

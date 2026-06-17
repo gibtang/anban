@@ -12,6 +12,7 @@ export interface Column {
 export interface Board {
   id: string;
   name: string;
+  description?: string | null;
   ownerId: string;
   favorited?: boolean;
   archived?: boolean;
@@ -26,8 +27,10 @@ export interface Board {
 
 export interface CreateBoardRequest {
   name: string;
+  description?: string;
 }
 
 export interface UpdateBoardRequest {
   name: string;
+  description?: string | null;
 }

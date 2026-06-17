@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
     const userId = await verifyAuth(request);
 
     const body = await request.json();
-    const { name } = body;
+    const { name, description } = body;
 
     if (!name || typeof name !== 'string' || name.trim().length === 0) {
       return NextResponse.json({ error: 'Name is required' }, { status: 400 });
@@ -79,6 +79,7 @@ export async function POST(request: NextRequest) {
     const board = await prisma.board.create({
       data: {
         name: name.trim(),
+        description: description?.trim() || null,
         ownerId: userId,
         columns: {
           create: [
