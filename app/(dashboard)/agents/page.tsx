@@ -5,6 +5,7 @@ import useSWR from 'swr';
 import Link from 'next/link';
 import { useToast } from '@/components/toast/ToastProvider';
 import { fetchWithRetry } from '@/lib/utils/retry';
+import { AgentTicketsModal } from '@/components/agents/AgentTicketsModal';
 
 interface Agent {
   id: string;
@@ -25,6 +26,7 @@ export default function AgentsPage() {
   const [revokingId, setRevokingId] = useState<string | null>(null);
   const [copyingTokenId, setCopyingTokenId] = useState<string | null>(null);
   const [confirmRevoke, setConfirmRevoke] = useState<{ id: string; name: string } | null>(null);
+  const [selectedAgent, setSelectedAgent] = useState<{ id: string; name: string } | null>(null);
 
   const { data: agents, error, isLoading, mutate } = useSWR<Agent[]>('/api/agents/all', fetcher);
 
@@ -170,7 +172,12 @@ export default function AgentsPage() {
                         </span>
                       </div>
                       <div className="min-w-0">
-                        <p className="text-sm font-medium text-gray-900 truncate">{agent.name}</p>
+                        <button
+                          onClick={() => setSelectedAgent({ id: agent.id, name: agent.name })}
+                          className="text-sm font-medium text-indigo-600 hover:text-indigo-800 underline cursor-pointer truncate"
+                        >
+                          {agent.name}
+                        </button>
                         <p className="text-xs text-gray-500">
                           approved {formatDate(agent.createdAt)}
                           {agent.lastAccessAt && (
@@ -256,6 +263,16 @@ export default function AgentsPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Agent Tickets Modal */}
+      {selectedAgent && (
+        <AgentTicketsModal
+          isOpen={!!selectedAgent}
+          onClose={() => setSelectedAgent(null)}
+          agentId={selectedAgent.id}
+          agentName={selectedAgent.name}
+        />
       )}
     </div>
   );

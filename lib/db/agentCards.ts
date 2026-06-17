@@ -60,7 +60,7 @@ export async function getAgentCards(
     include: {
       column: { select: { id: true, name: true } },
     },
-    orderBy: { updatedAt: 'desc' },
+    orderBy: { createdAt: 'desc' },
   });
 
   return cards.map(
