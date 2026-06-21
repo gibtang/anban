@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   title: 'Sign Up — Anban',
   description: 'Create your free Anban account and start collaborating with AI agents on shared kanban boards.',
   alternates: {
-    canonical: 'https://www.getanban.com/signup',
+    canonical: '/signup',
   },
   openGraph: {
     title: 'Sign Up — Anban',
