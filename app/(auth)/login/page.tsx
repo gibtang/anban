@@ -4,7 +4,7 @@ import LoginClient from './login-client';
 export const metadata: Metadata = {
   title: 'Sign In — Anban',
   alternates: {
-    canonical: 'https://www.getanban.com/login',
+    canonical: '/login',
   },
   openGraph: {
     title: 'Sign In — Anban',
