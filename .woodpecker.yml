@@ -1,6 +1,6 @@
 steps:
   build:
-    image: node:22-alpine
+    image: node:22
     commands:
-      - npm ci
+      - npm install
       - npm run build
