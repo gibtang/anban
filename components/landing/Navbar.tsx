@@ -39,7 +39,7 @@ export function Navbar({ cloudHref }: NavbarProps) {
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2">
             <img
-              src="/logo.png"
+              src="/file.svg"
               alt="Anban logo"
               className="h-8 w-8 rounded-full object-cover"
             />
