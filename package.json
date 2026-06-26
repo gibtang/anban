@@ -19,6 +19,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "test": "bun test",
     "lint": "eslint",
     "db:seed": "bun ./prisma/seed.ts",
     "postinstall": "prisma generate"

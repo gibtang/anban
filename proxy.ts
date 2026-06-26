@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-const publicRoutes = [
+export const publicRoutes = [
   '/',
   '/login',
   '/signup',
@@ -19,7 +19,18 @@ const publicRoutes = [
   '/api/auth',
   '/api/board-access/board',
   '/api/board-access/request',
+  '/getting-started',
 ];
+
+export function isPublicRoute(pathname: string) {
+  return publicRoutes.some(route => {
+    if (route.endsWith('*')) {
+      const prefix = route.slice(0, -1);
+      return pathname.startsWith(prefix);
+    }
+    return pathname === route || pathname.startsWith(route + '/');
+  });
+}
 
 export function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
@@ -51,16 +62,10 @@ export function proxy(request: NextRequest) {
   }
 
   // Check if the current path is a public route
-  const isPublicRoute = publicRoutes.some(route => {
-    if (route.endsWith('*')) {
-      const prefix = route.slice(0, -1);
-      return pathname.startsWith(prefix);
-    }
-    return pathname === route || pathname.startsWith(route + '/');
-  });
+  const isPublicRouteRequest = isPublicRoute(pathname);
 
   // Public routes pass through
-  if (isPublicRoute) {
+  if (isPublicRouteRequest) {
     return NextResponse.next();
   }
 
