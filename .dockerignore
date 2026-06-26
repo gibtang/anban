@@ -1,0 +1,38 @@
+# Version control / metadata
+.git
+.gitignore
+.github
+
+# Dependencies (installed inside the image)
+node_modules
+**/node_modules
+
+# Build output (rebuilt inside the image)
+.next
+out
+dist
+build
+test-results
+coverage
+
+# Local env / secrets — NEVER bake into image (injected by Coolify at runtime)
+.env
+.env.*
+!.env.example
+
+# CI configs (not needed in image)
+.woodpecker.yml
+.beads
+.omc
+
+# Docs / non-runtime
+docs
+*.md
+LICENSE
+
+# Editor / OS noise
+.DS_Store
+.idea
+.vscode
+*.log
+npm-debug.log*
