@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { verifyAuth } from '@/lib/auth/helpers';
+import { validateAgentName } from '@/lib/agents/name-validation';
 
 export const runtime = 'nodejs';
 
@@ -53,15 +54,22 @@ export async function GET(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   try {
     const userId = await verifyAuth(request);
-    const body = await request.json();
+
+    let body: { agentId?: string; name?: unknown };
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    }
     const { agentId, name } = body;
 
     if (!agentId) {
       return NextResponse.json({ error: 'agentId is required' }, { status: 400 });
     }
 
-    if (typeof name !== 'string' || name.trim().length === 0) {
-      return NextResponse.json({ error: 'Name is required (min 1 character)' }, { status: 400 });
+    const result = validateAgentName(name);
+    if (!result.ok) {
+      return NextResponse.json({ error: result.error }, { status: 400 });
     }
 
     // Verify agent belongs to this user
@@ -75,7 +83,7 @@ export async function PATCH(request: NextRequest) {
 
     const updated = await prisma.agent.update({
       where: { id: agentId },
-      data: { name: name.trim() },
+      data: { name: result.value },
     });
 
     return NextResponse.json({ id: updated.id, name: updated.name });
