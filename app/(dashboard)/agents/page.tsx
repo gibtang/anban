@@ -27,6 +27,9 @@ export default function AgentsPage() {
   const [copyingTokenId, setCopyingTokenId] = useState<string | null>(null);
   const [confirmRevoke, setConfirmRevoke] = useState<{ id: string; name: string } | null>(null);
   const [selectedAgent, setSelectedAgent] = useState<{ id: string; name: string } | null>(null);
+  const [editingAgent, setEditingAgent] = useState<{ id: string; name: string } | null>(null);
+  const [editName, setEditName] = useState('');
+  const [renamingId, setRenamingId] = useState<string | null>(null);
 
   const { data: agents, error, isLoading, mutate } = useSWR<Agent[]>('/api/agents/all', fetcher);
 
@@ -49,6 +52,34 @@ export default function AgentsPage() {
       toast.showToast('Failed to revoke access', 'error');
     } finally {
       setRevokingId(null);
+    }
+  };
+
+  const openRenameModal = (agent: { id: string; name: string }) => {
+    setEditingAgent(agent);
+    setEditName(agent.name);
+  };
+
+  const handleRename = async () => {
+    if (!editingAgent) return;
+    const trimmed = editName.trim();
+    if (!trimmed) return;
+
+    setRenamingId(editingAgent.id);
+    try {
+      const res = await fetchWithRetry('/api/agents/all', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ agentId: editingAgent.id, name: trimmed }),
+      });
+      if (!res.ok) throw new Error('Failed to rename');
+      await mutate();
+      toast.showToast(`Renamed to "${trimmed}"`, 'success');
+      setEditingAgent(null);
+    } catch {
+      toast.showToast('Failed to rename agent', 'error');
+    } finally {
+      setRenamingId(null);
     }
   };
 
@@ -122,7 +153,18 @@ export default function AgentsPage() {
               {pending.map((agent) => (
                 <li key={agent.id} className="px-4 py-3 flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-900">{agent.name}</p>
+                    <div className="flex items-center gap-1.5">
+                      <p className="text-sm font-medium text-gray-900">{agent.name}</p>
+                      <button
+                        onClick={() => openRenameModal(agent)}
+                        className="text-gray-400 hover:text-indigo-600 transition-colors"
+                        title="Rename agent"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </button>
+                    </div>
                     <p className="text-xs text-gray-500">requested {formatDate(agent.createdAt)}</p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -172,12 +214,23 @@ export default function AgentsPage() {
                         </span>
                       </div>
                       <div className="min-w-0">
-                        <button
-                          onClick={() => setSelectedAgent({ id: agent.id, name: agent.name })}
-                          className="text-sm font-medium text-indigo-600 hover:text-indigo-800 underline cursor-pointer truncate"
-                        >
-                          {agent.name}
-                        </button>
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            onClick={() => setSelectedAgent({ id: agent.id, name: agent.name })}
+                            className="text-sm font-medium text-indigo-600 hover:text-indigo-800 underline cursor-pointer truncate"
+                          >
+                            {agent.name}
+                          </button>
+                          <button
+                            onClick={() => openRenameModal(agent)}
+                            className="text-gray-400 hover:text-indigo-600 transition-colors flex-shrink-0"
+                            title="Rename agent"
+                          >
+                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                          </button>
+                        </div>
                         <p className="text-xs text-gray-500">
                           approved {formatDate(agent.createdAt)}
                           {agent.lastAccessAt && (
@@ -273,6 +326,42 @@ export default function AgentsPage() {
           agentId={selectedAgent.id}
           agentName={selectedAgent.name}
         />
+      )}
+
+      {/* Rename Agent Modal */}
+      {editingAgent && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen px-4">
+            <div className="fixed inset-0 bg-black/50 transition-opacity" onClick={() => setEditingAgent(null)} />
+            <div className="relative bg-white rounded-lg shadow-xl max-w-sm w-full p-6">
+              <h3 className="text-base font-semibold text-gray-900 mb-4">Rename Agent</h3>
+              <input
+                type="text"
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                autoFocus
+                onKeyDown={(e) => { if (e.key === 'Enter') handleRename(); }}
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                placeholder="Agent name"
+              />
+              <div className="flex gap-3 justify-end mt-5">
+                <button
+                  onClick={() => setEditingAgent(null)}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleRename}
+                  disabled={!editName.trim() || renamingId === editingAgent.id}
+                  className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 disabled:opacity-50"
+                >
+                  {renamingId === editingAgent.id ? 'Saving...' : 'Save'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

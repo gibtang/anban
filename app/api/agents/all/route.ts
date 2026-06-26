@@ -46,6 +46,49 @@ export async function GET(request: NextRequest) {
 }
 
 /**
+ * Rename an agent
+ * PATCH /api/agents/all
+ * Body: { agentId: string, name: string }
+ */
+export async function PATCH(request: NextRequest) {
+  try {
+    const userId = await verifyAuth(request);
+    const body = await request.json();
+    const { agentId, name } = body;
+
+    if (!agentId) {
+      return NextResponse.json({ error: 'agentId is required' }, { status: 400 });
+    }
+
+    if (typeof name !== 'string' || name.trim().length === 0) {
+      return NextResponse.json({ error: 'Name is required (min 1 character)' }, { status: 400 });
+    }
+
+    // Verify agent belongs to this user
+    const agent = await prisma.agent.findFirst({
+      where: { id: agentId, ownerId: userId },
+    });
+
+    if (!agent) {
+      return NextResponse.json({ error: 'Agent not found' }, { status: 404 });
+    }
+
+    const updated = await prisma.agent.update({
+      where: { id: agentId },
+      data: { name: name.trim() },
+    });
+
+    return NextResponse.json({ id: updated.id, name: updated.name });
+  } catch (error) {
+    console.error('Error renaming agent:', error);
+    if (error instanceof Error && error.message === 'Unauthorized') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    return NextResponse.json({ error: 'Failed to rename agent' }, { status: 500 });
+  }
+}
+
+/**
  * Delete an agent (revoke access)
  * DELETE /api/agents/all
  * Body: { agentId: string }
