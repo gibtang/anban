@@ -1,6 +1,0 @@
-steps:
-  build:
-    image: node:22
-    commands:
-      - npm install
-      - npm run build
