@@ -15,7 +15,7 @@ import { CTASection } from '@/components/landing/CTASection';
 import { Footer } from '@/components/landing/Footer';
 
 export default function HomeContent() {
-  const { user, loading } = useAuth();
+  const { user } = useAuth();
   const [stars, setStars] = useState(0);
 
   useEffect(() => {
@@ -27,14 +27,6 @@ export default function HomeContent() {
 
   // Build context-aware href for "Try Cloud Version"
   const cloudHref = user ? '/boards' : '/login';
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
-        <div className="w-8 h-8 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-white">
