@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import type { Card, CreateCardRequest, UpdateCardRequest } from '@/types/card';
 import { ActivityLog } from './ActivityLog';
 import { CommentSection } from './CommentSection';
+import { LinkifyText } from './LinkifyText';
 import apiFetch from '@/lib/apiFetch';
 
 interface AgentOption {
@@ -50,6 +51,7 @@ export function CardModal({
   const [isGeneratingTitle, setIsGeneratingTitle] = useState(false);
   const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
   const [isArchiving, setIsArchiving] = useState(false);
+  const [descEditMode, setDescEditMode] = useState(false);
 
   const isEditMode = !!card;
 
@@ -72,6 +74,7 @@ export function CardModal({
     setIsSaving(false);
     setShowDeleteConfirm(false);
     setShowArchiveConfirm(false);
+    setDescEditMode(!card); // Edit mode for new cards, view mode for existing
   }, [card, isOpen, agents]);
 
   const handleAddTag = () => {
@@ -333,21 +336,45 @@ export function CardModal({
 
                     {/* Description */}
                     <div>
-                      <label
-                        htmlFor="card-description"
-                        className="block text-sm font-medium text-gray-700"
-                      >
-                        Description <span className="text-red-500">*</span>
-                      </label>
-                      <textarea
-                        id="card-description"
-                        value={description}
-                        onChange={(e) => setDescription(e.target.value)}
-                        rows={12}
-                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                        placeholder="Add a description..."
-                        required
-                      />
+                      <div className="flex items-center justify-between">
+                        <label
+                          htmlFor="card-description"
+                          className="block text-sm font-medium text-gray-700"
+                        >
+                          Description <span className="text-red-500">*</span>
+                        </label>
+                        {isEditMode && (
+                          <button
+                            type="button"
+                            onClick={() => setDescEditMode(!descEditMode)}
+                            className="text-xs text-indigo-600 hover:text-indigo-800 font-medium"
+                          >
+                            {descEditMode ? 'Preview' : 'Edit'}
+                          </button>
+                        )}
+                      </div>
+                      {descEditMode ? (
+                        <textarea
+                          id="card-description"
+                          value={description}
+                          onChange={(e) => setDescription(e.target.value)}
+                          rows={12}
+                          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                          placeholder="Add a description..."
+                          required
+                        />
+                      ) : (
+                        <div
+                          onClick={() => setDescEditMode(true)}
+                          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 text-gray-900 sm:text-sm min-h-[12rem] cursor-pointer hover:border-indigo-400 transition-colors whitespace-pre-wrap"
+                        >
+                          {description.trim() ? (
+                            <LinkifyText text={description} />
+                          ) : (
+                            <span className="text-gray-400">Click to add a description...</span>
+                          )}
+                        </div>
+                      )}
                     </div>
 
 
