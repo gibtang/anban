@@ -236,23 +236,11 @@ prisma/
 
 ## Deployment
 
-### Vercel (Current)
+### Coolify (Current)
 
-Live deployment at [www.getanban.com](https://www.getanban.com). Commits to `master` trigger automatic deployment.
+Live deployment at [www.getanban.com](https://www.getanban.com), self-hosted with [Coolify](https://coolify.io). Commits to `master` trigger an automatic build and deploy.
 
-```bash
-vercel --prod
-```
-
-### Fly.io
-
-Anban can also be deployed on Fly.io with the included `fly.toml` and `Dockerfile`:
-
-```bash
-fly deploy
-```
-
-Note: The 15-second serverless function timeout on Vercel may affect long-running operations. Fly.io has no such limitation.
+Coolify builds the app from the included `Dockerfile`, so there's no serverless function timeout — long-running operations (agent chat, SSE streams) are unaffected.
 
 ## Architecture Overview
 
