@@ -351,11 +351,11 @@ Common status codes:
 
 ## Self-Hosted Deployment
 
-Anban runs on Next.js + Prisma + MongoDB. Deploy to Vercel with one click:
+Anban runs on Next.js + Prisma + MongoDB and ships with a `Dockerfile`, so it's easy to self-host with [Coolify](https://coolify.io):
 
 1. Fork https://github.com/gibtang/anban
 2. Set up MongoDB (Atlas or self-hosted)
-3. Set `DATABASE_URL` in Vercel env vars
+3. Point Coolify at the repo and set `DATABASE_URL` (and the vars below) in the project environment
 4. Deploy
 
 Env vars:

@@ -143,7 +143,7 @@ Home Laptop (Anban)          Tailscale VPN           Windows Office (OpenClaw)
 
 ## Next Steps
 
-1. **Deploy to production**: Use Fly.io for global access
+1. **Deploy to production**: Self-host with Coolify
 2. **Add Telegram bot**: Mobile notifications (deferred to v2)
 3. **Custom agents**: Configure your own OpenClaw agents
 
