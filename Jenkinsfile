@@ -1,61 +1,69 @@
+// anban — Jenkins→Coolify.
+// No build-args (build-env file is empty). Replaces the legacy aspirational
+// Jenkinsfile (which used the wrong /start endpoint + a fragile docker login).
+// GHCR + Coolify auth come from Jenkins credentials (ghcr-token, coolify-api).
+// GitHub Actions (.github/workflows/deploy.yml) remains the manual-only fallback.
 pipeline {
-    agent any
+  agent any
+  options { timestamps(); disableConcurrentBuilds(); buildDiscarder(logRotator(numToKeepStr: '20')) }
+  environment {
+    IMAGE       = 'ghcr.io/gibtang/anban'
+    TAG         = "${env.BUILD_NUMBER}"
+    APP_UUID    = 'yxvqbs5rknprqqtc5bxzeok1'
+    COOLIFY_API = 'https://coolify-api.feedcode.dev'
+    BUILDENV    = '/run/secrets/build-env.anban'   // empty (no build-args)
+  }
+  stages {
+    stage('Checkout') { steps { checkout scm } }
 
-    environment {
-        IMAGE      = 'ghcr.io/gibtang/anban'
-        TAG        = "${env.BUILD_NUMBER}"
-        COOLIFY_API   = 'https://coolify-api.feedcode.dev'
-        APP_UUID      = 'yxvqbs5rknprqqtc5bxzeok1'
+    stage('Build Image') {
+      steps {
+        sh '''#!/bin/bash
+          set -euo pipefail
+          set -a; . "${BUILDENV}"; set +a
+          args=()
+          while IFS='=' read -r name _; do
+            [ -z "${name:-}" ] && continue
+            [[ "$name" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]] || continue
+            args+=(--build-arg "${name}=${!name}")
+          done < "${BUILDENV}"
+          docker build "${args[@]}" -t "${IMAGE}:${TAG}" -t "${IMAGE}:latest" .
+        '''
+      }
     }
 
-    stages {
-        stage('Checkout') {
-            steps {
-                checkout scm
-            }
+    stage('Push to GHCR') {
+      steps {
+        withCredentials([usernamePassword(credentialsId: 'ghcr-token', usernameVariable: 'GHCR_USER', passwordVariable: 'GHCR_PASS')]) {
+          sh '''#!/bin/bash
+            set -euo pipefail
+            echo "${GHCR_PASS}" | docker login ghcr.io -u "${GHCR_USER}" --password-stdin
+            docker push "${IMAGE}:${TAG}"
+            docker push "${IMAGE}:latest"
+          '''
         }
-
-        stage('Build Image') {
-            steps {
-                sh "docker build -t ${IMAGE}:${TAG} ."
-                sh "docker tag ${IMAGE}:${TAG} ${IMAGE}:latest"
-            }
-        }
-
-        stage('Push to GHCR') {
-            steps {
-                withCredentials([usernamePassword(
-                    credentialsId: 'ghcr-token',
-                    usernameVariable: 'GHCR_USER',
-                    passwordVariable: 'GHCR_PASS'
-                )]) {
-                    sh "echo '${env.GHCR_PASS}' | docker login ghcr.io -u '${env.GHCR_USER}' --password-stdin"
-                }
-                sh "docker push ${IMAGE}:${TAG}"
-                sh "docker push ${IMAGE}:latest"
-            }
-        }
-
-        stage('Deploy via Coolify') {
-            steps {
-                withCredentials([usernamePassword(
-                    credentialsId: 'coolify-api',
-                    usernameVariable: 'COOLIFY_USER',
-                    passwordVariable: 'COOLIFY_TOKEN'
-                )]) {
-                    sh """
-                        curl -sf -X POST \
-                            -H "Authorization: Bearer ${COOLIFY_TOKEN}" \
-                            "${COOLIFY_API}/api/v1/applications/${APP_UUID}/start"
-                    """
-                }
-            }
-        }
+      }
     }
 
-    post {
-        cleanup {
-            sh "docker image rm ${IMAGE}:${TAG} ${IMAGE}:latest 2>/dev/null || true"
+    stage('Deploy via Coolify') {
+      steps {
+        withCredentials([usernamePassword(credentialsId: 'coolify-api', usernameVariable: 'CUSER', passwordVariable: 'CTOK')]) {
+          sh """#!/bin/bash
+            set -euo pipefail
+            code=\$(curl -s -o /tmp/coolify.resp -w '%{http_code}' -X POST \\
+              '${env.COOLIFY_API}/api/v1/deploy' \\
+              -H "Authorization: Bearer \${CTOK}" \\
+              -H 'Content-Type: application/json' \\
+              -d '{"uuid":"${env.APP_UUID}"}')
+            cat /tmp/coolify.resp; echo
+            [ "\$code" = '200' ] || { echo "Coolify deploy failed (HTTP \${code})"; exit 1; }
+            echo 'Coolify deploy queued.'
+          """
         }
+      }
     }
+  }
+  post {
+    cleanup { sh "docker image rm ${IMAGE}:${TAG} ${IMAGE}:latest 2>/dev/null || true" }
+  }
 }
