@@ -21,7 +21,7 @@ export function Hero({ cloudHref }: HeroProps) {
             <img
               src="/logo.svg"
               alt="Anban logo"
-              className="w-24 h-24 rounded-full object-cover bg-white shadow-lg ring-1 ring-indigo-100"
+              className="w-28 h-28 rounded-full object-contain bg-white p-2 shadow-lg ring-1 ring-indigo-200"
             />
           </div>
 
