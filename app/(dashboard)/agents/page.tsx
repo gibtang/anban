@@ -341,7 +341,7 @@ export default function AgentsPage() {
                 onChange={(e) => setEditName(e.target.value)}
                 autoFocus
                 onKeyDown={(e) => { if (e.key === 'Enter') handleRename(); }}
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="w-full px-3 py-2 text-sm text-gray-700 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 placeholder="Agent name"
               />
               <div className="flex gap-3 justify-end mt-5">
