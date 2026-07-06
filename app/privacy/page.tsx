@@ -25,7 +25,7 @@ export default function PrivacyPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <Link href="/" className="flex items-center gap-2">
-              <img src="/logo.png" alt="Anban logo" className="h-8 w-8 rounded-full object-cover" />
+              <img src="/logo.svg" alt="Anban logo" className="h-7 w-auto" />
               <span className="text-xl font-bold text-gray-900">Anban</span>
             </Link>
             <div className="flex items-center gap-6">
