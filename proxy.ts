@@ -53,6 +53,19 @@ export function proxy(request: NextRequest) {
     }
   }
 
+  // OG link previews: rewrite unauthenticated /boards/[id] requests to the
+  // OG route handler so crawlers (Telegram, Twitter, Slack) see OG tags
+  // instead of a 307 redirect to /login.
+  const boardMatch = pathname.match(/^\/boards\/([^/]+)$/);
+  if (boardMatch) {
+    const hasAuth = request.cookies.get('firebase-auth-token')?.value;
+    if (!hasAuth) {
+      const url = request.nextUrl.clone();
+      url.pathname = `/api/og/board/${boardMatch[1]}`;
+      return NextResponse.rewrite(url);
+    }
+  }
+
   // Check if auth is disabled via environment variable
   const authDisabled = process.env.DISABLE_AUTH === 'true';
 

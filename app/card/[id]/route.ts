@@ -95,6 +95,13 @@ export async function GET(request: NextRequest, context: RouteContext) {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${escapeHtml(cardDetails.title)} - Anban</title>
+  <meta property="og:title" content="${escapeHtml(cardDetails.title)} — Anban" />
+  <meta property="og:description" content="Board: ${escapeHtml(cardDetails.boardName)} · Column: ${escapeHtml(cardDetails.column)}" />
+  <meta property="og:site_name" content="Anban" />
+  <meta property="og:type" content="article" />
+  <meta property="og:image" content="https://www.getanban.com/og-image.png" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="${escapeHtml(cardDetails.title)} — Anban" />
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f9fafb; color: #111827; padding: 2rem; }
