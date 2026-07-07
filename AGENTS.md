@@ -1,6 +1,6 @@
 # Agent Instructions
 
-> **Beads workflow:** See `/home/gibson/my-files/AGENTS.md` for beads issue tracker integration (Quick Reference, Rules, Pre-Implementation, Session Completion).
+> **Anban workflow:** See `/home/gibson/my-files/AGENTS.md` for the global Anban task-tracking rules.
 
 ## Project-Specific Notes
 

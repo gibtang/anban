@@ -16,13 +16,14 @@ interface KanbanCardProps {
   card: Card;
   isDragging?: boolean;
   onEdit?: () => void;
+  onDelete?: (cardId: string) => Promise<void>;
   agentName?: string | null;
   agentToken?: string | null;
   agents?: AgentOption[];
   boardId?: string;
 }
 
-export default function KanbanCard({ card, isDragging, onEdit, agentName, agentToken, agents, boardId }: KanbanCardProps) {
+export default function KanbanCard({ card, isDragging, onEdit, onDelete, agentName, agentToken, agents, boardId }: KanbanCardProps) {
   const {
     attributes,
     listeners,
@@ -41,9 +42,12 @@ export default function KanbanCard({ card, isDragging, onEdit, agentName, agentT
   const [copied, setCopied] = useState(false);
   const [agentDropdownOpen, setAgentDropdownOpen] = useState(false);
   const [blockedDropdownOpen, setBlockedDropdownOpen] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [assigning, setAssigning] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const blockedDropdownRef = useRef<HTMLDivElement>(null);
+  const deleteRef = useRef<HTMLDivElement>(null);
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -54,7 +58,7 @@ export default function KanbanCard({ card, isDragging, onEdit, agentName, agentT
 
   // Close dropdown when clicking outside
   useEffect(() => {
-    if (!agentDropdownOpen && !blockedDropdownOpen) return;
+    if (!agentDropdownOpen && !blockedDropdownOpen && !deleteConfirmOpen) return;
     const handleClickOutside = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setAgentDropdownOpen(false);
@@ -62,10 +66,24 @@ export default function KanbanCard({ card, isDragging, onEdit, agentName, agentT
       if (blockedDropdownRef.current && !blockedDropdownRef.current.contains(e.target as Node)) {
         setBlockedDropdownOpen(false);
       }
+      if (deleteRef.current && !deleteRef.current.contains(e.target as Node)) {
+        setDeleteConfirmOpen(false);
+      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [agentDropdownOpen, blockedDropdownOpen]);
+  }, [agentDropdownOpen, blockedDropdownOpen, deleteConfirmOpen]);
+
+  const handleDelete = useCallback(async () => {
+    if (!onDelete || deleting) return;
+    setDeleting(true);
+    try {
+      await onDelete(card.id);
+    } finally {
+      setDeleting(false);
+      setDeleteConfirmOpen(false);
+    }
+  }, [onDelete, card.id, deleting]);
 
   const handleAssignAgent = useCallback(async (agentId: string | null) => {
     if (!boardId || assigning) return;
@@ -211,6 +229,57 @@ export default function KanbanCard({ card, isDragging, onEdit, agentName, agentT
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
               </svg>
             </button>
+          )}
+          {onDelete && (
+            <div className="relative" ref={deleteRef}>
+              <button
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (!deleteConfirmOpen) setDeleteConfirmOpen(true);
+                }}
+                disabled={deleting}
+                className="flex-shrink-0 p-1 rounded hover:bg-red-50 text-gray-400 hover:text-red-600 transition-all disabled:opacity-50"
+                title="Delete card"
+              >
+                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
+
+              {deleteConfirmOpen && (
+                <div
+                  onPointerDown={(e) => e.stopPropagation()}
+                  className="absolute z-[100] top-full right-0 mt-1 w-40 bg-white rounded-md shadow-lg border border-gray-200 p-2"
+                >
+                  <p className="text-[11px] text-gray-600 mb-2">
+                    Delete this card permanently?
+                  </p>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDelete();
+                      }}
+                      disabled={deleting}
+                      className="flex-1 px-2 py-1 text-[11px] font-medium text-white bg-red-600 rounded hover:bg-red-700 transition-colors disabled:opacity-50"
+                    >
+                      {deleting ? 'Deleting…' : 'Delete'}
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setDeleteConfirmOpen(false);
+                      }}
+                      disabled={deleting}
+                      className="flex-1 px-2 py-1 text-[11px] font-medium text-gray-600 bg-gray-100 rounded hover:bg-gray-200 transition-colors disabled:opacity-50"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           )}
         </div>
       </div>

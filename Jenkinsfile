@@ -3,6 +3,13 @@
 // Jenkinsfile (which used the wrong /start endpoint + a fragile docker login).
 // GHCR + Coolify auth come from Jenkins credentials (ghcr-token, coolify-api).
 // GitHub Actions (.github/workflows/deploy.yml) remains the manual-only fallback.
+// tg() — Telegram pipeline notifications. TG_TOKEN/TG_CHAT come from Jenkins
+// secret-text credentials; tg-notify.sh is mounted into the controller. No-ops
+// silently if the creds are unset, so it never breaks a build.
+void tg(String msg) {
+  withEnv(["TG_MSG=${msg}"]) { sh 'tg-notify.sh' }
+}
+
 pipeline {
   agent any
   options { timestamps(); disableConcurrentBuilds(); buildDiscarder(logRotator(numToKeepStr: '20')) }
@@ -12,12 +19,21 @@ pipeline {
     APP_UUID    = 'yxvqbs5rknprqqtc5bxzeok1'
     COOLIFY_API = 'https://coolify-api.feedcode.dev'
     BUILDENV    = '/run/secrets/build-env.anban'   // empty (no build-args)
+    APP         = 'anban'
+    TG_TOKEN    = credentials('telegram-token')   // Telegram notify (tg-notify.sh)
+    TG_CHAT     = credentials('telegram-chat')
   }
   stages {
-    stage('Checkout') { steps { checkout scm } }
+    stage('Checkout') {
+      steps {
+        tg("🔨 <b>${APP}</b> #${BUILD_NUMBER} — Checkout started")
+        checkout scm
+      }
+    }
 
     stage('Build Image') {
       steps {
+        tg("🔨 <b>${APP}</b> #${BUILD_NUMBER} — Build started")
         sh '''#!/bin/bash
           set -euo pipefail
           set -a; . "${BUILDENV}"; set +a
@@ -34,6 +50,7 @@ pipeline {
 
     stage('Push to GHCR') {
       steps {
+        tg("📤 <b>${APP}</b> #${BUILD_NUMBER} — Push to GHCR started")
         withCredentials([usernamePassword(credentialsId: 'ghcr-token', usernameVariable: 'GHCR_USER', passwordVariable: 'GHCR_PASS')]) {
           sh '''#!/bin/bash
             set -euo pipefail
@@ -42,6 +59,7 @@ pipeline {
             docker push "${IMAGE}:latest"
           '''
         }
+        tg("✅ <b>${APP}</b> #${BUILD_NUMBER} — Pushed to GHCR")
       }
     }
 
@@ -64,6 +82,9 @@ pipeline {
     }
   }
   post {
+    failure {
+      tg("❌ <b>${APP}</b> #${BUILD_NUMBER} — build FAILED: ${env.BUILD_URL}")
+    }
     cleanup { sh "docker image rm ${IMAGE}:${TAG} ${IMAGE}:latest 2>/dev/null || true" }
   }
 }

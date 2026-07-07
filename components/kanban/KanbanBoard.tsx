@@ -502,6 +502,7 @@ export default function KanbanBoard({ boardId }: KanbanBoardProps) {
                 agents={agents}
                 defaultCollapsed={false}
                 onEditCard={handleEditCard}
+                onDeleteCard={handleDeleteCard}
                 onAddCard={handleAddCard}
               />
             ))}
