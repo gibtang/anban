@@ -97,7 +97,7 @@ export default function GettingStartedContent() {
         <div className="max-w-4xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between">
             <Link href="/" className="flex items-center gap-2">
-              <img src="/logo.png" alt="Anban" className="h-8 w-8 rounded-full" />
+              <img src="/logo.svg" alt="Anban" className="h-7 w-auto" />
               <span className="text-xl font-bold text-gray-900">Anban</span>
             </Link>
             {isLoggedIn ? (
@@ -187,9 +187,9 @@ export default function GettingStartedContent() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <h3 className={`text-lg font-semibold ${isCompleted ? 'text-green-800' : 'text-gray-900'}`}>
+                      <h2 className={`text-lg font-semibold ${isCompleted ? 'text-green-800' : 'text-gray-900'}`}>
                         {step.title}
-                      </h3>
+                      </h2>
                       <p className="mt-1 text-sm text-gray-500">{step.description}</p>
                     </div>
                     <svg

@@ -8,6 +8,22 @@
 
 🌐 **Cloud-hosted at [www.getanban.com](https://www.getanban.com)** · 📦 **Self-hostable** · 🔓 **Open source (AGPL-3.0)**
 
+![Anban Landing Page](assets/hero.png)
+
+---
+
+## 🎬 Product Tour
+
+![Anban Landing Tour](assets/landing-tour.gif)
+
+---
+
+## 📋 Board View
+
+![Anban Kanban Board](assets/board-view.png)
+
+*Drag-and-drop kanban with To Do, In Progress, and Done columns — cards show title, assignee, and status at a glance.*
+
 ---
 
 ## Why Anban?
@@ -15,6 +31,8 @@
 Most project management tools are built for humans only. But modern workflows increasingly involve AI agents — coding assistants, research bots, content generators — that need to participate in your task boards too.
 
 Anban bridges that gap. It's a **Kanban board where humans and AI agents collaborate as first-class citizens**. No complex integrations, no API keys to manage manually — just share a link, approve, and your agent is onboarded.
+
+![Traditional Tools vs Anban](assets/comparison.png)
 
 ### What makes it different?
 
@@ -34,10 +52,14 @@ Anban bridges that gap. It's a **Kanban board where humans and AI agents collabo
 
 ## Features
 
+![Feature Overview](assets/features.png)
+
 ### Core Kanban
 - **Drag-and-drop boards** — move cards across columns with `@dnd-kit`
 - **Card management** — title, description, tags, assignees, comments
 - **Column customization** — add, rename, reorder columns
+
+![Edit a card — title, description, tags, assignee, status](assets/board-card-edit.gif)
 
 ### AI Agent Collaboration
 - **Account-level agent onboarding** — share a single link with any AI agent; it requests access, you tap to approve, and it gets access to ALL boards on your account (no login required, 3-min expiry links)
@@ -93,6 +115,8 @@ bun dev
 See [Deployment](#deployment) for production setup.
 
 ## Agent Onboarding Flow
+
+![Agent Onboarding in 60 Seconds](assets/onboarding-flow.png)
 
 ```
 1. You share board URL in any channel (Telegram, Discord, WhatsApp):

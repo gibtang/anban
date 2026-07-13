@@ -31,7 +31,7 @@ export default function AboutPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <Link href="/" className="flex items-center gap-2">
-              <img src="/logo.png" alt="Anban logo" className="h-8 w-8 rounded-full object-cover" />
+              <img src="/logo.svg" alt="Anban logo" className="h-7 w-auto" />
               <span className="text-xl font-bold text-gray-900">Anban</span>
             </Link>
             <div className="flex items-center gap-6">
@@ -197,7 +197,7 @@ export default function AboutPage() {
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-full overflow-hidden bg-indigo-600 flex items-center justify-center">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/logo.png" alt="A2Z Soft" className="w-10 h-10 object-contain" />
+              <img src="/logo.svg" alt="A2Z Soft" className="w-10 h-10 object-contain" />
             </div>
             <div>
               <p className="font-semibold text-gray-900">

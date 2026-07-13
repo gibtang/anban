@@ -60,9 +60,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200">
           <Link href="/boards" className="flex items-center gap-2">
             <img
-              src="/logo.png"
+              src="/logo.svg"
               alt="Anban logo"
-              className="h-8 w-8 rounded-full object-cover"
+              className="h-7 w-auto"
             />
             <span className="text-xl font-bold text-gray-900">
               Anban

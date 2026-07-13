@@ -30,6 +30,7 @@ interface KanbanColumnProps {
   agents?: AgentOption[];
   defaultCollapsed?: boolean;
   onEditCard?: (card: Card) => void;
+  onDeleteCard?: (cardId: string) => Promise<void>;
   onAddCard?: (columnId: string) => void;
 }
 
@@ -43,6 +44,7 @@ export default function KanbanColumn({
   agents,
   defaultCollapsed = false,
   onEditCard,
+  onDeleteCard,
   onAddCard,
 }: KanbanColumnProps) {
   const [collapsed, setCollapsed] = useState(defaultCollapsed);
@@ -149,6 +151,7 @@ export default function KanbanColumn({
               card={card}
               isDragging={activeCardId === card.id}
               onEdit={() => onEditCard?.(card)}
+              onDelete={onDeleteCard}
               agentName={card.agentId ? (agentNames[card.agentId] || null) : null}
               agentToken={card.agentId ? (agentTokensMap[card.agentId] || null) : (Object.values(agentTokensMap)[0] || null)}
               agents={agents}

@@ -15,6 +15,16 @@ export function Hero({ cloudHref }: HeroProps) {
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         <div className="text-center max-w-3xl mx-auto">
+          {/* Logo */}
+          <div className="flex justify-center mb-8">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/logo.svg"
+              alt="Anban logo"
+              className="w-28 h-28 rounded-full object-contain bg-white p-2 shadow-lg ring-1 ring-indigo-200"
+            />
+          </div>
+
           {/* Badge */}
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-100 mb-8">
             <svg className="w-4 h-4 text-indigo-600" fill="currentColor" viewBox="0 0 24 24">

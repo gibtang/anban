@@ -22,7 +22,6 @@ export const metadata: Metadata = {
   keywords: ["kanban", "ai agents", "project management", "open source", "self-hosted", "agent api", "kanban board", "ai collaboration"],
   authors: [{ name: "A2Z Soft", url: "https://github.com/gibtang" }],
   icons: {
-    icon: "/favicon.ico",
     apple: "/apple-touch-icon.png",
   },
   openGraph: {

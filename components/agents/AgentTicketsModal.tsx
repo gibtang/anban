@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import useSWR from 'swr';
 import { fetchWithRetry } from '@/lib/utils/retry';
+import { LinkifyText } from '@/components/kanban/LinkifyText';
 
 interface AgentCard {
   id: string;
@@ -132,7 +133,7 @@ export function AgentTicketsModal({ isOpen, onClose, agentId, agentName }: Agent
                         <td className="px-4 py-4">
                           <div className="text-sm font-medium text-gray-900">{card.title}</div>
                           {card.description && (
-                            <div className="text-xs text-gray-500 line-clamp-1">{card.description}</div>
+                            <div className="text-xs text-gray-500 line-clamp-1"><LinkifyText text={card.description} /></div>
                           )}
                         </td>
                         <td className="px-4 py-4 whitespace-nowrap">
