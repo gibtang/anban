@@ -4,7 +4,9 @@ on:
     branches: [main]
   workflow_dispatch:
 jobs:
-  test:
-    uses: gibtang/infra/.github/workflows/_test-minimal.yml@main
+  deploy:
+    uses: gibtang/infra/.github/workflows/build-deploy.yml@main
     with:
-      msg: hello
+      image: ghcr.io/gibtang/anban
+      app_uuid: yxvqbs5rknprqqtc5bxzeok1
+    secrets: inherit
