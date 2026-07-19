@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
 jobs:
   deploy:
-    uses: gibtang/infra/.github/workflows/build-deploy.yml@main
+    uses: gibtang/infra/.github/workflows/build-deploy.yml@v1
     with:
       image: ghcr.io/gibtang/anban
       app_uuid: yxvqbs5rknprqqtc5bxzeok1
