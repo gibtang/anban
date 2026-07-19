@@ -3,13 +3,8 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
-concurrency:
-  group: deploy-${{ github.ref }}
-  cancel-in-progress: true
 jobs:
-  deploy:
-    uses: gibtang/infra/.github/workflows/build-deploy.yml@main
+  test:
+    uses: gibtang/infra/.github/workflows/_test-minimal.yml@main
     with:
-      image: ghcr.io/gibtang/anban
-      app_uuid: yxvqbs5rknprqqtc5bxzeok1
-    secrets: inherit
+      msg: hello
