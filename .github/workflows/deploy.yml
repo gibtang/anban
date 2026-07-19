@@ -8,7 +8,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   deploy:
-    uses: gibtang/infra/.github/workflows/build-deploy.yml@v1
+    uses: gibtang/infra/.github/workflows/build-deploy.yml@main
     with:
       image: ghcr.io/gibtang/anban
       app_uuid: yxvqbs5rknprqqtc5bxzeok1
