@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useMemo } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import useSWR, { mutate } from 'swr';
 import { useEventSource } from '@/lib/hooks/useEventSource';
 import KanbanBoard from '@/components/kanban/KanbanBoard';
@@ -28,8 +28,10 @@ const boardFetcher = async (url: string) => {
 export default function BoardDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const toast = useToast();
   const boardId = params.id as string;
+  const cardId = searchParams.get('card');
 
   const { event, connectionState } = useEventSource(boardId);
 
@@ -293,7 +295,7 @@ export default function BoardDetailPage() {
 
       {/* Kanban Board with Drag-and-Drop */}
       <div className="flex-1 overflow-hidden">
-        <KanbanBoard boardId={boardId} />
+      <KanbanBoard boardId={boardId} initialCardId={cardId} />
       </div>
     </div>
   );

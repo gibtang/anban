@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import useSWR, { mutate } from 'swr';
 import {
   DndContext,
@@ -55,9 +56,12 @@ const fetcher = async (url: string) => {
 
 interface KanbanBoardProps {
   boardId: string;
+  /** Optional signed-in board deep-link target. It is never an API capability token. */
+  initialCardId?: string | null;
 }
 
-export default function KanbanBoard({ boardId }: KanbanBoardProps) {
+export default function KanbanBoard({ boardId, initialCardId }: KanbanBoardProps) {
+  const router = useRouter();
   const toast = useToast();
   const { data: board, error, isLoading } = useSWR<BoardData>(
     `/api/boards/${boardId}`,
@@ -101,6 +105,7 @@ export default function KanbanBoard({ boardId }: KanbanBoardProps) {
   }, [agentsList]);
 
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
+  const attemptedDeepLinkCardId = useRef<string | null>(null);
   const [optimisticBoard, setOptimisticBoard] = useState<BoardData | null>(null);
   const [modalState, setModalState] = useState<
     { mode: 'edit'; card: Card } |
@@ -155,6 +160,18 @@ export default function KanbanBoard({ boardId }: KanbanBoardProps) {
     }
     return null;
   }, [activeCardId, displayBoard]);
+
+  // A card URL is useful in external systems such as an SEO review Sheet, but
+  // authorization remains the normal board API/session check. Never resolve a
+  // card outside this already-authorized board response.
+  useEffect(() => {
+    if (!initialCardId || !displayBoard || modalState || attemptedDeepLinkCardId.current === initialCardId) return;
+    attemptedDeepLinkCardId.current = initialCardId;
+    const card = displayBoard.columns.flatMap((column) => column.cards)
+      .find((candidate) => candidate.id === initialCardId);
+    if (card) setModalState({ mode: 'edit', card });
+    else toast.showToast('This card is not available on this board.', 'error');
+  }, [displayBoard, initialCardId, modalState, toast]);
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
     setActiveCardId(event.active.id as string);
@@ -339,6 +356,11 @@ export default function KanbanBoard({ boardId }: KanbanBoardProps) {
   const handleEditCard = useCallback((card: Card) => {
     setModalState({ mode: 'edit', card });
   }, []);
+
+  const handleCloseModal = useCallback(() => {
+    setModalState(null);
+    if (initialCardId) router.replace(`/boards/${boardId}`);
+  }, [boardId, initialCardId, router]);
 
   const handleAddCard = useCallback((columnId: string) => {
     setModalState({ mode: 'add', columnId });
@@ -529,7 +551,7 @@ export default function KanbanBoard({ boardId }: KanbanBoardProps) {
       {/* Card modal (add/edit) — rendered outside DndContext to avoid event conflicts */}
       <CardModal
         isOpen={!!modalState}
-        onClose={() => setModalState(null)}
+        onClose={handleCloseModal}
         onSave={handleSaveCard}
         onDelete={handleDeleteCard}
         onArchive={handleArchiveCard}
