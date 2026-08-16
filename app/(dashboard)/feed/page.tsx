@@ -281,7 +281,7 @@ export default function FeedPage() {
                 {items.map((activity) => (
                   <Link
                     key={activity.id}
-                    href={`/boards/${activity.boardId}`}
+                    href={`/boards/${activity.boardId}?card=${activity.cardId}`}
                     className="block bg-white border border-gray-200 rounded-lg p-4 hover:border-indigo-300 hover:shadow-sm transition-all group"
                   >
                     <div className="flex items-start gap-3">
