@@ -238,8 +238,8 @@ export default function AgentsPage() {
                           )}
                         </p>
                         {agent.token && (
-                          <div className="flex items-center gap-1.5 mt-1">
-                            <code className="text-[11px] font-mono text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">
+                          <div className="flex items-center gap-1.5 mt-1 min-w-0">
+                            <code className="text-[11px] font-mono text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded truncate min-w-0">
                               {agent.token.slice(0, 5)}{'*'.repeat(Math.min(agent.token.length - 5, 20))}
                             </code>
                             <button

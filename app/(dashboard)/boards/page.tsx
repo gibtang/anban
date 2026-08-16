@@ -157,8 +157,8 @@ export default function BoardsPage() {
 
   return (
     <div>
-      {/* Page header */}
-      <div className="flex items-center justify-between mb-8">
+      {/* Page header — wraps on narrow screens so the action buttons never overflow the viewport (no page-level horizontal scroll outside a board view) */}
+      <div className="flex flex-wrap items-center justify-between gap-y-4 mb-8">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Boards</h1>
           {boards && boards.length > 0 && (
@@ -167,7 +167,7 @@ export default function BoardsPage() {
             </p>
           )}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <SharePanel />
           <Link
             href="/boards/archived"

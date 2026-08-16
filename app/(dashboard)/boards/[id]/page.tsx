@@ -150,9 +150,9 @@ export default function BoardDetailPage() {
 
   return (
     <div className="h-full flex flex-col">
-      {/* Board Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center space-x-4">
+      {/* Board Header — wraps on narrow screens; only the kanban strip below may scroll horizontally */}
+      <div className="flex flex-wrap items-center justify-between gap-y-3 mb-6">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 min-w-0">
           <button
             onClick={() => router.push('/boards')}
             className="text-gray-500 hover:text-gray-700 transition-colors"
@@ -189,7 +189,7 @@ export default function BoardDetailPage() {
           ) : (
             <button
               onClick={handleStartRename}
-              className="text-xl font-bold text-gray-900 hover:text-indigo-600 transition-colors group flex items-center gap-1.5"
+              className="text-xl font-bold text-gray-900 hover:text-indigo-600 transition-colors group flex items-center gap-1.5 min-w-0 max-w-full truncate"
               title="Click to rename"
             >
               {board?.name || '...'}
@@ -221,7 +221,7 @@ export default function BoardDetailPage() {
           </div>
 
           {/* Ticket counts */}
-          <div className="flex items-center gap-2 text-xs text-gray-500 bg-gray-100 rounded-full px-3 py-1">
+          <div className="flex items-center gap-2 text-xs text-gray-500 bg-gray-100 rounded-full px-3 py-1 flex-shrink-0">
             <span className="flex items-center gap-1">
               <span className="inline-block h-2 w-2 rounded-full bg-blue-500" />
               <span className="font-medium text-gray-700">{counts.open}</span> Open
