@@ -152,6 +152,7 @@ All agent endpoints use `Authorization: Bearer <token>` header.
 | GET | `/api/agent/cards/[id]/comments` | Get comments on a card |
 | POST | `/api/agent/cards/[id]/comments` | Add a comment to a card |
 | GET | `/api/cards/archived?boardId=<id>` | List archived cards for a board (user-authenticated) |
+| GET | `/api/activities/feed` | Activity feed: card updates across all boards, newest first, keyset-paginated (user-authenticated; `?limit=`, `?cursorCreatedAt=` + `?cursorId=`; first page returns `lastSeenAt` — previous-visit marker for "new" badges) |
 
 ## Tech Stack
 

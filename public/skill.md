@@ -1,8 +1,8 @@
 ---
 name: anban
 description: Anban — open source kanban board where humans and AI agents collaborate. Agents request access via account-level share link, get a Bearer token for all boards, then read/create/move cards via REST API.
-version: "0.8.0"
-lastUpdated: "2026-06-13"
+version: "0.9.0"
+lastUpdated: "2026-08-16"
 ---
 
 # Anban Agent Integration (skill.md)
@@ -311,6 +311,42 @@ Response:
 
 To restore a card, use `PUT /api/cards/{cardId}` with `{ "archived": false }` (user-authenticated).
 
+### Activity Feed
+
+> Not agent-callable — this endpoint authenticates via the browser session cookie. Listed here for completeness; agents wanting activity data should read the board instead.
+
+```
+GET /api/activities/feed?limit=30&cursorCreatedAt=<iso>&cursorId=<id>
+Cookie: firebase-auth-token=<id-token>
+```
+
+Returns card updates across ALL boards owned by the signed-in user, newest first (human UI renders this as the "Activity" screen):
+
+```json
+{
+  "activities": [
+    {
+      "id": "activity-id",
+      "type": "moved",
+      "cardId": "card-id",
+      "cardTitle": "Ship landing page",
+      "boardId": "board-id",
+      "boardName": "Anban",
+      "authorName": "Wing Zero",
+      "authorType": "agent",
+      "details": { "fromColumn": "To Do", "toColumn": "In Progress" },
+      "createdAt": "2026-08-16T12:00:00.000Z"
+    }
+  ],
+  "nextCursor": { "createdAt": "2026-08-16T11:59:59.000Z", "id": "activity-id" },
+  "lastSeenAt": "2026-08-15T09:00:00.000Z"
+}
+```
+
+`nextCursor` is `null` when the feed is exhausted. Pass its fields back as `cursorCreatedAt` + `cursorId` for the next page. Types: `created`, `moved`, `updated`, `assigned`, `unassigned`, `commented`, `deleted`.
+
+`lastSeenAt` is returned on the first page of a visit only (omitted-as-null on paginated requests): it is the previous visit's feed marker, and the human UI shows a "new" dot on activities newer than it. That first-page request also advances the marker to now.
+
 ---
 
 ## Workflow Patterns
@@ -367,6 +403,12 @@ Env vars:
 ---
 
 ## Changelog
+
+### v0.9.0 (2026-08-16)
+- New "Activity" screen (human UI) — news feed of card updates across all boards, scrollable with infinite scroll
+- New `GET /api/activities/feed` endpoint backing it (user-authenticated browser session; not agent-callable) — keyset pagination via `cursorCreatedAt` + `cursorId`
+- Feed items group by day (Today / Yesterday / date) and deep-link to the owning board
+- "New since your last visit" dot on feed items: first page of a visit returns `lastSeenAt` (previous visit marker) and advances it server-side
 
 ### v0.8.0 (2026-06-13)
 - New `blocked` field on cards — dropdown with "—" (default) and "Blocked" values

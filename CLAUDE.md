@@ -41,6 +41,13 @@ Rules:
 - [ ] `public/skill.md` version bumped + changelog entry added
 - [ ] `CLAUDE.md` updated if there are developer-facing notes
 
+### `GET /api/activities/feed` notes
+- User-authenticated (session cookie) — the global feed behind the "Activity" nav screen; NOT callable with agent Bearer tokens
+- Keyset pagination: order is `(createdAt DESC, id DESC)`; pass back `nextCursor.createdAt`/`nextCursor.id` as `cursorCreatedAt`/`cursorId`
+- `cardTitle` is `null` for deleted cards (activities survive card deletion by design)
+- Includes activities from archived boards (feed = history)
+- `lastSeenAt` (ISO string | null): returned on the FIRST page of a visit only (no cursor params) — it is the PREVIOUS `User.lastFeedSeenAt`; the UI marks activities with `createdAt > lastSeenAt` with a "new" dot. The same request stamps `User.lastFeedSeenAt = now` after a successful query. Paginated requests return `lastSeenAt: null` and never re-stamp. `User.lastFeedSeenAt` is nullable — first-ever visit gets `null` (no dots).
+
 ## Git Commits
 **Always include the Anban card URL in commit message body** for traceability. Format:
 ```
