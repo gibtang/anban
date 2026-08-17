@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { verifyIdToken } from '@/lib/firebase/admin';
+import { notifyNewRegistration } from '@/lib/notifications/registration';
 
 /**
  * Verify authentication and return user ID
@@ -30,21 +31,33 @@ export async function verifyAuth(request: NextRequest): Promise<string> {
   const decodedToken = await verifyIdToken(token);
   const firebaseUid = decodedToken.uid;
 
-  // Get or create user by Firebase UID
-  const user = await prisma.user.upsert({
-    where: { firebaseUid },
-    update: {},
-    create: {
-      firebaseUid,
-      email: decodedToken.email || firebaseUid,
-    },
-  });
+  // Get or create user by Firebase UID. findFirst-then-create (instead of
+  // upsert) so we know exactly when the user was created in THIS request —
+  // upsert cannot tell "created" from "already existed", which would risk
+  // duplicate registration notifications for rapid first-session requests.
+  let user = await prisma.user.findUnique({ where: { firebaseUid } });
+  const isNewUser = !user;
+  if (!user) {
+    try {
+      user = await prisma.user.create({
+        data: {
+          firebaseUid,
+          email: decodedToken.email || firebaseUid,
+        },
+      });
+    } catch (error) {
+      // P2002 = a concurrent first request already created the user
+      if ((error as { code?: string }).code === 'P2002') {
+        user = await prisma.user.findUniqueOrThrow({ where: { firebaseUid } });
+      } else {
+        throw error;
+      }
+    }
+  }
 
-  // Auto-create default board only for brand-new users
-  // Use createdAt to detect if user was just created (within last 5 seconds)
-  const justCreated = Date.now() - user.createdAt.getTime() < 5000;
-
-  if (justCreated) {
+  // Auto-create default board for brand-new users (guarded in case a
+  // previous partial signup already created one)
+  if (isNewUser) {
     const existingBoards = await prisma.board.count({
       where: { ownerId: user.id },
     });
@@ -64,6 +77,10 @@ export async function verifyAuth(request: NextRequest): Promise<string> {
         },
       });
     }
+
+    // Best-effort welcome email + Telegram registration alert.
+    // Fire-and-forget: never blocks or fails the authenticated request.
+    void notifyNewRegistration({ email: user.email, userId: user.id });
   }
 
   return user.id;
