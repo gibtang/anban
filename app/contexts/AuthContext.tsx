@@ -9,7 +9,7 @@ import {
   signOut as firebaseSignOut,
   signInWithPopup,
   GoogleAuthProvider,
-  onAuthStateChanged,
+  onIdTokenChanged,
   IdTokenResult,
   sendPasswordResetEmail,
 } from 'firebase/auth';
@@ -40,7 +40,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setAuth(firebaseAuth);
 
         if (firebaseAuth) {
-          const unsubscribe = onAuthStateChanged(firebaseAuth, async (firebaseUser) => {
+          // Fires on initial auth resolution AND every silent Firebase ID-token
+          // rotation. The server's HTTP-only cookie contains that ID token, so it
+          // must be kept in sync — onAuthStateChanged only fires for sign-in/out
+          // and otherwise leaves an expired token in the cookie after idle time.
+          const unsubscribe = onIdTokenChanged(firebaseAuth, async (firebaseUser) => {
             // Set or clear cookie BEFORE setting user state
             // This ensures middleware can verify the cookie when the page redirects
             if (firebaseUser) {
