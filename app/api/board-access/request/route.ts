@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
+import { requestAppUrl } from '@/lib/appUrl';
 import crypto from 'crypto';
 
 export const runtime = 'nodejs';
@@ -38,7 +39,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No boards found for this account' }, { status: 404 });
     }
 
-    const appUrl = (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').trim();
+    const appUrl = requestAppUrl(request).trim();
 
     // Look up existing agent by name + account
     let agent = await prisma.agent.findFirst({

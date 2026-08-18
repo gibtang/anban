@@ -6,6 +6,7 @@ import { ActivityLog } from './ActivityLog';
 import { CommentSection } from './CommentSection';
 import { LinkifyText } from './LinkifyText';
 import apiFetch from '@/lib/apiFetch';
+import { clientAppUrl } from '@/lib/appUrl';
 
 interface AgentOption {
   id: string;
@@ -174,7 +175,7 @@ export function CardModal({
 
   const handleCopyLink = () => {
     if (!card) return;
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const appUrl = clientAppUrl();
     // Use assigned agent token, or fall back to any approved agent token on the board
     const token = (card.agentId && agentTokensMap?.[card.agentId])
       ? agentTokensMap[card.agentId]

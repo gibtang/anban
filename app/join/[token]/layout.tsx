@@ -1,4 +1,5 @@
 import { ReactNode } from 'react';
+import { serverAppUrl } from '@/lib/appUrl';
 
 interface JoinLayoutProps {
   children: ReactNode;
@@ -8,7 +9,7 @@ interface JoinLayoutProps {
 export default async function JoinLayout({ children, params }: JoinLayoutProps) {
   const { token: shareToken } = await params;
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const appUrl = await serverAppUrl();
 
   const agentContext = {
     '@context': 'https://schema.org',
