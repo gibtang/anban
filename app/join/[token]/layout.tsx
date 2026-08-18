@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { serverAppUrl } from '@/lib/appUrl';
+import { serverAppUrl } from '@/lib/appUrl.server';
 
 interface JoinLayoutProps {
   children: ReactNode;

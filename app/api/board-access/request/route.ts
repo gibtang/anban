@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
-import { requestAppUrl } from '@/lib/appUrl';
+import { requestAppUrl } from '@/lib/appUrl.server';
 import crypto from 'crypto';
 
 export const runtime = 'nodejs';
