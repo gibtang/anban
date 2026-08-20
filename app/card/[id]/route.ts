@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { unauthorizedResponse } from '@/lib/auth/helpers';
 import { prisma } from '@/lib/db/prisma';
 
 interface RouteContext {
@@ -19,7 +20,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
     const token = searchParams.get('token');
 
     if (!token) {
-      return NextResponse.json({ error: 'Token required' }, { status: 401 });
+      return unauthorizedResponse('Token required');
     }
 
     // Validate agent exists with this token
