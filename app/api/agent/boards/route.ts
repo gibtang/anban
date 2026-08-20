@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
-import { verifyAgentAuth } from '@/lib/auth/helpers';
+import { verifyAgentAuth, isUnauthorizedError, unauthorizedResponse } from '@/lib/auth/helpers';
 
 export const runtime = 'nodejs';
 
@@ -35,8 +35,8 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error listing agent boards:', error);
-    if (error instanceof Error && error.message.startsWith('Unauthorized')) {
-      return NextResponse.json({ error: error.message }, { status: 401 });
+    if (isUnauthorizedError(error)) {
+      return unauthorizedResponse(error.message);
     }
     return NextResponse.json({ error: 'Failed to list boards' }, { status: 500 });
   }

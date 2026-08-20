@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
-import { verifyAgentAuth } from '@/lib/auth/helpers';
+import { verifyAgentAuth, isUnauthorizedError, unauthorizedResponse } from '@/lib/auth/helpers';
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -60,8 +60,8 @@ export async function POST(request: NextRequest, context: RouteContext) {
     return NextResponse.json(comment, { status: 201 });
   } catch (error) {
     console.error('Error creating agent comment:', error);
-    if (error instanceof Error && error.message.startsWith('Unauthorized')) {
-      return NextResponse.json({ error: error.message }, { status: 401 });
+    if (isUnauthorizedError(error)) {
+      return unauthorizedResponse(error.message);
     }
     if (error instanceof Error && error.message.startsWith('Forbidden')) {
       return NextResponse.json({ error: error.message }, { status: 403 });
@@ -104,8 +104,8 @@ export async function GET(request: NextRequest, context: RouteContext) {
     return NextResponse.json(comments);
   } catch (error) {
     console.error('Error fetching agent comments:', error);
-    if (error instanceof Error && error.message.startsWith('Unauthorized')) {
-      return NextResponse.json({ error: error.message }, { status: 401 });
+    if (isUnauthorizedError(error)) {
+      return unauthorizedResponse(error.message);
     }
     if (error instanceof Error && error.message.startsWith('Forbidden')) {
       return NextResponse.json({ error: error.message }, { status: 403 });

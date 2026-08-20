@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
-import { verifyAgentAuth } from '@/lib/auth/helpers';
+import { verifyAgentAuth, isUnauthorizedError, unauthorizedResponse } from '@/lib/auth/helpers';
 import { eventBus } from '@/lib/events/event-bus';
 
 interface RouteContext {
@@ -83,8 +83,8 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     });
   } catch (error) {
     console.error('Error reassigning card:', error);
-    if (error instanceof Error && error.message.startsWith('Unauthorized')) {
-      return NextResponse.json({ error: error.message }, { status: 401 });
+    if (isUnauthorizedError(error)) {
+      return unauthorizedResponse(error.message);
     }
     if (error instanceof Error && error.message.startsWith('Forbidden')) {
       return NextResponse.json({ error: error.message }, { status: 403 });

@@ -135,7 +135,7 @@ const SKILL_MD_POINTER = `Read the skill.md for API access and troubleshooting: 
  * True when an error was thrown by verifyAuth/verifyAgentAuth (their
  * messages all start with "Unauthorized").
  */
-export function isUnauthorizedError(error: unknown): boolean {
+export function isUnauthorizedError(error: unknown): error is Error {
   return error instanceof Error && error.message.startsWith('Unauthorized');
 }
 
