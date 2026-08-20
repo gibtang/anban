@@ -8,7 +8,7 @@
 
 **Tech Stack:** Next.js 16 route handlers (App Router), TypeScript, `bun test` (bun:test), Prisma (not exercised by these tests).
 
-**Spec:** `docs/superpowers/specs/2026-08-20-self-service-401s-design.md`
+**Spec:** `docs/superpowers/specs/2026-08-20-self-service-401s-design.md` (Tasks 1-5). Task 6 adds an owner-facing section to `public/skill.md` — approved in-session 2026-08-20; rides the same version bump.
 
 ## Global Constraints
 
@@ -444,4 +444,86 @@ Only if Steps 1-3 surfaced issues:
 
 ```bash
 git add -A && git commit -m "fix: complete 401 skill.md rollout"
+```
+
+---
+
+### Task 6: "For Board Owners" section in skill.md
+
+**Files:**
+- Modify: `public/skill.md` (served live at `https://www.getanban.com/skill.md`)
+
+**Interfaces:**
+- Consumes: nothing from earlier tasks
+- Produces: owner-facing onboarding steps in the published doc; version bump to 0.10.0 whose changelog also records the 401 rollout from Tasks 1-5
+
+**Context:** skill.md currently documents only the agent's half (request → poll → token). An owner who reads it to add an agent finds no steps. Verified facts: SharePanel in the board UI is headed "Share All Boards" with Copy and revoke (`components/board/SharePanel.tsx`); approval happens at `/approve/<requestId>` with Approve/Deny buttons (`app/approve/[id]/page.tsx`); requests expire after 3 minutes (already stated elsewhere in the doc). Do not invent unverified UI paths (e.g. agent-removal screens) — the section sticks to these three facts plus revoking the share link.
+
+- [ ] **Step 1: Bump frontmatter**
+
+In `public/skill.md`, change:
+
+```md
+version: "0.9.0"
+lastUpdated: "2026-08-16"
+```
+
+to:
+
+```md
+version: "0.10.0"
+lastUpdated: "2026-08-20"
+```
+
+- [ ] **Step 2: Insert the owner section**
+
+Between the `---` line that follows `**Cloud:** https://www.getanban.com` and `## Quick Start (3 Steps)`, insert:
+
+```md
+## For Board Owners
+
+Agents can't join on their own — an account owner grants access first. The full loop:
+
+### 1. Generate your share link
+
+Open any board and click **Share**. In the "Share All Boards" panel, click **Copy**. One link covers every board on your account, including boards you create later. You can revoke the link from the same panel at any time.
+
+### 2. Hand the link to your agent
+
+Paste the link wherever your agent reads instructions — its skill file, prompt, or credentials notes. The agent then runs the Quick Start below to request access.
+
+### 3. Approve the request
+
+Your agent will surface an approval URL (`https://www.getanban.com/approve/<requestId>`). Open it and click **Approve** — or **Deny** to refuse. Once approved, the agent receives its Bearer token automatically and can start working.
+
+Access requests expire after 3 minutes. If one lapses before you approve it, the agent simply requests again — no cleanup needed.
+
+---
+
+```
+
+- [ ] **Step 3: Add the changelog entry**
+
+Under `## Changelog`, directly above `### v0.9.0 (2026-08-16)`, insert:
+
+```md
+### v0.10.0 (2026-08-20)
+- New "For Board Owners" section — generate the share link, hand it to an agent, approve the request
+- All API 401 responses now point at this skill.md for self-service troubleshooting
+
+```
+
+- [ ] **Step 4: Verify**
+
+Run: `grep -c "For Board Owners" public/skill.md && grep -n "0.10.0" public/skill.md`
+Expected: `1` and two matches (frontmatter + changelog).
+
+Run: `bun test`
+Expected: 0 fail (doc change can't break tests, but confirms clean tree state).
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add public/skill.md
+git commit -m "docs: skill.md owner section for adding agents"
 ```
