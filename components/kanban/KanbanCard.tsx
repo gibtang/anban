@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { clientAppUrl } from '@/lib/appUrl';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { mutate } from 'swr';
@@ -158,7 +159,7 @@ export default function KanbanCard({ card, isDragging, onEdit, onDelete, agentNa
     e.preventDefault();
     if (!agentToken) return;
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const appUrl = clientAppUrl();
     const url = `${appUrl}/card/${card.id}?token=${agentToken}`;
     navigator.clipboard.writeText(url).then(() => {
       setCopied(true);

@@ -223,6 +223,9 @@ export async function POST(request: NextRequest, context: RouteContext) {
     return NextResponse.json(response);
   } catch (error) {
     console.error('Error in agent chat:', error);
+    if (error instanceof Error && error.message === 'Unauthorized') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Failed to send message to agent' },
       { status: 500 }

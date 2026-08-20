@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { verifyAuth } from '@/lib/auth/helpers';
+import { requestAppUrl } from '@/lib/appUrl.server';
 import crypto from 'crypto';
 
 export const runtime = 'nodejs';
@@ -29,7 +30,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const appUrl = requestAppUrl(request);
 
     return NextResponse.json({
       shareUrl: `${appUrl}/join/${shareToken}`,

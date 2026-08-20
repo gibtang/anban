@@ -28,7 +28,17 @@ export async function verifyAuth(request: NextRequest): Promise<string> {
     throw new Error('Unauthorized');
   }
 
-  const decodedToken = await verifyIdToken(token);
+  let decodedToken;
+  try {
+    decodedToken = await verifyIdToken(token);
+  } catch (error) {
+    // Firebase throws auth/id-token-expired and auth/argument-error for stale,
+    // malformed, or revoked raw ID tokens. API routes already map the app's
+    // Unauthorized error to 401; normalize here so an expired session never
+    // gets mislabeled as a server-side 500.
+    console.info('Firebase ID token rejected:', error instanceof Error ? error.message : error);
+    throw new Error('Unauthorized');
+  }
   const firebaseUid = decodedToken.uid;
 
   // Get or create user by Firebase UID. findFirst-then-create (instead of

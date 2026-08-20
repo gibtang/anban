@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
+import { requestAppUrl } from '@/lib/appUrl.server';
 
 export const runtime = 'nodejs';
 
@@ -49,7 +50,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const appUrl = requestAppUrl(request);
     const boardNames = boards.map(b => b.name).join(', ');
 
     return NextResponse.json({
