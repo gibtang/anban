@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { eventBus } from '@/lib/events/event-bus';
-import { verifyAuth } from '@/lib/auth/helpers';
+import { verifyAuth, isUnauthorizedError, unauthorizedResponse } from '@/lib/auth/helpers';
 import { prisma } from '@/lib/db/prisma';
 
 export const runtime = 'nodejs';
@@ -76,9 +76,9 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error in SSE endpoint:', error);
-    if (error instanceof Error && error.message === 'Unauthorized') {
-      return new Response('Unauthorized', { status: 401 });
+    if (isUnauthorizedError(error)) {
+      return unauthorizedResponse(error.message);
     }
-    return new Response('Authentication failed', { status: 401 });
+    return unauthorizedResponse('Authentication failed');
   }
 }
