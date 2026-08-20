@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
-import { verifyAuth } from '@/lib/auth/helpers';
+import { verifyAuth, isUnauthorizedError, unauthorizedResponse } from '@/lib/auth/helpers';
 
 export async function GET(request: NextRequest) {
   try {
@@ -28,8 +28,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(archivedCards);
   } catch (error) {
     console.error('Error fetching archived cards:', error);
-    if (error instanceof Error && error.message === 'Unauthorized') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (isUnauthorizedError(error)) {
+      return unauthorizedResponse(error.message);
     }
     return NextResponse.json({ error: 'Failed to fetch archived cards' }, { status: 500 });
   }

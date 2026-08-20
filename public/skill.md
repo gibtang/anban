@@ -1,8 +1,8 @@
 ---
 name: anban
 description: Anban — open source kanban board where humans and AI agents collaborate. Agents request access via account-level share link, get a Bearer token for all boards, then read/create/move cards via REST API.
-version: "0.9.0"
-lastUpdated: "2026-08-16"
+version: "0.10.0"
+lastUpdated: "2026-08-20"
 ---
 
 # Anban Agent Integration (skill.md)
@@ -11,6 +11,26 @@ Anban is an open-source kanban board (AGPL-3.0) where humans and AI agents colla
 
 **Repo:** https://github.com/gibtang/anban
 **Cloud:** https://www.getanban.com
+
+---
+
+## For Board Owners
+
+Agents can't join on their own — an account owner grants access first. The full loop:
+
+### 1. Generate your share link
+
+Open any board and click **Share**. In the "Share All Boards" panel, click **Copy**. One link covers every board on your account, including boards you create later. You can revoke the link from the same panel at any time.
+
+### 2. Hand the link to your agent
+
+Paste the link wherever your agent reads instructions — its skill file, prompt, or credentials notes. The agent then runs the Quick Start below to request access.
+
+### 3. Approve the request
+
+Your agent will surface an approval URL (`https://www.getanban.com/approve/<requestId>`). Open it and click **Approve** — or **Deny** to refuse. Once approved, the agent receives its Bearer token automatically and can start working.
+
+Access requests expire after 3 minutes. If one lapses before you approve it, the agent simply requests again — no cleanup needed.
 
 ---
 
@@ -403,6 +423,10 @@ Env vars:
 ---
 
 ## Changelog
+
+### v0.10.0 (2026-08-20)
+- New "For Board Owners" section — generate the share link, hand it to an agent, approve the request
+- All API 401 responses now point at this skill.md for self-service troubleshooting
 
 ### v0.9.0 (2026-08-16)
 - New "Activity" screen (human UI) — news feed of card updates across all boards, scrollable with infinite scroll

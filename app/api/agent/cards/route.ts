@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyAgentAuth } from '@/lib/auth/helpers';
+import { verifyAgentAuth, isUnauthorizedError, unauthorizedResponse } from '@/lib/auth/helpers';
 import { getAgentCards } from '@/lib/db/agentCards';
 import { logAuditEvent } from '@/lib/db/audit';
 import { logActivity } from '@/lib/db/activity';
@@ -31,8 +31,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ agentId, cards });
   } catch (error) {
     console.error('Error listing agent cards:', error);
-    if (error instanceof Error && error.message.startsWith('Unauthorized')) {
-      return NextResponse.json({ error: error.message }, { status: 401 });
+    if (isUnauthorizedError(error)) {
+      return unauthorizedResponse(error.message);
     }
     if (error instanceof Error && error.message === 'Invalid boardId format') {
       return NextResponse.json({ error: error.message }, { status: 400 });
@@ -132,8 +132,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(card, { status: 201 });
   } catch (error) {
     console.error('Error in agent card creation:', error);
-    if (error instanceof Error && error.message.startsWith('Unauthorized')) {
-      return NextResponse.json({ error: error.message }, { status: 401 });
+    if (isUnauthorizedError(error)) {
+      return unauthorizedResponse(error.message);
     }
     if (error instanceof Error && error.message.startsWith('Forbidden')) {
       return NextResponse.json({ error: error.message }, { status: 403 });

@@ -1,4 +1,4 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { verifyIdToken } from '@/lib/firebase/admin';
 import { notifyNewRegistration } from '@/lib/notifications/registration';
@@ -138,4 +138,25 @@ export async function verifyAgentAuth(request: NextRequest): Promise<AgentAuthRe
   };
 }
 
+const SKILL_MD_URL = 'https://www.getanban.com/skill.md';
+const SKILL_MD_POINTER = `Read the skill.md for API access and troubleshooting: ${SKILL_MD_URL}`;
 
+/**
+ * True when an error was thrown by verifyAuth/verifyAgentAuth (their
+ * messages all start with "Unauthorized").
+ */
+export function isUnauthorizedError(error: unknown): error is Error {
+  return error instanceof Error && error.message.startsWith('Unauthorized');
+}
+
+/**
+ * Build the canonical 401 response. Every API 401 points the caller at
+ * the skill.md so agents can self-troubleshoot access problems.
+ * `detail` may be a raw thrown message; a leading "Unauthorized:" is
+ * stripped so it is not repeated.
+ */
+export function unauthorizedResponse(detail?: string): NextResponse {
+  const stripped = detail?.replace(/^Unauthorized:?\s*/, '').trim();
+  const base = stripped ? `Unauthorized: ${stripped}. ` : 'Unauthorized. ';
+  return NextResponse.json({ error: `${base}${SKILL_MD_POINTER}` }, { status: 401 });
+}

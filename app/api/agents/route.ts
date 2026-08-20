@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
-import { verifyAuth } from '@/lib/auth/helpers';
+import { verifyAuth, isUnauthorizedError, unauthorizedResponse } from '@/lib/auth/helpers';
 
 export const runtime = 'nodejs';
 
@@ -17,8 +17,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(agents);
   } catch (error) {
     console.error('Error fetching agents:', error);
-    if (error instanceof Error && error.message === 'Unauthorized') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (isUnauthorizedError(error)) {
+      return unauthorizedResponse(error.message);
     }
     return NextResponse.json({ error: 'Failed to fetch agents' }, { status: 500 });
   }
@@ -62,8 +62,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(agent, { status: 201 });
   } catch (error) {
     console.error('Error creating agent:', error);
-    if (error instanceof Error && error.message === 'Unauthorized') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (isUnauthorizedError(error)) {
+      return unauthorizedResponse(error.message);
     }
     return NextResponse.json({ error: 'Failed to create agent' }, { status: 500 });
   }

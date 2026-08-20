@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
-import { verifyAgentAuth } from '@/lib/auth/helpers';
+import { verifyAgentAuth, isUnauthorizedError, unauthorizedResponse } from '@/lib/auth/helpers';
 import { validateAgentName } from '@/lib/agents/name-validation';
 
 export const runtime = 'nodejs';
@@ -25,8 +25,8 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(agent);
   } catch (error) {
-    if (error instanceof Error && error.message.startsWith('Unauthorized')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (isUnauthorizedError(error)) {
+      return unauthorizedResponse(error.message);
     }
     console.error('Error fetching agent profile:', error);
     return NextResponse.json({ error: 'Failed to fetch profile' }, { status: 500 });
@@ -63,8 +63,8 @@ export async function PATCH(request: NextRequest) {
 
     return NextResponse.json({ id: updated.id, name: updated.name });
   } catch (error) {
-    if (error instanceof Error && error.message.startsWith('Unauthorized')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (isUnauthorizedError(error)) {
+      return unauthorizedResponse(error.message);
     }
     console.error('Error updating agent profile:', error);
     return NextResponse.json({ error: 'Failed to update profile' }, { status: 500 });
