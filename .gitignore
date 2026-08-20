@@ -53,3 +53,7 @@ test-results/
 # Autopilot docs (.omc/autopilot/) and state checkpoints remain tracked.
 .omc/sessions/
 .omc/project-memory.json
+
+# superpowers SDD scratch
+.worktrees/
+.superpowers/
