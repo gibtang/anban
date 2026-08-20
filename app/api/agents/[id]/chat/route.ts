@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
-import { verifyAuth } from '@/lib/auth/helpers';
+import { verifyAuth, isUnauthorizedError, unauthorizedResponse } from '@/lib/auth/helpers';
 import { OpenClawHTTPAdapter } from '@/lib/openclaw/http-adapter';
 import { eventBus } from '@/lib/events/event-bus';
 import { logAuditEvent } from '@/lib/db/audit';
@@ -223,8 +223,8 @@ export async function POST(request: NextRequest, context: RouteContext) {
     return NextResponse.json(response);
   } catch (error) {
     console.error('Error in agent chat:', error);
-    if (error instanceof Error && error.message === 'Unauthorized') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (isUnauthorizedError(error)) {
+      return unauthorizedResponse(error.message);
     }
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Failed to send message to agent' },
