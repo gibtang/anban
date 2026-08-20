@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
-import { verifyAuth } from '@/lib/auth/helpers';
+import { verifyAuth, isUnauthorizedError, unauthorizedResponse } from '@/lib/auth/helpers';
 import { logAuditEvent } from '@/lib/db/audit';
 import { logActivity } from '@/lib/db/activity';
 
@@ -186,8 +186,8 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     return NextResponse.json(card);
   } catch (error) {
     console.error('Error updating card:', error);
-    if (error instanceof Error && error.message === 'Unauthorized') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (isUnauthorizedError(error)) {
+      return unauthorizedResponse(error.message);
     }
     return NextResponse.json({ error: 'Failed to update card' }, { status: 500 });
   }
@@ -249,8 +249,8 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (error) {
     console.error('Error deleting card:', error);
-    if (error instanceof Error && error.message === 'Unauthorized') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (isUnauthorizedError(error)) {
+      return unauthorizedResponse(error.message);
     }
     return NextResponse.json({ error: 'Failed to delete card' }, { status: 500 });
   }

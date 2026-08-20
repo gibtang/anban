@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyAuth } from '@/lib/auth/helpers';
+import { verifyAuth, isUnauthorizedError, unauthorizedResponse } from '@/lib/auth/helpers';
 
 export const runtime = 'nodejs';
 
@@ -93,8 +93,8 @@ export async function POST(request: NextRequest) {
     }
   } catch (error) {
     console.error('Error testing connection:', error);
-    if (error instanceof Error && error.message === 'Unauthorized') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (isUnauthorizedError(error)) {
+      return unauthorizedResponse(error.message);
     }
     return NextResponse.json(
       {

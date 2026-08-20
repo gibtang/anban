@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
-import { verifyAuth } from '@/lib/auth/helpers';
+import { verifyAuth, isUnauthorizedError, unauthorizedResponse } from '@/lib/auth/helpers';
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -72,8 +72,8 @@ export async function GET(request: NextRequest, context: RouteContext) {
     return NextResponse.json(board);
   } catch (error) {
     console.error('Error fetching board:', error);
-    if (error instanceof Error && error.message === 'Unauthorized') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (isUnauthorizedError(error)) {
+      return unauthorizedResponse(error.message);
     }
     return NextResponse.json({ error: 'Failed to fetch board' }, { status: 500 });
   }
@@ -131,8 +131,8 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     return NextResponse.json(board);
   } catch (error) {
     console.error('Error updating board:', error);
-    if (error instanceof Error && error.message === 'Unauthorized') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (isUnauthorizedError(error)) {
+      return unauthorizedResponse(error.message);
     }
     return NextResponse.json({ error: 'Failed to update board' }, { status: 500 });
   }
@@ -185,8 +185,8 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (error) {
     console.error('Error deleting board:', error);
-    if (error instanceof Error && error.message === 'Unauthorized') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (isUnauthorizedError(error)) {
+      return unauthorizedResponse(error.message);
     }
     return NextResponse.json({ error: 'Failed to delete board' }, { status: 500 });
   }

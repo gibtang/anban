@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyAuth } from '@/lib/auth/helpers';
+import { verifyAuth, isUnauthorizedError, unauthorizedResponse } from '@/lib/auth/helpers';
 import { createOpenAI } from '@ai-sdk/openai';
 import { generateText } from 'ai';
 
@@ -50,8 +50,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ title: trimmed });
   } catch (error) {
     console.error('Error in generate-title:', error);
-    if (error instanceof Error && error.message === 'Unauthorized') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (isUnauthorizedError(error)) {
+      return unauthorizedResponse(error.message);
     }
     return NextResponse.json(
       { error: 'Failed to generate title' },
