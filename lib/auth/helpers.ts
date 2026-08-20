@@ -150,5 +150,3 @@ export function unauthorizedResponse(detail?: string): NextResponse {
   const base = stripped ? `Unauthorized: ${stripped}. ` : 'Unauthorized. ';
   return NextResponse.json({ error: `${base}${SKILL_MD_POINTER}` }, { status: 401 });
 }
-
-
