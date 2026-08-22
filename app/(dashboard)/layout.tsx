@@ -4,6 +4,7 @@ import { ReactNode, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/app/contexts/AuthContext';
+import { clearReturnUrl } from '@/lib/auth/return-url';
 import { useRouter } from 'next/navigation';
 import { LoadingProvider } from '@/app/contexts/LoadingContext';
 import { GlobalOverlay } from '@/components/ui/GlobalOverlay';
@@ -18,6 +19,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
+    // Drop any stored post-login return URL so the next login doesn't
+    // bounce the user to a stale target from a previous session.
+    clearReturnUrl();
     await logout();
     router.push('/login');
   };

@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, FormEvent, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { Suspense, useState, FormEvent, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '../../contexts/AuthContext';
 import { getFriendlyAuthError } from '@/lib/auth-errors';
+import { safeReturnUrl, saveReturnUrl, loadReturnUrl, clearReturnUrl } from '@/lib/auth/return-url';
 import Link from 'next/link';
 
-export default function LoginClient() {
+function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -15,12 +16,27 @@ export default function LoginClient() {
   const [loading, setLoading] = useState(false);
   const { user, signIn, signInWithGoogle, resetPassword } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const nextParam = safeReturnUrl(searchParams.get('next'));
+
+  // Mirror the return URL into sessionStorage so the intent survives
+  // navigations that drop the query param (e.g. the password-reset email
+  // round trip). Only validated (relative-path) values are ever stored.
+  useEffect(() => {
+    if (nextParam) {
+      saveReturnUrl(nextParam);
+    }
+  }, [nextParam]);
 
   useEffect(() => {
     if (user) {
-      router.push('/boards');
+      // After auth, return the user to where they were originally headed.
+      // URL param wins; sessionStorage covers flows that lost the param.
+      const target = nextParam ?? loadReturnUrl();
+      clearReturnUrl();
+      router.push(target ?? '/boards');
     }
-  }, [user, router]);
+  }, [user, router, nextParam]);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -65,7 +81,10 @@ export default function LoginClient() {
           </h1>
           <p className="mt-2 text-center text-sm text-gray-600">
             Or{' '}
-            <Link href="/signup" className="font-medium text-indigo-600 hover:text-indigo-500">
+            <Link
+              href={nextParam ? `/signup?next=${encodeURIComponent(nextParam)}` : '/signup'}
+              className="font-medium text-indigo-600 hover:text-indigo-500"
+            >
               create a new account
             </Link>
           </p>
@@ -197,5 +216,14 @@ export default function LoginClient() {
         </form>
       </div>
     </div>
+  );
+}
+
+// useSearchParams() requires a Suspense boundary on statically rendered pages.
+export default function LoginClient() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
   );
 }

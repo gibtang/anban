@@ -15,7 +15,7 @@ export const runtime = 'nodejs';
  * Used by proxy.ts rewrite — unauthenticated requests to /boards/[id]
  * are rewritten here so crawlers see OG tags instead of a login redirect.
  */
-export async function GET(_request: NextRequest, context: RouteContext) {
+export async function GET(request: NextRequest, context: RouteContext) {
   const { id: boardId } = await context.params;
 
   let title = 'Board';
@@ -28,6 +28,11 @@ export async function GET(_request: NextRequest, context: RouteContext) {
   } catch {
     // DB error or invalid ID — fall back to generic title
   }
+
+  // Send human visitors to login with the original board URL (including any
+  // ?card= query, preserved through the proxy rewrite) as the return target.
+  const query = new URL(request.url).search;
+  const loginHref = `/login?next=${encodeURIComponent(`/boards/${boardId}${query}`).replace(/'/g, '%27')}`;
 
   const html = `<!DOCTYPE html>
 <html lang="en">
@@ -42,11 +47,11 @@ export async function GET(_request: NextRequest, context: RouteContext) {
   <meta property="og:image" content="https://www.getanban.com/og-image.png" />
   <meta name="twitter:card" content="summary" />
   <meta name="twitter:title" content="${escapeHtml(title)} — Anban" />
-  <meta http-equiv="refresh" content="0; url=/login" />
+  <meta http-equiv="refresh" content="0; url=${loginHref}" />
 </head>
 <body>
   <p style="font-family:sans-serif;text-align:center;padding:2rem">Redirecting…</p>
-  <script>window.location.href='/login';</script>
+  <script>window.location.href='${loginHref}';</script>
 </body>
 </html>`;
 
