@@ -48,6 +48,47 @@ export default function SharePanel() {
     }
   };
 
+  const panelContent = (
+    <>
+      {/* Header with title + close X */}
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-sm font-medium text-gray-900">Share All Boards</h3>
+        <button
+          onClick={() => setShowPanel(false)}
+          className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+          aria-label="Close"
+        >
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <p className="text-xs text-gray-500 mb-3">
+        Send this link to an agent to request access to all your boards.
+      </p>
+      <div className="flex items-center gap-2">
+        <input
+          type="text"
+          readOnly
+          value={shareUrl ?? ''}
+          className="flex-1 min-w-0 text-xs bg-gray-50 border border-gray-200 rounded px-2 py-1.5 font-mono text-gray-900"
+        />
+        <button
+          onClick={handleCopy}
+          className="shrink-0 px-2.5 py-1.5 text-xs font-medium bg-indigo-600 text-white rounded hover:bg-indigo-700 transition-colors"
+        >
+          {copied ? '✓' : 'Copy'}
+        </button>
+      </div>
+      <button
+        onClick={handleRevoke}
+        className="mt-3 text-xs text-red-500 hover:text-red-700 transition-colors"
+      >
+        Revoke link
+      </button>
+    </>
+  );
+
   return (
     <div className="relative">
       <button
@@ -66,44 +107,27 @@ export default function SharePanel() {
       </button>
 
       {showPanel && shareUrl && (
-        <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 p-4 z-50">
-          {/* Header with title + close X */}
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-medium text-gray-900">Share All Boards</h3>
-            <button
-              onClick={() => setShowPanel(false)}
-              className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
-              aria-label="Close"
-            >
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-          <p className="text-xs text-gray-500 mb-3">
-            Send this link to an agent to request access to all your boards.
-          </p>
-          <div className="flex items-center gap-2">
-            <input
-              type="text"
-              readOnly
-              value={shareUrl}
-              className="flex-1 text-xs bg-gray-50 border border-gray-200 rounded px-2 py-1.5 font-mono text-gray-900"
-            />
-            <button
-              onClick={handleCopy}
-              className="px-2.5 py-1.5 text-xs font-medium bg-indigo-600 text-white rounded hover:bg-indigo-700 transition-colors"
-            >
-              {copied ? '✓' : 'Copy'}
-            </button>
-          </div>
-          <button
-            onClick={handleRevoke}
-            className="mt-3 text-xs text-red-500 hover:text-red-700 transition-colors"
+        <>
+          {/* Mobile: centered modal + dimmed overlay */}
+          <div
+            className="fixed inset-0 bg-black/40 z-[60] sm:hidden"
+            onClick={() => setShowPanel(false)}
+            aria-hidden="true"
+          />
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Share All Boards"
+            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100%-2rem)] max-w-xs bg-white rounded-lg shadow-lg border border-gray-200 p-4 z-[70] sm:hidden"
           >
-            Revoke link
-          </button>
-        </div>
+            {panelContent}
+          </div>
+
+          {/* sm+: anchored dropdown (unchanged desktop behavior) */}
+          <div className="hidden sm:block absolute right-0 top-full mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 p-4 z-50">
+            {panelContent}
+          </div>
+        </>
       )}
     </div>
   );
