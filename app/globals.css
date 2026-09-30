@@ -1,23 +1,108 @@
 @import "tailwindcss";
 
+/* ============================================
+   ANBAN × INSTINCT FILES THEME
+   Reference: files.instinct.com viewer (2026-09-30).
+   Warm-paper light theme, ink text, red accent.
+   Fonts: free equivalents — Instrument Sans (body,
+   ~GT America), Instrument Serif (display, ~Aime).
+   Palette + fonts applied by OVERRIDING Tailwind v4
+   color scales, so existing utility classes across
+   the app inherit the theme with zero component churn.
+   ============================================ */
+
+@theme {
+  /* ---------- Brand / accent: Instinct red ---------- */
+  /* Overrides indigo-* everywhere (buttons, links, active states) */
+  --color-indigo-50: #fdf1f1;
+  --color-indigo-100: #fbe3e3;
+  --color-indigo-200: #f5aaae;
+  --color-indigo-300: #ef8086;
+  --color-indigo-400: #ea5860;
+  --color-indigo-500: #ed313e;
+  --color-indigo-600: #d9202e;
+  --color-indigo-700: #b51c27;
+  --color-indigo-800: #911922;
+  --color-indigo-900: #6f161d;
+  --color-indigo-950: #450a10;
+
+  /* ---------- Neutrals: warm ink-on-paper ---------- */
+  /* Overrides gray-* everywhere (bg-gray-50, text-gray-900, border-gray-200…) */
+  --color-gray-50: #fbfaf9;   /* page (Instinct --ds-page) */
+  --color-gray-100: #f4efec;  /* raised (Instinct --ds-raised) */
+  --color-gray-200: #eae9ea;  /* hairline (Instinct --ds-hairline) */
+  --color-gray-300: #c0bebf;  /* ink-4 */
+  --color-gray-400: #969394;  /* ink-3 */
+  --color-gray-500: #7a7476;  /* between ink-3 and ink-2 */
+  --color-gray-600: #585254;  /* ink-2 */
+  --color-gray-700: #464042;
+  --color-gray-800: #342f31;
+  --color-gray-900: #251f21;  /* ink (Instinct --ds-ink) */
+  --color-gray-950: #171314;
+
+  /* ---------- Semantic hues nudged to Instinct warmth ---------- */
+  --color-emerald-50: #eef6f3;
+  --color-emerald-100: #d7ebe4;
+  --color-emerald-500: #4e937f;
+  --color-emerald-600: #3d7c69;
+  --color-emerald-700: #326555;
+  --color-teal-50: #eff5f4;
+  --color-teal-100: #dcebe9;
+  --color-teal-500: #73a89a;  /* Instinct --ds-teal */
+  --color-teal-600: #5f9184;
+  --color-teal-700: #4e776c;
+  --color-amber-50: #fbf4ea;
+  --color-amber-100: #f5e6cf;
+  --color-amber-500: #c98a2d;
+  --color-amber-600: #b0761f;
+  --color-amber-700: #8f5f1a;
+  --color-yellow-50: #fbf4ea;
+  --color-yellow-100: #f5e6cf;
+  --color-yellow-500: #c98a2d;
+  --color-yellow-600: #b0761f;
+
+  /* ---------- Core tokens ---------- */
+  --color-background: #fbfaf9;
+  --color-foreground: #251f21;
+
+  /* ---------- Type scale ---------- */
+  --font-sans: var(--font-instrument-sans), -apple-system, BlinkMacSystemFont,
+    "Helvetica Neue", Arial, sans-serif;
+  --font-display: var(--font-instrument-serif), Georgia, serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+
+  /* ---------- Instinct details ---------- */
+  --radius-sm: 0.25rem;
+  --radius: 0.375rem;          /* Instinct --radius */
+  --radius-lg: 0.5rem;
+  --shadow-control: 0 1px 2px rgba(37, 31, 33, 0.05);
+  --shadow-modal: 0 30px 70px rgba(46, 39, 41, 0.28);
+  --tracking-tightest: -0.025em; /* Instinct display letter-spacing */
+}
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #fbfaf9;
+  --foreground: #251f21;
+  --ds-ink: #251f21;
+  --ds-ink-2: #585254;
+  --ds-ink-3: #969394;
+  --ds-ink-4: #c0bebf;
+  --ds-hairline: #eae9ea;
+  --ds-page: #fbfaf9;
+  --ds-raised: #f4efec;
+  --ds-red: #ed313e;
+  --ds-teal: #73a89a;
+  --ds-scrim: rgba(46, 39, 41, 0.45);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+/* Instinct forces the warm-paper look regardless of OS dark preference.
+   Kill the old auto-dark block so the brand is consistent everywhere. */
 
 html {
   scroll-behavior: smooth;
@@ -32,33 +117,16 @@ html {
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-instrument-sans), -apple-system, BlinkMacSystemFont,
+    "Helvetica Neue", Arial, sans-serif;
+  letter-spacing: -0.011em; /* Instinct body tracking */
   overflow-x: hidden;
   overflow-x: clip;
 }
 
-/* Toast animations */
-@keyframes slide-in {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
-
-.animate-slide-in {
-  animation: slide-in 0.3s ease-out;
-}
-
-/* Global overlay fade-in */
-@keyframes fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-.animate-fade-in {
-  animation: fade-in 0.2s ease-out;
+/* Display type (headings, brand) gets the serif display face + tight tracking */
+h1, h2, h3 {
+  font-family: var(--font-instrument-serif), Georgia, serif;
+  letter-spacing: -0.01em;
+  font-weight: 400;
 }

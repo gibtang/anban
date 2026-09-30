@@ -91,7 +91,7 @@ function SignupForm() {
       <div className="max-w-md w-full space-y-8">
         <div>
           <Link href="/" className="flex justify-center mb-6">
-            <span className="font-[Playfair_Display] text-3xl font-bold text-indigo-600">Anban</span>
+            <span className="font-[family-name:var(--font-instrument-serif)] text-3xl font-bold text-indigo-600">Anban</span>
           </Link>
           <h1 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
             Create your account
