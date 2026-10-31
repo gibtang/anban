@@ -99,3 +99,9 @@ jobs:
         run: |
           msg="⏹ <b>ghcr.io/gibtang/anban</b> #${{ github.run_number }} — build ABORTED"
           bash .infra/scripts/telegram-notify.sh "$msg" || true
+      - name: Cleanup runner disk
+        if: always()
+        run: |
+          docker builder prune -af > /dev/null 2>&1 || true
+          docker image prune -af > /dev/null 2>&1 || true
+          echo "docker disk reclaimed"
