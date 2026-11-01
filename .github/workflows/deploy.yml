@@ -1,4 +1,4 @@
-name: deploy
+name: build
 on:
   push:
     branches: [main]
@@ -6,102 +6,21 @@ on:
       - '.github/**'
   workflow_dispatch:
 concurrency:
-  group: deploy-${{ github.ref }}
+  group: build-${{{ github.ref }}}
   cancel-in-progress: true
 permissions:
   contents: read
-  issues: write
-  pull-requests: read
-env:
-  COOLIFY_API_URL: https://coolify-api.feedcode.dev
 jobs:
-  deploy:
-    runs-on: [self-hosted, mac]
-    timeout-minutes: 30
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
-      - name: Checkout app repo
-        uses: actions/checkout@v4
-
-      - name: Checkout infra (scripts)
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          repository: gibtang/infra
-          path: .infra
-
-      - name: Notify start
-        if: always()
-        env:
-          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
-          TELEGRAM_CHAT: ${{ secrets.TELEGRAM_CHAT }}
-        run: |
-          msg="🔨 <b>ghcr.io/gibtang/anban</b> #${{ github.run_number }} — build started"
-          bash .infra/scripts/telegram-notify.sh "$msg" || true
-
-      - name: Login to GHCR
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GHCR_TOKEN }}
-
+          node-version: '20'
+          cache: 'npm'
+      - name: Install
+        run: npm ci --no-audit --no-fund
       - name: Build
-
-        run: |
-          set -euo pipefail
-          docker build \
-            -f "Dockerfile" \
-            -t "ghcr.io/gibtang/anban:latest" \
-            -t "ghcr.io/gibtang/anban:github-${{ github.run_number }}" \
-            "."
-
-      - name: Push
-        run: |
-          docker push "ghcr.io/gibtang/anban:latest"
-          docker push "ghcr.io/gibtang/anban:github-${{ github.run_number }}"
-
-      - name: Deploy via Coolify
-        env:
-          COOLIFY_API_TOKEN: ${{ secrets.COOLIFY_API_TOKEN }}
-        run: |
-          bash .infra/scripts/coolify-deploy.sh "zn7i3oz8n77jgoxxvaw812kp"
-
-      - name: Notify success
-        if: success()
-        env:
-          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
-          TELEGRAM_CHAT: ${{ secrets.TELEGRAM_CHAT }}
-        run: |
-          msg="✅ <b>ghcr.io/gibtang/anban</b> #${{ github.run_number }} — deploy SUCCESS: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-          bash .infra/scripts/telegram-notify.sh "$msg" || true
-
-      - name: Close linked issues
-        if: success()
-        env:
-          GH_TOKEN: ${{ github.token }}
-          GH_REPO: ${{ github.repository }}
-        run: |
-          bash .infra/scripts/close-pr-issues.sh "${{ github.sha }}" "Closed via production deploy ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-
-      - name: Notify failure
-        if: failure()
-        env:
-          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
-          TELEGRAM_CHAT: ${{ secrets.TELEGRAM_CHAT }}
-        run: |
-          msg="❌ <b>ghcr.io/gibtang/anban</b> #${{ github.run_number }} — build FAILED: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-          bash .infra/scripts/telegram-notify.sh "$msg" || true
-
-      - name: Notify abort
-        if: cancelled()
-        env:
-          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
-          TELEGRAM_CHAT: ${{ secrets.TELEGRAM_CHAT }}
-        run: |
-          msg="⏹ <b>ghcr.io/gibtang/anban</b> #${{ github.run_number }} — build ABORTED"
-          bash .infra/scripts/telegram-notify.sh "$msg" || true
-      - name: Cleanup runner disk
-        if: always()
-        run: |
-          docker builder prune -af > /dev/null 2>&1 || true
-          docker image prune -af > /dev/null 2>&1 || true
-          echo "docker disk reclaimed"
+        run: npm run build
