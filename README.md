@@ -434,3 +434,5 @@ See the [LICENSE](./LICENSE) file for the full license text, or visit [https://w
 ---
 
 *If you find Anban useful, consider giving it a ⭐ on [GitHub](https://github.com/gibtang/anban)!*
+
+<!-- e2e: post-deploy issue close verification -->

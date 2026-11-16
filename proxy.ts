@@ -86,8 +86,13 @@ export function proxy(request: NextRequest) {
   const token = request.cookies.get('firebase-auth-token')?.value;
 
   if (!token) {
-    // Redirect to login if no token is present
-    return NextResponse.redirect(new URL('/login', request.url));
+    // Redirect to login if no token is present — preserve the original
+    // path + query in ?next= so login can return the user where they
+    // were going (validated as a relative path before use; see
+    // lib/auth/return-url.ts).
+    const loginUrl = new URL('/login', request.url);
+    loginUrl.searchParams.set('next', pathname + request.nextUrl.search);
+    return NextResponse.redirect(loginUrl);
   }
 
   // Valid token, allow access
