@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db/prisma';
+import { boards, users, toId } from '@/lib/db/mongo';
 
 export const runtime = 'nodejs';
 
@@ -19,30 +19,28 @@ export async function GET(request: NextRequest) {
     }
 
     // Look up user by account-level share token
-    const user = await prisma.user.findUnique({
-      where: { shareToken },
-      select: { id: true },
-    });
+    const user = await users.findOne({ shareToken });
 
     if (!user) {
       return NextResponse.json({ error: 'Invalid or expired share link' }, { status: 404 });
     }
 
     // Get all boards owned by this user
-    const boards = await prisma.board.findMany({
-      where: { ownerId: user.id },
-      select: { id: true, name: true },
-      orderBy: { createdAt: 'asc' },
-    }) as { id: string; name: string }[];
+    const boardDocs = await boards.find(
+      { ownerId: toId(user.id) },
+      { sort: { createdAt: 1 } }
+    );
 
-    if (boards.length === 0) {
+    const boardsOut = boardDocs.map((b) => ({ id: b.id, name: b.name }));
+
+    if (boardsOut.length === 0) {
       return NextResponse.json({ error: 'No boards found for this account' }, { status: 404 });
     }
 
     return NextResponse.json({
-      boards,
-      boardName: boards[0].name, // primary board name for backwards compat with join page
-      boardId: boards[0].id,     // primary board id for backwards compat
+      boards: boardsOut,
+      boardName: boardsOut[0].name, // primary board name for backwards compat with join page
+      boardId: boardsOut[0].id,     // primary board id for backwards compat
     });
   } catch (error) {
     console.error('Error looking up account:', error);

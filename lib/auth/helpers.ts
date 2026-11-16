@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db/prisma';
-import { verifyIdToken } from '@/lib/firebase/admin';
+import { verifyIdToken } from '@/lib/firebase/verify';
 import { notifyNewRegistration } from '@/lib/notifications/registration';
+import { agents, boards, columns, users, toId } from '@/lib/db/mongo';
 
 /**
  * Verify authentication and return user ID
@@ -11,16 +11,20 @@ export async function verifyAuth(request: NextRequest): Promise<string> {
   const authDisabled = process.env.DISABLE_AUTH === 'true';
 
   if (authDisabled) {
-    // Return mock user ID for development
-    const mockUser = await prisma.user.upsert({
-      where: { firebaseUid: 'dev-user' },
-      update: {},
-      create: {
-        firebaseUid: 'dev-user',
-        email: 'dev@localhost',
-      },
+    // Dev convenience: reuse (or lazily create) a single deterministic dev user.
+    const devUid = 'local-dev-user';
+    const user = await users.findOne({ firebaseUid: devUid });
+    if (user) {
+      return user.id;
+    }
+    return users.insertOne({
+      firebaseUid: devUid,
+      email: 'dev@localhost',
+      shareToken: null,
+      onboardingCompleted: false,
+      lastFeedSeenAt: null,
+      createdAt: new Date(),
     });
-    return mockUser.id;
   }
 
   const token = request.cookies.get('firebase-auth-token')?.value;
@@ -28,9 +32,12 @@ export async function verifyAuth(request: NextRequest): Promise<string> {
     throw new Error('Unauthorized');
   }
 
-  let decodedToken;
+  let firebaseUid: string;
+  let email: string | null;
   try {
-    decodedToken = await verifyIdToken(token);
+    const decoded = await verifyIdToken(token);
+    firebaseUid = decoded.uid;
+    email = decoded.email;
   } catch (error) {
     // Firebase throws auth/id-token-expired and auth/argument-error for stale,
     // malformed, or revoked raw ID tokens. API routes already map the app's
@@ -39,61 +46,64 @@ export async function verifyAuth(request: NextRequest): Promise<string> {
     console.info('Firebase ID token rejected:', error instanceof Error ? error.message : error);
     throw new Error('Unauthorized');
   }
-  const firebaseUid = decodedToken.uid;
 
-  // Get or create user by Firebase UID. findFirst-then-create (instead of
+  // Get or create user by Firebase UID. find-then-create (instead of
   // upsert) so we know exactly when the user was created in THIS request —
   // upsert cannot tell "created" from "already existed", which would risk
   // duplicate registration notifications for rapid first-session requests.
-  let user = await prisma.user.findUnique({ where: { firebaseUid } });
+  let user = await users.findOne({ firebaseUid });
   const isNewUser = !user;
   if (!user) {
-    try {
-      user = await prisma.user.create({
-        data: {
-          firebaseUid,
-          email: decodedToken.email || firebaseUid,
-        },
-      });
-    } catch (error) {
-      // P2002 = a concurrent first request already created the user
-      if ((error as { code?: string }).code === 'P2002') {
-        user = await prisma.user.findUniqueOrThrow({ where: { firebaseUid } });
-      } else {
-        throw error;
-      }
-    }
+    user = {
+      id: await users.insertOne({
+        firebaseUid,
+        email: email || firebaseUid,
+        shareToken: null,
+        onboardingCompleted: false,
+        lastFeedSeenAt: null,
+        createdAt: new Date(),
+      }),
+      firebaseUid,
+      email: email || firebaseUid,
+      shareToken: null,
+      onboardingCompleted: false,
+      lastFeedSeenAt: null,
+      createdAt: new Date(),
+    };
   }
+  const userId = user.id;
 
   // Auto-create default board for brand-new users (guarded in case a
   // previous partial signup already created one)
   if (isNewUser) {
-    const existingBoards = await prisma.board.count({
-      where: { ownerId: user.id },
-    });
+    const existingBoards = await boards.count({ ownerId: toId(userId) });
 
     if (existingBoards === 0) {
-      await prisma.board.create({
-        data: {
-          name: 'My Board',
-          ownerId: user.id,
-          columns: {
-            create: [
-              { name: 'To Do', position: 0 },
-              { name: 'In Progress', position: 1 },
-              { name: 'Done', position: 2 },
-            ],
-          },
-        },
+      const now = new Date();
+      const boardId = await boards.insertOne({
+        name: 'My Board',
+        ownerId: toId(userId),
+        favorited: false,
+        archived: false,
+        createdAt: now,
+        updatedAt: now,
       });
+      const defaults = [
+        { name: 'To Do', position: 0 },
+        { name: 'In Progress', position: 1 },
+        { name: 'Done', position: 2 },
+      ];
+      for (const col of defaults) {
+        await columns.insertOne({ boardId: toId(boardId), name: col.name, position: col.position, createdAt: new Date() });
+      }
     }
 
     // Best-effort welcome email + Telegram registration alert.
     // Fire-and-forget: never blocks or fails the authenticated request.
-    void notifyNewRegistration({ email: user.email, userId: user.id });
+    void notifyNewRegistration({ email: user.email, userId });
   }
 
-  return user.id;
+  return userId;
 }
 
 export interface AgentAuthResult {
@@ -117,19 +127,14 @@ export async function verifyAgentAuth(request: NextRequest): Promise<AgentAuthRe
     throw new Error('Unauthorized: Empty token');
   }
 
-  const agent = await prisma.agent.findUnique({
-    where: { token },
-  });
+  const agent = await agents.findOne({ token });
 
   if (!agent) {
     throw new Error('Unauthorized: Invalid or revoked token');
   }
 
   // Track last access asynchronously (fire-and-forget)
-  prisma.agent.update({
-    where: { id: agent.id },
-    data: { lastAccessAt: new Date() },
-  }).catch(() => {}); // ignore errors
+  agents.updateOne({ _id: toId(agent.id) }, { $set: { lastAccessAt: new Date() } }).catch(() => {}); // ignore errors
 
   return {
     agentId: agent.id,

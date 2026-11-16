@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db/prisma';
+import { boards, cards, comments, toId, toIdOrNull } from '@/lib/db/mongo';
 import { verifyAuth, isUnauthorizedError, unauthorizedResponse } from '@/lib/auth/helpers';
 import { logActivity } from '@/lib/db/activity';
 
@@ -17,28 +17,25 @@ export async function GET(request: NextRequest, context: RouteContext) {
     const { id: cardId } = await context.params;
 
     // Verify card belongs to a board owned by this user
-    const card = await prisma.card.findFirst({
-      where: { id: cardId },
-    });
+    const cardOid = toIdOrNull(cardId);
+    const card = cardOid ? await cards.findOne({ _id: cardOid }) : null;
 
     if (!card) {
       return NextResponse.json({ error: 'Card not found' }, { status: 404 });
     }
 
-    const board = await prisma.board.findFirst({
-      where: { id: card.boardId, ownerId: userId },
+    const board = await boards.findOne({
+      _id: toId(card.boardId),
+      ownerId: toId(userId),
     });
 
     if (!board) {
       return NextResponse.json({ error: 'Board not found' }, { status: 404 });
     }
 
-    const comments = await prisma.comment.findMany({
-      where: { cardId },
-      orderBy: { createdAt: 'asc' },
-    });
+    const commentDocs = await comments.find({ cardId: cardOid }, { sort: { createdAt: 1 } });
 
-    return NextResponse.json(comments);
+    return NextResponse.json(commentDocs);
   } catch (error) {
     console.error('Error fetching comments:', error);
     if (isUnauthorizedError(error)) {
@@ -72,32 +69,32 @@ export async function POST(request: NextRequest, context: RouteContext) {
     }
 
     // Verify card belongs to a board owned by this user
-    const card = await prisma.card.findFirst({
-      where: { id: cardId },
-    });
+    const cardOid = toIdOrNull(cardId);
+    const card = cardOid ? await cards.findOne({ _id: cardOid }) : null;
 
     if (!card) {
       return NextResponse.json({ error: 'Card not found' }, { status: 404 });
     }
 
-    const board = await prisma.board.findFirst({
-      where: { id: card.boardId, ownerId: userId },
+    const board = await boards.findOne({
+      _id: toId(card.boardId),
+      ownerId: toId(userId),
     });
 
     if (!board) {
       return NextResponse.json({ error: 'Board not found' }, { status: 404 });
     }
 
-    const comment = await prisma.comment.create({
-      data: {
-        cardId,
-        boardId: card.boardId,
-        authorId: userId,
-        authorName: 'You',
-        authorType: 'user',
-        content: content.trim(),
-      },
+    const commentId = await comments.insertOne({
+      cardId: cardOid,
+      boardId: toId(card.boardId),
+      authorId: toId(userId),
+      authorName: 'You',
+      authorType: 'user',
+      content: content.trim(),
+      createdAt: new Date(),
     });
+    const comment = await comments.findOne({ _id: toId(commentId) });
 
     // Log activity
     await logActivity({

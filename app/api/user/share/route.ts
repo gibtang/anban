@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db/prisma';
+import { users, toId } from '@/lib/db/mongo';
 import { verifyAuth, isUnauthorizedError, unauthorizedResponse } from '@/lib/auth/helpers';
 import { requestAppUrl } from '@/lib/appUrl.server';
 import crypto from 'crypto';
@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
   try {
     const userId = await verifyAuth(request);
 
-    const user = await prisma.user.findUnique({ where: { id: userId } });
+    const user = await users.findOne({ _id: toId(userId) });
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
@@ -24,10 +24,7 @@ export async function POST(request: NextRequest) {
     let shareToken = user.shareToken;
     if (!shareToken) {
       shareToken = crypto.randomUUID();
-      await prisma.user.update({
-        where: { id: userId },
-        data: { shareToken },
-      });
+      await users.updateOne({ _id: toId(userId) }, { $set: { shareToken } });
     }
 
     const appUrl = requestAppUrl(request);
@@ -49,10 +46,7 @@ export async function DELETE(request: NextRequest) {
   try {
     const userId = await verifyAuth(request);
 
-    await prisma.user.update({
-      where: { id: userId },
-      data: { shareToken: null },
-    });
+    await users.updateOne({ _id: toId(userId) }, { $set: { shareToken: null } });
 
     return NextResponse.json({ success: true });
   } catch (error) {

@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db/prisma';
 import { verifyAgentAuth, isUnauthorizedError, unauthorizedResponse } from '@/lib/auth/helpers';
 import { eventBus } from '@/lib/events/event-bus';
 import { logActivity } from '@/lib/db/activity';
 import { logAuditEvent } from '@/lib/db/audit';
+import { cards, toId } from '@/lib/db/mongo';
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -30,8 +30,9 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
 
 
     // Verify card belongs to this board
-    const existingCard = await prisma.card.findFirst({
-      where: { id: cardId, boardId },
+    const existingCard = await cards.findOne({
+      _id: toId(cardId),
+      boardId: toId(boardId),
     });
 
     if (!existingCard) {
@@ -55,9 +56,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
     });
 
     // Delete the card
-    await prisma.card.delete({
-      where: { id: cardId },
-    });
+    await cards.deleteOne({ _id: toId(cardId) });
 
     // Emit real-time event
     eventBus.emitEvent({

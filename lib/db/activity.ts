@@ -1,4 +1,4 @@
-import { prisma } from './prisma';
+import { activities, toIdOrNull, type ActivityDoc } from './mongo';
 
 export interface ActivityParams {
   cardId: string;
@@ -11,15 +11,16 @@ export interface ActivityParams {
 }
 
 export async function logActivity(params: ActivityParams) {
-  await prisma.activity.create({
-    data: {
-      cardId: params.cardId,
-      boardId: params.boardId,
-      type: params.type,
-      authorId: params.authorId ?? null,
-      authorName: params.authorName,
-      authorType: params.authorType,
-      details: params.details ?? undefined,
-    },
+  await activities.insertOne({
+    cardId: toIdOrNull(params.cardId),
+    boardId: toIdOrNull(params.boardId),
+    type: params.type,
+    authorId: toIdOrNull(params.authorId),
+    authorName: params.authorName,
+    authorType: params.authorType,
+    ...(params.details !== undefined ? { details: params.details } : {}),
+    createdAt: new Date(),
   });
 }
+
+export type { ActivityDoc };

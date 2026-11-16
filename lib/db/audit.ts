@@ -1,4 +1,4 @@
-import { prisma } from './prisma';
+import { auditLogs, toIdOrNull } from './mongo';
 
 export async function logAuditEvent(params: {
   userId?: string;
@@ -6,24 +6,22 @@ export async function logAuditEvent(params: {
   action: string;
   entityType: string;
   entityId: string;
-  oldValues?: any;
-  newValues?: any;
+  oldValues?: Record<string, unknown>;
+  newValues?: Record<string, unknown>;
 }) {
   if (!params.userId && !params.agentId) {
     console.warn('logAuditEvent called without userId or agentId');
     return;
   }
 
-  await prisma.auditLog.create({
-    data: {
-      userId: params.userId ?? null,
-      agentId: params.agentId ?? null,
-      action: params.action,
-      entityType: params.entityType,
-      entityId: params.entityId,
-      oldValues: params.oldValues,
-      newValues: params.newValues,
-      timestamp: new Date(),
-    },
+  await auditLogs.insertOne({
+    userId: toIdOrNull(params.userId),
+    agentId: toIdOrNull(params.agentId),
+    action: params.action,
+    entityType: params.entityType,
+    entityId: params.entityId,
+    oldValues: params.oldValues ?? null,
+    newValues: params.newValues ?? null,
+    timestamp: new Date(),
   });
 }

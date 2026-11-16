@@ -57,3 +57,8 @@ test-results/
 # superpowers SDD scratch
 .worktrees/
 .superpowers/
+
+# Cloudflare Workers
+.open-next/
+.wrangler/
+.dev.vars

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db/prisma';
+import { agentConfigs, boards, openClawConnections, toId } from '@/lib/db/mongo';
 import { verifyAuth, isUnauthorizedError, unauthorizedResponse } from '@/lib/auth/helpers';
 import { OpenClawHTTPAdapter } from '@/lib/openclaw/http-adapter';
 
@@ -19,26 +19,23 @@ export async function POST(
     const { id } = await context.params;
 
     // Get agent config
-    const agent = await prisma.agentConfig.findUnique({
-      where: { id },
-    });
+    const agent = /^[a-fA-F0-9]{24}$/.test(id)
+      ? await agentConfigs.findOne({ _id: toId(id) })
+      : null;
 
     if (!agent) {
       return NextResponse.json({ error: 'Agent not found' }, { status: 404 });
     }
 
     // Get the first board's OpenClaw connection for health check
-    const board = await prisma.board.findFirst({
-      where: {
-        ownerId: userId,
-        openClawConnection: { isNot: null },
-      },
-      include: {
-        openClawConnection: true,
-      },
-    });
+    const userBoards = await boards.find({ ownerId: toId(userId) });
+    const connection = userBoards.length
+      ? await openClawConnections.findOne({
+          boardId: { $in: userBoards.map((b) => toId(b.id)) },
+        })
+      : null;
 
-    if (!board || !board.openClawConnection) {
+    if (!connection) {
       return NextResponse.json(
         { error: 'No OpenClaw connection configured' },
         { status: 400 }
@@ -47,8 +44,8 @@ export async function POST(
 
     // Perform health check
     const isHealthy = await OpenClawHTTPAdapter.healthCheck({
-      gatewayUrl: board.openClawConnection.gatewayUrl,
-      apiKey: board.openClawConnection.apiKey ?? undefined,
+      gatewayUrl: connection.gatewayUrl,
+      apiKey: connection.apiKey ?? undefined,
     });
 
     return NextResponse.json({ healthy: isHealthy });

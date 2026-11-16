@@ -3,7 +3,7 @@ import { verifyAgentAuth, isUnauthorizedError, unauthorizedResponse } from '@/li
 import { getAgentCards } from '@/lib/db/agentCards';
 import { logAuditEvent } from '@/lib/db/audit';
 import { logActivity } from '@/lib/db/activity';
-import { prisma } from '@/lib/db/prisma';
+import { cards, columns, toId } from '@/lib/db/mongo';
 
 export const runtime = 'nodejs';
 
@@ -64,44 +64,54 @@ export async function POST(request: NextRequest) {
     // If no column specified, find or create "To Do" column
     let targetColumnId = columnId;
     if (!targetColumnId) {
-      const todoColumn = await prisma.column.findFirst({
-        where: { boardId, name: 'To Do' },
+      const todoColumn = await columns.findOne({
+        boardId: toId(boardId),
+        name: 'To Do',
       });
       if (todoColumn) {
         targetColumnId = todoColumn.id;
       } else {
-        const newColumn = await prisma.column.create({
-          data: { name: 'To Do', position: 0, boardId },
+        const newColumnId = await columns.insertOne({
+          name: 'To Do',
+          position: 0,
+          boardId: toId(boardId),
+          createdAt: new Date(),
         });
-        targetColumnId = newColumn.id;
+        targetColumnId = newColumnId;
       }
     }
 
     // Verify column belongs to this board
-    const column = await prisma.column.findFirst({
-      where: { id: targetColumnId, boardId },
+    const column = await columns.findOne({
+      _id: toId(targetColumnId),
+      boardId: toId(boardId),
     });
     if (!column) {
       return NextResponse.json({ error: 'Column not found on this board' }, { status: 400 });
     }
 
     // Get next position
-    const maxPosCard = await prisma.card.findFirst({
-      where: { columnId: targetColumnId },
-      orderBy: { position: 'desc' },
-    });
-    const position = maxPosCard ? maxPosCard.position + 1 : 0;
+    const maxPosCards = await cards.find(
+      { columnId: toId(targetColumnId) },
+      { sort: { position: -1 }, limit: 1 }
+    );
+    const position = maxPosCards.length > 0 ? maxPosCards[0].position + 1 : 0;
 
-    const card = await prisma.card.create({
-      data: {
-        title: title.trim(),
-        description: description?.trim() || null,
-        columnId: targetColumnId,
-        boardId,
-        tags: tags || [],
-        position,
-      },
+    const now = new Date();
+    const cardId = await cards.insertOne({
+      title: title.trim(),
+      description: description?.trim() || null,
+      columnId: toId(targetColumnId),
+      boardId: toId(boardId),
+      tags: tags || [],
+      position,
+      agentId: null,
+      blocked: null,
+      archived: false,
+      createdAt: now,
+      updatedAt: now,
     });
+    const card = (await cards.findOne({ _id: toId(cardId) }))!;
 
     // Audit trail
     await logAuditEvent({

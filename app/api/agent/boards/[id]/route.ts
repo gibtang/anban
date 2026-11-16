@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db/prisma';
 import { verifyAgentAuth, isUnauthorizedError, unauthorizedResponse } from '@/lib/auth/helpers';
+import { boards, toId } from '@/lib/db/mongo';
 
 export const runtime = 'nodejs';
 
@@ -33,23 +33,24 @@ export async function PUT(
     }
 
     // Verify the board belongs to the agent's account
-    const board = await prisma.board.findFirst({
-      where: { id, ownerId },
+    const board = await boards.findOne({
+      _id: toId(id),
+      ownerId: toId(ownerId),
     });
 
     if (!board) {
       return NextResponse.json({ error: 'Board not found' }, { status: 404 });
     }
 
-    const updated = await prisma.board.update({
-      where: { id },
-      data: { archived },
-    });
+    await boards.updateOne(
+      { _id: toId(id) },
+      { $set: { archived, updatedAt: new Date() } },
+    );
 
     return NextResponse.json({
-      id: updated.id,
-      name: updated.name,
-      archived: updated.archived,
+      id: board.id,
+      name: board.name,
+      archived,
     });
   } catch (error) {
     console.error('Error archiving board:', error);

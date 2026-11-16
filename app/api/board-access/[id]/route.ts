@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db/prisma';
+import { agents, toId } from '@/lib/db/mongo';
 import crypto from 'crypto';
 
 interface RouteContext {
@@ -14,16 +14,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
   try {
     const { id: approvalToken } = await context.params;
 
-    const agent = await prisma.agent.findFirst({
-      where: { approvalToken },
-      select: {
-        id: true,
-        name: true,
-        token: true,
-        approvalToken: true,
-        approvalExpiresAt: true,
-      },
-    });
+    const agent = await agents.findOne({ approvalToken });
 
     if (!agent) {
       return NextResponse.json({ error: 'Request not found' }, { status: 404 });
@@ -63,9 +54,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: 'action must be "approve" or "deny"' }, { status: 400 });
     }
 
-    const agent = await prisma.agent.findFirst({
-      where: { approvalToken },
-    });
+    const agent = await agents.findOne({ approvalToken });
 
     if (!agent) {
       return NextResponse.json({ error: 'Request not found' }, { status: 404 });
@@ -83,23 +72,25 @@ export async function PUT(request: NextRequest, context: RouteContext) {
 
     if (action === 'deny') {
       // Clear approval token so it can't be reused
-      await prisma.agent.update({
-        where: { id: agent.id },
-        data: { approvalToken: null, approvalExpiresAt: null },
-      });
+      await agents.updateOne(
+        { _id: toId(agent.id) },
+        { $set: { approvalToken: null, approvalExpiresAt: null } }
+      );
       return NextResponse.json({ status: 'denied' });
     }
 
     // Approve: generate a real agent token
     const agentToken = crypto.randomBytes(32).toString('hex');
-    await prisma.agent.update({
-      where: { id: agent.id },
-      data: {
-        token: agentToken,
-        approvalToken: null,
-        approvalExpiresAt: null,
-      },
-    });
+    await agents.updateOne(
+      { _id: toId(agent.id) },
+      {
+        $set: {
+          token: agentToken,
+          approvalToken: null,
+          approvalExpiresAt: null,
+        },
+      }
+    );
 
     return NextResponse.json({ status: 'approved', agentToken });
   } catch (error) {

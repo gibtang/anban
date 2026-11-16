@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db/prisma';
 import { verifyAuth, isUnauthorizedError, unauthorizedResponse } from '@/lib/auth/helpers';
 import { OpenClawHTTPAdapter } from '@/lib/openclaw/http-adapter';
 import { eventBus } from '@/lib/events/event-bus';
 import { logAuditEvent } from '@/lib/db/audit';
+import { agentConfigs, cards, openClawConnections, toId } from '@/lib/db/mongo';
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -21,34 +21,30 @@ export const dynamic = 'force-dynamic';
 async function appendAgentResponseToCards(agentId: string, boardId: string, response: string) {
   try {
     // Find all cards on this board assigned to this agent
-    const cards = await prisma.card.findMany({
-      where: {
-        boardId,
-        agentId,
-      },
+    const cardList = await cards.find({
+      boardId: toId(boardId),
+      agentId: toId(agentId),
     });
 
-    if (cards.length === 0) {
+    if (cardList.length === 0) {
       console.log(`No cards found for agent ${agentId} on board ${boardId}`);
       return;
     }
 
-    console.log(`Appending agent response to ${cards.length} card(s)`);
+    console.log(`Appending agent response to ${cardList.length} card(s)`);
 
     const timestamp = new Date().toISOString();
     const responseBlock = `\n\n--- Agent Response (${timestamp}) ---\n${response}`;
 
     // Update each card
-    for (const card of cards) {
+    for (const card of cardList) {
       const oldDescription = card.description || '';
       const newDescription = oldDescription + responseBlock;
 
-      const updatedCard = await prisma.card.update({
-        where: { id: card.id },
-        data: {
-          description: newDescription,
-        },
-      });
+      await cards.updateOne(
+        { _id: toId(card.id) },
+        { $set: { description: newDescription, updatedAt: new Date() } },
+      );
 
       // Emit card.updated event for real-time updates
       eventBus.emitEvent({
@@ -98,9 +94,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
     }
 
     // Look up agent config by ID
-    const agent = await prisma.agentConfig.findUnique({
-      where: { id: agentId },
-    });
+    const agent = await agentConfigs.findOne({ _id: toId(agentId) });
 
     if (!agent) {
       return NextResponse.json({ error: 'Agent not found' }, { status: 404 });
@@ -115,8 +109,8 @@ export async function POST(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: 'boardId is required' }, { status: 400 });
     }
 
-    const openClawConnection = await prisma.openClawConnection.findUnique({
-      where: { boardId },
+    const openClawConnection = await openClawConnections.findOne({
+      boardId: toId(boardId),
     });
 
     if (!openClawConnection || !openClawConnection.enabled) {

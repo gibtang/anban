@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db/prisma';
 import { verifyAgentAuth, isUnauthorizedError, unauthorizedResponse } from '@/lib/auth/helpers';
+import { cards, comments, toId } from '@/lib/db/mongo';
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -38,24 +38,25 @@ export async function POST(request: NextRequest, context: RouteContext) {
     }
 
     // Verify card belongs to this board
-    const card = await prisma.card.findFirst({
-      where: { id: cardId, boardId },
+    const card = await cards.findOne({
+      _id: toId(cardId),
+      boardId: toId(boardId),
     });
 
     if (!card) {
       return NextResponse.json({ error: 'Card not found on this board' }, { status: 404 });
     }
 
-    const comment = await prisma.comment.create({
-      data: {
-        cardId,
-        boardId,
-        authorId: agentId,
-        authorName: agentName,
-        authorType: 'agent',
-        content: content.trim(),
-      },
+    const commentId = await comments.insertOne({
+      cardId: toId(cardId),
+      boardId: toId(boardId),
+      authorId: toId(agentId),
+      authorName: agentName,
+      authorType: 'agent',
+      content: content.trim(),
+      createdAt: new Date(),
     });
+    const comment = await comments.findOne({ _id: toId(commentId) });
 
     return NextResponse.json(comment, { status: 201 });
   } catch (error) {
@@ -88,20 +89,21 @@ export async function GET(request: NextRequest, context: RouteContext) {
     }
 
     // Verify card belongs to this board
-    const card = await prisma.card.findFirst({
-      where: { id: cardId, boardId },
+    const card = await cards.findOne({
+      _id: toId(cardId),
+      boardId: toId(boardId),
     });
 
     if (!card) {
       return NextResponse.json({ error: 'Card not found on this board' }, { status: 404 });
     }
 
-    const comments = await prisma.comment.findMany({
-      where: { cardId },
-      orderBy: { createdAt: 'asc' },
-    });
+    const commentList = await comments.find(
+      { cardId: toId(cardId) },
+      { sort: { createdAt: 1 } }
+    );
 
-    return NextResponse.json(comments);
+    return NextResponse.json(commentList);
   } catch (error) {
     console.error('Error fetching agent comments:', error);
     if (isUnauthorizedError(error)) {

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db/prisma';
+import { agents, toId } from '@/lib/db/mongo';
 import { verifyAuth, isUnauthorizedError, unauthorizedResponse } from '@/lib/auth/helpers';
 import { getAgentCards } from '@/lib/db/agentCards';
 
@@ -18,9 +18,9 @@ export async function GET(
     const { id: agentId } = await params;
 
     // Verify agent belongs to this user
-    const agent = await prisma.agent.findFirst({
-      where: { id: agentId, ownerId: userId },
-    });
+    const agent = /^[a-fA-F0-9]{24}$/.test(agentId)
+      ? await agents.findOne({ _id: toId(agentId), ownerId: toId(userId) })
+      : null;
 
     if (!agent) {
       return NextResponse.json({ error: 'Agent not found' }, { status: 404 });

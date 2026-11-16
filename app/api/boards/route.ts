@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db/prisma';
+import { boards, cards, columns, toId, type BoardDoc, type CardDoc, type ColumnDoc } from '@/lib/db/mongo';
 import { verifyAuth, isUnauthorizedError, unauthorizedResponse } from '@/lib/auth/helpers';
 
 export const runtime = 'nodejs';
@@ -10,49 +10,64 @@ export async function GET(request: NextRequest) {
 
     const showArchived = request.nextUrl.searchParams.get('includeArchived') === 'true';
 
-    // Get all boards for the user with column/card counts in a single query
-    const boards = await prisma.board.findMany({
-      where: {
-        ownerId: userId,
+    // Get all boards for the user
+    const boardDocs = await boards.find(
+      {
+        ownerId: toId(userId),
         ...(showArchived ? {} : { archived: false }),
       },
-      orderBy: [
-        { favorited: 'desc' },
-        { updatedAt: 'desc' },
-      ],
-      include: {
-        _count: {
-          select: { columns: true, cards: { where: { archived: false } } },
-        },
-        columns: {
-          select: { id: true, name: true },
-        },
-      },
-    });
-
-    // Get "Done" column IDs per board
-    const doneColumnIds = boards.flatMap((b: { columns: { id: string; name: string }[] }) =>
-      b.columns.filter((c: { name: string }) => c.name === 'Done').map((c: { id: string }) => c.id),
+      { sort: { favorited: -1, updatedAt: -1 } }
     );
 
-    // Count open (non-Done, non-archived) cards in a single query
-    const openCounts = await prisma.card.groupBy({
-      by: ['boardId'],
-      where: {
-        boardId: { in: boards.map((b: { id: string }) => b.id) },
-        columnId: { notIn: doneColumnIds },
-        archived: false,
+    if (boardDocs.length === 0) {
+      return NextResponse.json([]);
+    }
+    const boardIds = boardDocs.map((b: BoardDoc) => toId(b.id));
+
+    // Load columns and non-archived cards to compute counts in JS
+    const columnDocs = await columns.find({ boardId: { $in: boardIds } });
+    const cardDocs = await cards.find({ boardId: { $in: boardIds }, archived: false });
+
+    const columnsByBoard = new Map<string, ColumnDoc[]>();
+    for (const c of columnDocs) {
+      const list = columnsByBoard.get(c.boardId) ?? [];
+      list.push(c);
+      columnsByBoard.set(c.boardId, list);
+    }
+    const cardCountByBoard = new Map<string, number>();
+    for (const c of cardDocs) {
+      cardCountByBoard.set(c.boardId, (cardCountByBoard.get(c.boardId) ?? 0) + 1);
+    }
+
+    // Get "Done" column IDs per board
+    const doneColumnIds = boardDocs.flatMap((b: BoardDoc) =>
+      (columnsByBoard.get(b.id) ?? []).filter((c) => c.name === 'Done').map((c) => c.id),
+    );
+    const doneSet = new Set(doneColumnIds);
+
+    // Count open (non-Done, non-archived) cards per board
+    const openCountByBoard = new Map<string, number>();
+    for (const c of cardDocs as CardDoc[]) {
+      if (doneSet.has(c.columnId)) continue;
+      openCountByBoard.set(c.boardId, (openCountByBoard.get(c.boardId) ?? 0) + 1);
+    }
+
+    // Strip columns from response, add counts
+    const result = boardDocs.map((b: BoardDoc) => ({
+      id: b.id,
+      name: b.name,
+      description: b.description,
+      ownerId: b.ownerId,
+      favorited: b.favorited,
+      archived: b.archived,
+      createdAt: b.createdAt,
+      updatedAt: b.updatedAt,
+      _count: {
+        columns: (columnsByBoard.get(b.id) ?? []).length,
+        cards: cardCountByBoard.get(b.id) ?? 0,
       },
-      _count: true,
-    });
-
-    const openMap = new Map(openCounts.map((r: { boardId: string; _count: number }) => [r.boardId, r._count]));
-
-    // Strip columns from response, add openCardCount
-    const result = boards.map((b: { columns?: unknown; [key: string]: unknown }) => {
-      const { columns, ...rest } = b;
-      return { ...rest, openCardCount: openMap.get(b.id as string) ?? 0 };
-    });
+      openCardCount: openCountByBoard.get(b.id) ?? 0,
+    }));
 
     return NextResponse.json(result);
   } catch (error) {
@@ -75,24 +90,41 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Name is required' }, { status: 400 });
     }
 
-    // Create board + default columns in a single DB call
-    const board = await prisma.board.create({
-      data: {
-        name: name.trim(),
-        description: description?.trim() || null,
-        ownerId: userId,
-        columns: {
-          create: [
-            { name: 'To Do', position: 0 },
-            { name: 'In Progress', position: 1 },
-            { name: 'Done', position: 2 },
-          ],
-        },
-      },
-      include: { columns: true },
+    const now = new Date();
+
+    // Create board
+    const boardId = await boards.insertOne({
+      name: name.trim(),
+      description: description?.trim() || null,
+      ownerId: toId(userId),
+      favorited: false,
+      archived: false,
+      createdAt: now,
+      updatedAt: now,
     });
 
-    return NextResponse.json(board, { status: 201 });
+    // Create default columns
+    const columnIds: string[] = [];
+    const defaults = [
+      { name: 'To Do', position: 0 },
+      { name: 'In Progress', position: 1 },
+      { name: 'Done', position: 2 },
+    ];
+    for (const col of defaults) {
+      columnIds.push(
+        await columns.insertOne({
+          name: col.name,
+          position: col.position,
+          boardId: toId(boardId),
+          createdAt: now,
+        })
+      );
+    }
+
+    const board = await boards.findOne({ _id: toId(boardId) });
+    const columnDocs = columnIds.length ? await columns.find({ _id: { $in: columnIds.map(toId) } }, { sort: { position: 1 } }) : [];
+
+    return NextResponse.json({ ...board, columns: columnDocs }, { status: 201 });
   } catch (error) {
     console.error('Error creating board:', error);
     if (isUnauthorizedError(error)) {

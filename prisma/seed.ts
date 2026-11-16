@@ -1,33 +1,44 @@
-/* eslint-disable @typescript-eslint/no-require-imports */
-const { PrismaClient } = require('@prisma/client');
-
-const prisma = new PrismaClient({
-  log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
-});
+import {
+  users,
+  boards,
+  columns,
+  cards,
+  agentConfigs,
+  openClawConnections,
+  getMongoDb,
+  toId,
+} from '../lib/db/mongo';
 
 async function main() {
   console.log('🌱 Starting database seed...');
 
   try {
     // Create default user
-    const defaultUser = await prisma.user.create({
-      data: {
-        firebaseUid: 'test-user-123',
-      },
+    const defaultUserId = await users.insertOne({
+      firebaseUid: 'test-user-123',
+      email: null,
+      shareToken: null,
+      onboardingCompleted: false,
+      lastFeedSeenAt: null,
+      createdAt: new Date(),
     });
-    console.log('✅ Created default user:', defaultUser.id);
+    console.log('✅ Created default user:', defaultUserId);
 
     // Create default board
-    const defaultBoard = await prisma.board.create({
-      data: {
-        name: 'My First Board',
-        ownerId: defaultUser.id,
-      },
+    const now = new Date();
+    const defaultBoardId = await boards.insertOne({
+      name: 'My First Board',
+      description: null,
+      ownerId: toId(defaultUserId),
+      favorited: false,
+      archived: false,
+      createdAt: now,
+      updatedAt: now,
     });
-    console.log('✅ Created default board:', defaultBoard.id);
+    console.log('✅ Created default board:', defaultBoardId);
 
     // Create default columns
-    const columns = [
+    const columnDefs = [
       { name: 'Backlog', position: 0 },
       { name: 'To Do', position: 1 },
       { name: 'In Progress', position: 2 },
@@ -35,79 +46,91 @@ async function main() {
       { name: 'Done', position: 4 },
     ];
 
-    const createdColumns = await Promise.all(
-      columns.map((column) =>
-        prisma.column.create({
-          data: {
-            name: column.name,
-            position: column.position,
-            boardId: defaultBoard.id,
-          },
+    const createdColumnIds = await Promise.all(
+      columnDefs.map((column) =>
+        columns.insertOne({
+          name: column.name,
+          position: column.position,
+          boardId: toId(defaultBoardId),
+          createdAt: new Date(),
         })
       )
     );
-    console.log('✅ Created default columns:', createdColumns.length);
+    console.log('✅ Created default columns:', createdColumnIds.length);
 
     // Create sample cards
     const sampleCards = [
       {
         title: 'Setup development environment',
         description: 'Install Node.js, create project, setup git',
-        columnId: createdColumns[0].id, // Backlog
-        boardId: defaultBoard.id,
+        columnId: createdColumnIds[0], // Backlog
+        boardId: defaultBoardId,
         tags: ['setup', 'development'],
       },
       {
         title: 'Design database schema',
         description: 'Create Prisma schema with User, Board, Column, Card models',
-        columnId: createdColumns[0].id, // Backlog
-        boardId: defaultBoard.id,
+        columnId: createdColumnIds[0], // Backlog
+        boardId: defaultBoardId,
         tags: ['database', 'design'],
       },
       {
         title: 'Implement authentication',
         description: 'Setup Firebase Auth with email/password and Google OAuth',
-        columnId: createdColumns[1].id, // To Do
-        boardId: defaultBoard.id,
+        columnId: createdColumnIds[1], // To Do
+        boardId: defaultBoardId,
         tags: ['auth', 'firebase'],
       },
       {
         title: 'Create board API routes',
         description: 'Implement CRUD operations for boards',
-        columnId: createdColumns[1].id, // To Do
-        boardId: defaultBoard.id,
+        columnId: createdColumnIds[1], // To Do
+        boardId: defaultBoardId,
         tags: ['api', 'backend'],
       },
       {
         title: 'Build board UI components',
         description: 'Create responsive board layout with drag and drop',
-        columnId: createdColumns[2].id, // In Progress
-        boardId: defaultBoard.id,
+        columnId: createdColumnIds[2], // In Progress
+        boardId: defaultBoardId,
         tags: ['frontend', 'react', 'ui'],
       },
       {
         title: 'Implement card CRUD operations',
         description: 'Create API endpoints for card management',
-        columnId: createdColumns[2].id, // In Progress
-        boardId: defaultBoard.id,
+        columnId: createdColumnIds[2], // In Progress
+        boardId: defaultBoardId,
         tags: ['api', 'backend'],
       },
       {
         title: 'Setup deployment pipeline',
         description: 'Configure Fly.io deployment with proper env variables',
-        columnId: createdColumns[4].id, // Done
-        boardId: defaultBoard.id,
+        columnId: createdColumnIds[4], // Done
+        boardId: defaultBoardId,
         tags: ['deployment', 'devops'],
       },
     ];
 
-    const createdCards = await prisma.card.createMany({
-      data: sampleCards,
-    });
-    console.log('✅ Created sample cards:', createdCards.count);
+    const cardNow = new Date();
+    for (const card of sampleCards) {
+      await cards.insertOne({
+        title: card.title,
+        description: card.description,
+        position: 0,
+        columnId: toId(card.columnId),
+        boardId: toId(card.boardId),
+        tags: card.tags,
+        agentId: null,
+        blocked: null,
+        archived: false,
+        createdAt: cardNow,
+        updatedAt: cardNow,
+      });
+    }
+    console.log('✅ Created sample cards:', sampleCards.length);
 
     // Create sample OpenClaw agent configs
-    const agentConfigs = [
+    const agentConfigDefs = [
       {
         name: 'Code Review Assistant',
         openClawId: 'claude-code-review',
@@ -134,19 +157,24 @@ async function main() {
       },
     ];
 
-    await prisma.agentConfig.createMany({
-      data: agentConfigs,
-    });
-    console.log('✅ Created sample agent configs:', agentConfigs.length);
+    for (const config of agentConfigDefs) {
+      await agentConfigs.insertOne({
+        name: config.name,
+        openClawId: config.openClawId,
+        description: config.description,
+        model: config.model,
+        enabled: true,
+        ownerId: toId(defaultUserId),
+      });
+    }
+    console.log('✅ Created sample agent configs:', agentConfigDefs.length);
 
     // Create sample OpenClaw connection
-    await prisma.openClawConnection.create({
-      data: {
-        gatewayUrl: 'https://api.openclaw.example.com',
-        apiKey: 'sample-api-key-for-testing',
-        enabled: true,
-        boardId: defaultBoard.id,
-      },
+    await openClawConnections.insertOne({
+      gatewayUrl: 'https://api.openclaw.example.com',
+      apiKey: 'sample-api-key-for-testing',
+      enabled: true,
+      boardId: toId(defaultBoardId),
     });
     console.log('✅ Created sample OpenClaw connection');
 
@@ -163,5 +191,5 @@ main()
     process.exit(1);
   })
   .finally(async () => {
-    await prisma.$disconnect();
+    await getMongoDb().client.close();
   });

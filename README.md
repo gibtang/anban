@@ -261,11 +261,19 @@ prisma/
 
 ## Deployment
 
-### Coolify (Current)
+### Cloudflare Workers (Current)
 
-Live deployment at [www.getanban.com](https://www.getanban.com), self-hosted with [Coolify](https://coolify.io). Commits to `master` trigger an automatic build and deploy.
+Live deployment: [www.getanban.com](https://www.getanban.com) on Cloudflare Workers via [`@opennextjs/cloudflare`](https://opennext.js.org/cloudflare) (worker preview: `anban.gibtang.workers.dev`; getanban.com cutover pending DNS move — see [docs/DEPLOY-CF.md](docs/DEPLOY-CF.md)). Push to `main` → [GitHub Action](.github/workflows/deploy.yml) builds and deploys the worker.
 
-Coolify builds the app from the included `Dockerfile`, so there's no serverless function timeout — long-running operations (agent chat, SSE streams) are unaffected.
+- Prerequisites, secrets, DNS cutover, and runtime notes: [docs/DEPLOY-CF.md](docs/DEPLOY-CF.md)
+- `npm run deploy` — build + deploy the worker
+- `npm run preview` — build + local workerd preview
+- No serverless timeout: agent chat and SSE streams stream uninterrupted on Workers.
+- Data access uses the MongoDB driver directly (`lib/db/mongo.ts`); `prisma/schema.prisma` documents the schema. See the guide above for why Prisma cannot run on Workers.
+
+### Docker (self-hosting)
+
+Self-host with the included `Dockerfile` (build and run on any Node-capable host or platform). Set `DATABASE_URL`, `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY`, and the Firebase web client vars at runtime — config is runtime-resolved, no rebuild needed.
 
 ## Architecture Overview
 

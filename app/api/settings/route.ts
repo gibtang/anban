@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db/prisma';
+import { boards, openClawConnections, toId } from '@/lib/db/mongo';
 import { verifyAuth, isUnauthorizedError, unauthorizedResponse } from '@/lib/auth/helpers';
 
 export const runtime = 'nodejs';
@@ -40,19 +40,17 @@ export async function GET(request: NextRequest) {
     }
 
     // Verify board ownership
-    const board = await prisma.board.findFirst({
-      where: {
-        id: boardId,
-        ownerId: userId,
-      },
+    const board = await boards.findOne({
+      _id: toId(boardId),
+      ownerId: toId(userId),
     });
 
     if (!board) {
       return NextResponse.json({ error: 'Board not found' }, { status: 404 });
     }
 
-    const openClawConnection = await prisma.openClawConnection.findUnique({
-      where: { boardId },
+    const openClawConnection = await openClawConnections.findOne({
+      boardId: toId(boardId),
     });
 
     // Mask sensitive fields in response
@@ -92,11 +90,9 @@ export async function PUT(request: NextRequest) {
     }
 
     // Verify board ownership
-    const board = await prisma.board.findFirst({
-      where: {
-        id: boardId,
-        ownerId: userId,
-      },
+    const board = await boards.findOne({
+      _id: toId(boardId),
+      ownerId: toId(userId),
     });
 
     if (!board) {
@@ -118,25 +114,28 @@ export async function PUT(request: NextRequest) {
         return NextResponse.json({ error: 'Invalid gatewayUrl format' }, { status: 400 });
       }
 
-      await prisma.openClawConnection.upsert({
-        where: { boardId },
-        create: {
-          boardId,
-          gatewayUrl: gatewayUrl.trim(),
-          apiKey: apiKey?.trim() || null,
-          enabled: enabled !== undefined ? enabled : true,
-        },
-        update: {
+      const boardObjectId = toId(boardId);
+      const existing = await openClawConnections.findOne({ boardId: boardObjectId });
+      if (existing) {
+        const $set: Record<string, unknown> = {
           gatewayUrl: gatewayUrl.trim(),
           ...(apiKey !== undefined && { apiKey: apiKey.trim() }),
           ...(enabled !== undefined && { enabled }),
-        },
-      });
+        };
+        await openClawConnections.updateOne({ boardId: boardObjectId }, { $set });
+      } else {
+        await openClawConnections.insertOne({
+          boardId: boardObjectId,
+          gatewayUrl: gatewayUrl.trim(),
+          apiKey: apiKey?.trim() || null,
+          enabled: enabled !== undefined ? enabled : true,
+        });
+      }
     }
 
     // Fetch updated settings
-    const updatedOpenClawConnection = await prisma.openClawConnection.findUnique({
-      where: { boardId },
+    const updatedOpenClawConnection = await openClawConnections.findOne({
+      boardId: toId(boardId),
     });
 
     // Mask sensitive fields in response

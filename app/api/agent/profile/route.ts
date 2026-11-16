@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db/prisma';
 import { verifyAgentAuth, isUnauthorizedError, unauthorizedResponse } from '@/lib/auth/helpers';
 import { validateAgentName } from '@/lib/agents/name-validation';
+import { agents, toId } from '@/lib/db/mongo';
 
 export const runtime = 'nodejs';
 
@@ -14,16 +14,17 @@ export async function GET(request: NextRequest) {
   try {
     const { agentId } = await verifyAgentAuth(request);
 
-    const agent = await prisma.agent.findUnique({
-      where: { id: agentId },
-      select: { id: true, name: true, createdAt: true },
-    });
+    const agent = await agents.findOne({ _id: toId(agentId) });
 
     if (!agent) {
       return NextResponse.json({ error: 'Agent not found' }, { status: 404 });
     }
 
-    return NextResponse.json(agent);
+    return NextResponse.json({
+      id: agent.id,
+      name: agent.name,
+      createdAt: agent.createdAt,
+    });
   } catch (error) {
     if (isUnauthorizedError(error)) {
       return unauthorizedResponse(error.message);
@@ -56,12 +57,16 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: result.error }, { status: 400 });
     }
 
-    const updated = await prisma.agent.update({
-      where: { id: agentId },
-      data: { name: result.value },
-    });
+    const matched = await agents.updateOne(
+      { _id: toId(agentId) },
+      { $set: { name: result.value } },
+    );
 
-    return NextResponse.json({ id: updated.id, name: updated.name });
+    if (!matched) {
+      throw new Error('Agent not found');
+    }
+
+    return NextResponse.json({ id: agentId, name: result.value });
   } catch (error) {
     if (isUnauthorizedError(error)) {
       return unauthorizedResponse(error.message);

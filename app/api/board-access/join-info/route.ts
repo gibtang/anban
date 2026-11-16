@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db/prisma';
+import { boards, users, toId } from '@/lib/db/mongo';
 import { requestAppUrl } from '@/lib/appUrl.server';
 
 export const runtime = 'nodejs';
@@ -24,10 +24,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Look up user by account-level share token
-    const user = await prisma.user.findUnique({
-      where: { shareToken },
-      select: { id: true },
-    });
+    const user = await users.findOne({ shareToken });
 
     if (!user) {
       return NextResponse.json(
@@ -37,13 +34,14 @@ export async function GET(request: NextRequest) {
     }
 
     // Get all boards owned by this user
-    const boards = await prisma.board.findMany({
-      where: { ownerId: user.id },
-      select: { id: true, name: true },
-      orderBy: { createdAt: 'asc' },
-    }) as { id: string; name: string }[];
+    const boardDocs = await boards.find(
+      { ownerId: toId(user.id) },
+      { sort: { createdAt: 1 } }
+    );
 
-    if (boards.length === 0) {
+    const boardsOut = boardDocs.map((b) => ({ id: b.id, name: b.name }));
+
+    if (boardsOut.length === 0) {
       return NextResponse.json(
         { error: 'No boards found for this account' },
         { status: 404 }
@@ -51,11 +49,11 @@ export async function GET(request: NextRequest) {
     }
 
     const appUrl = requestAppUrl(request);
-    const boardNames = boards.map(b => b.name).join(', ');
+    const boardNames = boardsOut.map((b) => b.name).join(', ');
 
     return NextResponse.json({
       type: 'anban-account-join',
-      boards: boards.map(b => ({ id: b.id, name: b.name })),
+      boards: boardsOut.map((b) => ({ id: b.id, name: b.name })),
       shareToken,
       instructions: {
         summary: `You are invited to join all boards (${boardNames}) on Anban (a kanban board). Follow these steps to get access.`,

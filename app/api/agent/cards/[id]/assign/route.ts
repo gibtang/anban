@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db/prisma';
 import { verifyAgentAuth, isUnauthorizedError, unauthorizedResponse } from '@/lib/auth/helpers';
 import { eventBus } from '@/lib/events/event-bus';
+import { agents, cards, toId } from '@/lib/db/mongo';
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -32,8 +32,9 @@ export async function PUT(request: NextRequest, context: RouteContext) {
 
 
     // Verify card belongs to this board
-    const card = await prisma.card.findFirst({
-      where: { id: cardId, boardId },
+    const card = await cards.findOne({
+      _id: toId(cardId),
+      boardId: toId(boardId),
     });
 
     if (!card) {
@@ -42,10 +43,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
 
     // If assigning to an agent, verify they exist on the same account
     if (agentId) {
-      const targetAgent = await prisma.agent.findUnique({
-        where: { id: agentId },
-        select: { id: true },
-      });
+      const targetAgent = await agents.findOne({ _id: toId(agentId) });
 
       if (!targetAgent) {
         return NextResponse.json(
@@ -55,12 +53,11 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       }
     }
 
-    const updatedCard = await prisma.card.update({
-      where: { id: cardId },
-      data: {
-        agentId: agentId || null,
-      },
-    });
+    const updatedAt = new Date();
+    await cards.updateOne(
+      { _id: toId(cardId) },
+      { $set: { agentId: agentId ? toId(agentId) : null, updatedAt } },
+    );
 
     // Emit real-time event
     eventBus.emitEvent({
@@ -71,8 +68,10 @@ export async function PUT(request: NextRequest, context: RouteContext) {
 
     // Resolve agent name for response
     const assignedAgent = agentId
-      ? await prisma.agent.findUnique({ where: { id: agentId }, select: { name: true } })
+      ? await agents.findOne({ _id: toId(agentId) })
       : null;
+
+    const updatedCard = { ...card, agentId: agentId || null, updatedAt };
 
     return NextResponse.json({
       ...updatedCard,

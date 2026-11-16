@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db/prisma';
 import { verifyAgentAuth, isUnauthorizedError, unauthorizedResponse } from '@/lib/auth/helpers';
+import { boards, cards, columns, toId } from '@/lib/db/mongo';
 
 export const runtime = 'nodejs';
 
@@ -21,26 +21,28 @@ export async function GET(request: NextRequest) {
     }
 
 
-    const board = await prisma.board.findUnique({
-      where: { id: boardId },
-      include: {
-        columns: {
-          orderBy: { position: 'asc' },
-          include: {
-            cards: {
-              where: { archived: false },
-              orderBy: { position: 'asc' },
-            },
-          },
-        },
-      },
-    });
+    const board = await boards.findOne({ _id: toId(boardId) });
 
     if (!board) {
       return NextResponse.json({ error: 'Board not found' }, { status: 404 });
     }
 
-    return NextResponse.json(board);
+    // Nested include (board -> columns -> cards) as separate finds, grouped in JS
+    const boardColumns = await columns.find(
+      { boardId: toId(boardId) },
+      { sort: { position: 1 } }
+    );
+    const columnsWithCards = await Promise.all(
+      boardColumns.map(async (col) => {
+        const colCards = await cards.find(
+          { columnId: toId(col.id), archived: false },
+          { sort: { position: 1 } }
+        );
+        return { ...col, cards: colCards };
+      })
+    );
+
+    return NextResponse.json({ ...board, columns: columnsWithCards });
   } catch (error) {
     console.error('Error in agent board endpoint:', error);
     if (isUnauthorizedError(error)) {
