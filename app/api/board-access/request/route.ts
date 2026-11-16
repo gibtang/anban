@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db/prisma';
+import { agents, boards, users, toId } from '@/lib/db/mongo';
 import { requestAppUrl } from '@/lib/appUrl.server';
 import crypto from 'crypto';
 
@@ -25,16 +25,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Look up user by account-level share token
-    const user = await prisma.user.findUnique({
-      where: { shareToken },
-    });
+    const user = await users.findOne({ shareToken });
 
     if (!user) {
       return NextResponse.json({ error: 'Invalid or expired share link' }, { status: 404 });
     }
 
     // Verify account has at least one board
-    const boardCount = await prisma.board.count({ where: { ownerId: user.id } });
+    const boardCount = await boards.count({ ownerId: toId(user.id) });
     if (boardCount === 0) {
       return NextResponse.json({ error: 'No boards found for this account' }, { status: 404 });
     }
@@ -42,8 +40,9 @@ export async function POST(request: NextRequest) {
     const appUrl = requestAppUrl(request).trim();
 
     // Look up existing agent by name + account
-    let agent = await prisma.agent.findFirst({
-      where: { name: agentName.trim(), ownerId: user.id },
+    let agent = await agents.findOne({
+      name: agentName.trim(),
+      ownerId: toId(user.id),
     });
 
     if (agent) {
@@ -68,16 +67,17 @@ export async function POST(request: NextRequest) {
       // Expired — generate new approval token
       const approvalToken = crypto.randomBytes(32).toString('hex');
       const approvalExpiresAt = new Date(Date.now() + APPROVAL_EXPIRY_MS);
-      agent = await prisma.agent.update({
-        where: { id: agent.id },
-        data: { approvalToken, approvalExpiresAt },
-      });
+      await agents.updateOne(
+        { _id: toId(agent.id) },
+        { $set: { approvalToken, approvalExpiresAt } }
+      );
+      agent = await agents.findOne({ _id: toId(agent.id) });
 
       return NextResponse.json({
         status: 'pending',
-        approvalToken: agent.approvalToken,
-        approvalUrl: `${appUrl}/approve/${agent.approvalToken}`,
-        message: `New approval link generated. Notify the account owner: ${appUrl}/approve/${agent.approvalToken}`,
+        approvalToken: agent?.approvalToken ?? null,
+        approvalUrl: `${appUrl}/approve/${agent?.approvalToken ?? approvalToken}`,
+        message: `New approval link generated. Notify the account owner: ${appUrl}/approve/${agent?.approvalToken ?? approvalToken}`,
       });
     }
 
@@ -85,21 +85,21 @@ export async function POST(request: NextRequest) {
     const approvalToken = crypto.randomBytes(32).toString('hex');
     const approvalExpiresAt = new Date(Date.now() + APPROVAL_EXPIRY_MS);
 
-    agent = await prisma.agent.create({
-      data: {
-        name: agentName.trim(),
-        token: '__pending__' + Date.now(),
-        ownerId: user.id,
-        approvalToken,
-        approvalExpiresAt,
-      },
+    const agentId = await agents.insertOne({
+      name: agentName.trim(),
+      token: '__pending__' + Date.now(),
+      ownerId: toId(user.id),
+      approvalToken,
+      approvalExpiresAt,
+      createdAt: new Date(),
     });
+    agent = await agents.findOne({ _id: toId(agentId) });
 
     return NextResponse.json({
       status: 'pending',
-      approvalToken: agent.approvalToken,
-      approvalUrl: `${appUrl}/approve/${agent.approvalToken}`,
-      message: `Access requested for account with ${boardCount} board(s). Notify the account owner: ${appUrl}/approve/${agent.approvalToken}`,
+      approvalToken: agent?.approvalToken ?? approvalToken,
+      approvalUrl: `${appUrl}/approve/${agent?.approvalToken ?? approvalToken}`,
+      message: `Access requested for account with ${boardCount} board(s). Notify the account owner: ${appUrl}/approve/${agent?.approvalToken ?? approvalToken}`,
     }, { status: 201 });
   } catch (error) {
     console.error('Error requesting access:', error);

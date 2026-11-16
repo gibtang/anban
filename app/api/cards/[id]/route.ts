@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db/prisma';
+import { boards, cards, columns, toId, toIdOrNull, type CardDoc } from '@/lib/db/mongo';
 import { verifyAuth, isUnauthorizedError, unauthorizedResponse } from '@/lib/auth/helpers';
 import { logAuditEvent } from '@/lib/db/audit';
 import { logActivity } from '@/lib/db/activity';
@@ -13,26 +13,26 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     const userId = await verifyAuth(request);
 
     const { id } = await context.params;
+    const cardOid = toIdOrNull(id);
+    if (!cardOid) {
+      return NextResponse.json({ error: 'Card not found' }, { status: 404 });
+    }
     const body = await request.json();
     const { title, description, columnId, position, tags, agentId, blocked, archived } = body;
 
     // Verify card exists and user has access
-    const existingCard = await prisma.card.findFirst({
-      where: {
-        id,
-      },
-    });
+    const existingCard: CardDoc | null = cardOid
+      ? await cards.findOne({ _id: cardOid })
+      : null;
 
     if (!existingCard) {
       return NextResponse.json({ error: 'Card not found' }, { status: 404 });
     }
 
     // Verify board ownership
-    const board = await prisma.board.findFirst({
-      where: {
-        id: existingCard.boardId,
-        ownerId: userId,
-      },
+    const board = await boards.findOne({
+      _id: toId(existingCard.boardId),
+      ownerId: toId(userId),
     });
 
     if (!board) {
@@ -47,8 +47,8 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       position: existingCard.position,
       tags: existingCard.tags,
       agentId: existingCard.agentId,
-      blocked: (existingCard as any).blocked ?? null,
-      archived: (existingCard as any).archived ?? false,
+      blocked: existingCard.blocked ?? null,
+      archived: existingCard.archived ?? false,
     };
 
     // Build update data
@@ -101,28 +101,40 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       updateData.archived = archived;
     }
 
+    // Build $set with ObjectId conversions for id fields
+    const $set: Record<string, unknown> = { updatedAt: new Date() };
+    if (updateData.title !== undefined) $set.title = updateData.title;
+    if (updateData.description !== undefined) $set.description = updateData.description;
+    if (updateData.columnId !== undefined) $set.columnId = toId(updateData.columnId);
+    if (updateData.position !== undefined) $set.position = updateData.position;
+    if (updateData.tags !== undefined) $set.tags = updateData.tags;
+    if (updateData.agentId !== undefined) $set.agentId = toIdOrNull(updateData.agentId);
+    if (updateData.blocked !== undefined) $set.blocked = updateData.blocked;
+    if (updateData.archived !== undefined) $set.archived = updateData.archived;
+
     // Update card
-    const card = await prisma.card.update({
-      where: { id },
-      data: updateData,
-    });
+    const matched = await cards.updateOne({ _id: cardOid }, { $set });
+    if (!matched) {
+      return NextResponse.json({ error: 'Card not found' }, { status: 404 });
+    }
+    const card: CardDoc | null = await cards.findOne({ _id: cardOid });
 
     // Log card update
     await logAuditEvent({
       userId,
       action: 'UPDATE',
       entityType: 'Card',
-      entityId: card.id,
+      entityId: card?.id ?? id,
       oldValues,
       newValues: {
-        title: card.title,
-        description: card.description,
-        columnId: card.columnId,
-        position: card.position,
-        tags: card.tags,
-        agentId: card.agentId,
-        blocked: (card as any).blocked ?? null,
-        archived: (card as any).archived ?? false,
+        title: card?.title,
+        description: card?.description ?? null,
+        columnId: card?.columnId,
+        position: card?.position,
+        tags: card?.tags ?? [],
+        agentId: card?.agentId ?? null,
+        blocked: card?.blocked ?? null,
+        archived: card?.archived ?? false,
       },
     });
 
@@ -131,12 +143,14 @@ export async function PUT(request: NextRequest, context: RouteContext) {
 
     if (updateData.columnId && existingCard.columnId !== updateData.columnId) {
       // Card moved between columns
-      const fromCol = await prisma.column.findUnique({ where: { id: existingCard.columnId } });
-      const toCol = await prisma.column.findUnique({ where: { id: updateData.columnId } });
+      const fromColOid = toIdOrNull(existingCard.columnId);
+      const toColOid = toIdOrNull(updateData.columnId);
+      const fromCol = fromColOid ? await columns.findOne({ _id: fromColOid }) : null;
+      const toCol = toColOid ? await columns.findOne({ _id: toColOid }) : null;
       activityPromises.push(
         logActivity({
-          cardId: card.id,
-          boardId: card.boardId,
+          cardId: card?.id ?? id,
+          boardId: card?.boardId ?? existingCard.boardId,
           type: 'moved',
           authorId: userId,
           authorName: 'You',
@@ -152,8 +166,8 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     if (updateData.agentId !== undefined && existingCard.agentId !== updateData.agentId) {
       activityPromises.push(
         logActivity({
-          cardId: card.id,
-          boardId: card.boardId,
+          cardId: card?.id ?? id,
+          boardId: card?.boardId ?? existingCard.boardId,
           type: updateData.agentId ? 'assigned' : 'unassigned',
           authorId: userId,
           authorName: 'You',
@@ -170,8 +184,8 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     if (fieldsChanged.length > 0) {
       activityPromises.push(
         logActivity({
-          cardId: card.id,
-          boardId: card.boardId,
+          cardId: card?.id ?? id,
+          boardId: card?.boardId ?? existingCard.boardId,
           type: 'updated',
           authorId: userId,
           authorName: 'You',
@@ -198,24 +212,21 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
     const userId = await verifyAuth(request);
 
     const { id } = await context.params;
+    const cardOid = toIdOrNull(id);
 
     // Verify card exists and user has access
-    const existingCard = await prisma.card.findFirst({
-      where: {
-        id,
-      },
-    });
+    const existingCard: CardDoc | null = cardOid
+      ? await cards.findOne({ _id: cardOid })
+      : null;
 
-    if (!existingCard) {
+    if (!cardOid || !existingCard) {
       return NextResponse.json({ error: 'Card not found' }, { status: 404 });
     }
 
     // Verify board ownership
-    const board = await prisma.board.findFirst({
-      where: {
-        id: existingCard.boardId,
-        ownerId: userId,
-      },
+    const board = await boards.findOne({
+      _id: toId(existingCard.boardId),
+      ownerId: toId(userId),
     });
 
     if (!board) {
@@ -233,9 +244,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
     };
 
     // Delete card
-    await prisma.card.delete({
-      where: { id },
-    });
+    await cards.deleteOne({ _id: cardOid });
 
     // Log card deletion
     await logAuditEvent({

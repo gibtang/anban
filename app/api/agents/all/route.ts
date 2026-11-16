@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db/prisma';
+import { agents, comments, cards, toId } from '@/lib/db/mongo';
 import { verifyAuth, isUnauthorizedError, unauthorizedResponse } from '@/lib/auth/helpers';
 import { validateAgentName } from '@/lib/agents/name-validation';
+
+const isValidId = (id: string) => /^[a-fA-F0-9]{24}$/.test(id);
 
 export const runtime = 'nodejs';
 
@@ -13,21 +15,12 @@ export async function GET(request: NextRequest) {
   try {
     const userId = await verifyAuth(request);
 
-    const agents = await prisma.agent.findMany({
-      where: { ownerId: userId },
-      select: {
-        id: true,
-        name: true,
-        token: true,
-        approvalToken: true,
-        approvalExpiresAt: true,
-        lastAccessAt: true,
-        createdAt: true,
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+    const agentDocs = await agents.find(
+      { ownerId: toId(userId) },
+      { sort: { createdAt: -1 } }
+    );
 
-    const result = agents.map((a: { id: string; name: string; token: string | null; createdAt: Date; lastAccessAt: Date | null }) => ({
+    const result = agentDocs.map((a) => ({
       id: a.id,
       name: a.name,
       status: a.token && !a.token.startsWith('__pending__') ? 'approved' as const : 'pending' as const,
@@ -73,20 +66,20 @@ export async function PATCH(request: NextRequest) {
     }
 
     // Verify agent belongs to this user
-    const agent = await prisma.agent.findFirst({
-      where: { id: agentId, ownerId: userId },
-    });
+    const agent = isValidId(agentId)
+      ? await agents.findOne({ _id: toId(agentId), ownerId: toId(userId) })
+      : null;
 
     if (!agent) {
       return NextResponse.json({ error: 'Agent not found' }, { status: 404 });
     }
 
-    const updated = await prisma.agent.update({
-      where: { id: agentId },
-      data: { name: result.value },
-    });
+    await agents.updateOne(
+      { _id: toId(agentId) },
+      { $set: { name: result.value } }
+    );
 
-    return NextResponse.json({ id: updated.id, name: updated.name });
+    return NextResponse.json({ id: agentId, name: result.value });
   } catch (error) {
     console.error('Error renaming agent:', error);
     if (isUnauthorizedError(error)) {
@@ -112,19 +105,19 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Verify agent belongs to this user
-    const agent = await prisma.agent.findFirst({
-      where: { id: agentId, ownerId: userId },
-    });
+    const agent = isValidId(agentId)
+      ? await agents.findOne({ _id: toId(agentId), ownerId: toId(userId) })
+      : null;
 
     if (!agent) {
       return NextResponse.json({ error: 'Agent not found' }, { status: 404 });
     }
 
     // Also delete related comments and unassign cards
-    await prisma.comment.deleteMany({ where: { authorId: agentId, authorType: 'agent' } });
-    await prisma.card.updateMany({ where: { agentId }, data: { agentId: null } });
+    await comments.raw().deleteMany({ authorId: toId(agentId), authorType: 'agent' });
+    await cards.raw().updateMany({ agentId: toId(agentId) }, { $set: { agentId: null, updatedAt: new Date() } });
 
-    await prisma.agent.delete({ where: { id: agentId } });
+    await agents.deleteOne({ _id: toId(agentId) });
 
     return NextResponse.json({ success: true });
   } catch (error) {

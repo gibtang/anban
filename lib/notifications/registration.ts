@@ -12,7 +12,7 @@
  */
 
 export interface RegistrationNotification {
-  email: string;
+  email: string | null;
   userId: string;
 }
 
@@ -47,8 +47,8 @@ export async function sendWelcomeEmail(
 ): Promise<boolean> {
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.RESEND_FROM_EMAIL || 'Anban <admin@a2z-soft.co>';
-  if (!apiKey) {
-    console.warn('[welcome-email] RESEND_API_KEY not set; skipping send.');
+  if (!apiKey || !registration.email) {
+    console.warn('[welcome-email] RESEND_API_KEY not set or user has no email; skipping send.');
     return false;
   }
 

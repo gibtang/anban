@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db/prisma';
 import { verifyAgentAuth, isUnauthorizedError, unauthorizedResponse } from '@/lib/auth/helpers';
+import { boards, toId } from '@/lib/db/mongo';
 
 export const runtime = 'nodejs';
 
@@ -19,19 +19,23 @@ export async function GET(request: NextRequest) {
 
     const showArchived = request.nextUrl.searchParams.get('includeArchived') === 'true';
 
-    const boards = await prisma.board.findMany({
-      where: {
-        ownerId,
+    const accountBoards = await boards.find(
+      {
+        ownerId: toId(ownerId),
         ...(showArchived ? {} : { archived: false }),
       },
-      select: { id: true, name: true, archived: true, createdAt: true },
-      orderBy: { name: 'asc' },
-    });
+      { sort: { name: 1 } }
+    );
 
     return NextResponse.json({
       agentId,
       agentName,
-      boards,
+      boards: accountBoards.map((b) => ({
+        id: b.id,
+        name: b.name,
+        archived: b.archived,
+        createdAt: b.createdAt,
+      })),
     });
   } catch (error) {
     console.error('Error listing agent boards:', error);

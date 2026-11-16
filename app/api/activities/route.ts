@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db/prisma';
+import { activities, boards, cards, toId } from '@/lib/db/mongo';
 import { verifyAuth, isUnauthorizedError, unauthorizedResponse } from '@/lib/auth/helpers';
 
 export const runtime = 'nodejs';
@@ -16,28 +16,29 @@ export async function GET(request: NextRequest) {
     }
 
     // Verify the card belongs to a board owned by this user
-    const card = await prisma.card.findFirst({
-      where: { id: cardId },
-    });
+    const card = /^[a-fA-F0-9]{24}$/.test(cardId)
+      ? await cards.findOne({ _id: toId(cardId) })
+      : null;
 
     if (!card) {
       return NextResponse.json({ error: 'Card not found' }, { status: 404 });
     }
 
-    const board = await prisma.board.findFirst({
-      where: { id: card.boardId, ownerId: userId },
+    const board = await boards.findOne({
+      _id: toId(card.boardId),
+      ownerId: toId(userId),
     });
 
     if (!board) {
       return NextResponse.json({ error: 'Board not found' }, { status: 404 });
     }
 
-    const activities = await prisma.activity.findMany({
-      where: { cardId },
-      orderBy: { createdAt: 'desc' },
-    });
+    const activityDocs = await activities.find(
+      { cardId: toId(cardId) },
+      { sort: { createdAt: -1 } }
+    );
 
-    return NextResponse.json(activities);
+    return NextResponse.json(activityDocs);
   } catch (error) {
     console.error('Error fetching activities:', error);
     if (isUnauthorizedError(error)) {

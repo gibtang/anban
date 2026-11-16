@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db/prisma';
 import { verifyAgentAuth, isUnauthorizedError, unauthorizedResponse } from '@/lib/auth/helpers';
 import { eventBus } from '@/lib/events/event-bus';
 import { logActivity } from '@/lib/db/activity';
 import { logAuditEvent } from '@/lib/db/audit';
+import { boards, cards, columns, toId } from '@/lib/db/mongo';
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -37,8 +37,9 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     }
 
     // Verify card exists on source board
-    const existingCard = await prisma.card.findFirst({
-      where: { id: cardId, boardId: sourceBoardId },
+    const existingCard = await cards.findOne({
+      _id: toId(cardId),
+      boardId: toId(sourceBoardId),
     });
 
     if (!existingCard) {
@@ -46,37 +47,40 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     }
 
     // Verify target board exists
-    const targetBoard = await prisma.board.findUnique({
-      where: { id: targetBoardId },
-      include: { columns: { orderBy: { position: 'asc' } } },
-    });
+    const targetBoard = await boards.findOne({ _id: toId(targetBoardId) });
 
     if (!targetBoard) {
       return NextResponse.json({ error: 'Target board not found' }, { status: 404 });
     }
 
+    // Nested include (board -> columns) as separate find
+    const targetBoardColumns = await columns.find(
+      { boardId: toId(targetBoardId) },
+      { sort: { position: 1 } }
+    );
+
     // Determine target column
     let resolvedColumnId = targetColumnId;
     if (resolvedColumnId) {
       // Verify the column belongs to the target board
-      const targetCol = targetBoard.columns.find((c: { id: string }) => c.id === resolvedColumnId);
+      const targetCol = targetBoardColumns.find((c) => c.id === resolvedColumnId);
       if (!targetCol) {
         return NextResponse.json({ error: 'Target column not found on target board' }, { status: 400 });
       }
     } else {
       // Default to the first column (usually "To Do")
-      if (targetBoard.columns.length === 0) {
+      if (targetBoardColumns.length === 0) {
         return NextResponse.json({ error: 'Target board has no columns' }, { status: 400 });
       }
-      resolvedColumnId = targetBoard.columns[0].id;
+      resolvedColumnId = targetBoardColumns[0].id;
     }
 
     // Get next position in target column
-    const maxPosCard = await prisma.card.findFirst({
-      where: { columnId: resolvedColumnId },
-      orderBy: { position: 'desc' },
-    });
-    const newPosition = maxPosCard ? maxPosCard.position + 1 : 0;
+    const maxPosCards = await cards.find(
+      { columnId: toId(resolvedColumnId) },
+      { sort: { position: -1 }, limit: 1 }
+    );
+    const newPosition = maxPosCards.length > 0 ? maxPosCards[0].position + 1 : 0;
 
     // Audit: old values
     const oldValues = {
@@ -87,14 +91,18 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     };
 
     // Move card to target board
-    const updatedCard = await prisma.card.update({
-      where: { id: cardId },
-      data: {
-        boardId: targetBoardId,
-        columnId: resolvedColumnId,
-        position: newPosition,
+    await cards.updateOne(
+      { _id: toId(cardId) },
+      {
+        $set: {
+          boardId: toId(targetBoardId),
+          columnId: toId(resolvedColumnId),
+          position: newPosition,
+          updatedAt: new Date(),
+        },
       },
-    });
+    );
+    const updatedCard = (await cards.findOne({ _id: toId(cardId) }))!;
 
     // Audit: new values
     await logAuditEvent({
@@ -142,7 +150,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     });
 
     // Log activity on target board
-    const targetCol = targetBoard.columns.find((c: { id: string }) => c.id === resolvedColumnId);
+    const targetCol = targetBoardColumns.find((c) => c.id === resolvedColumnId);
     await logActivity({
       cardId,
       boardId: targetBoardId,

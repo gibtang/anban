@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { eventBus } from '@/lib/events/event-bus';
+import { boards, toId } from '@/lib/db/mongo';
 import { verifyAuth, isUnauthorizedError, unauthorizedResponse } from '@/lib/auth/helpers';
-import { prisma } from '@/lib/db/prisma';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -18,12 +18,9 @@ export async function GET(request: NextRequest) {
     }
 
     // Verify board ownership
-    const board = await prisma.board.findFirst({
-      where: {
-        id: boardId,
-        ownerId: userId,
-      },
-    });
+    const board = /^[a-fA-F0-9]{24}$/.test(boardId)
+      ? await boards.findOne({ _id: toId(boardId), ownerId: toId(userId) })
+      : null;
 
     if (!board) {
       return new Response('Board not found', { status: 404 });

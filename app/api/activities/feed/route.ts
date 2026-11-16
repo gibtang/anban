@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import type { Prisma } from '@prisma/client';
-import { prisma } from '@/lib/db/prisma';
+import { activities, boards, cards, users, toId, type ActivityDoc } from '@/lib/db/mongo';
 import { verifyAuth, isUnauthorizedError, unauthorizedResponse } from '@/lib/auth/helpers';
 
 export const runtime = 'nodejs';
@@ -14,34 +13,13 @@ const MAX_LIMIT = 100;
  */
 async function stampLastFeedSeenAt(userId: string): Promise<void> {
   try {
-    await prisma.user.update({
-      where: { id: userId },
-      data: { lastFeedSeenAt: new Date() },
-    });
+    await users.updateOne(
+      { _id: toId(userId) },
+      { $set: { lastFeedSeenAt: new Date() } }
+    );
   } catch (error) {
     console.error('Failed to stamp lastFeedSeenAt:', error);
   }
-}
-
-interface FeedBoardRow {
-  id: string;
-  name: string;
-}
-
-interface FeedActivityRow {
-  id: string;
-  type: string;
-  cardId: string;
-  boardId: string;
-  authorName: string;
-  authorType: string;
-  details: unknown;
-  createdAt: Date;
-}
-
-interface FeedCardRow {
-  id: string;
-  title: string;
 }
 
 /**
@@ -84,19 +62,14 @@ export async function GET(request: NextRequest) {
 
     let previousSeenAt: Date | null = null;
     if (isInitialLoad) {
-      const user = await prisma.user.findUnique({
-        where: { id: userId },
-        select: { lastFeedSeenAt: true },
-      });
+      const user = await users.findOne({ _id: toId(userId) });
       previousSeenAt = user?.lastFeedSeenAt ?? null;
     }
 
-    const boards = (await prisma.board.findMany({
-      where: { ownerId: userId },
-      select: { id: true, name: true },
-    })) as unknown as FeedBoardRow[];
+    const boardDocs = await boards.find({ ownerId: toId(userId) });
+    const boardsList = boardDocs.map((b) => ({ id: b.id, name: b.name }));
 
-    if (boards.length === 0) {
+    if (boardsList.length === 0) {
       await stampLastFeedSeenAt(userId);
       return NextResponse.json({
         activities: [],
@@ -105,8 +78,8 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    const where: Prisma.ActivityWhereInput = {
-      boardId: { in: boards.map((b) => b.id) },
+    const filter: Record<string, unknown> = {
+      boardId: { $in: boardsList.map((b) => toId(b.id)) },
     };
 
     // Keyset pagination on (createdAt DESC, id DESC) so equal timestamps
@@ -114,34 +87,30 @@ export async function GET(request: NextRequest) {
     if (cursorCreatedAt && cursorId) {
       const createdAt = new Date(cursorCreatedAt);
       if (!Number.isNaN(createdAt.getTime())) {
-        where.OR = [
-          { createdAt: { lt: createdAt } },
-          { createdAt: createdAt, id: { lt: cursorId } },
+        filter.$or = [
+          { createdAt: { $lt: createdAt } },
+          { createdAt: createdAt, _id: { $lt: cursorId } },
         ];
       }
     }
 
-    const fetched = (await prisma.activity.findMany({
-      where,
-      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
-      take: limit + 1,
-    })) as unknown as FeedActivityRow[];
+    const fetched: ActivityDoc[] = await activities.find(filter, {
+      sort: { createdAt: -1, _id: -1 },
+      limit: limit + 1,
+    });
 
     const hasMore = fetched.length > limit;
     const page = hasMore ? fetched.slice(0, limit) : fetched;
 
     // Enrich with card titles (cards may be deleted — title becomes null)
     const cardIds = [...new Set(page.map((a) => a.cardId))];
-    const cards = cardIds.length
-      ? ((await prisma.card.findMany({
-          where: { id: { in: cardIds } },
-          select: { id: true, title: true },
-        })) as unknown as FeedCardRow[])
+    const cardDocs = cardIds.length
+      ? await cards.find({ _id: { $in: cardIds.filter((c) => /^[a-fA-F0-9]{24}$/.test(c)).map(toId) } })
       : [];
-    const cardById = new Map(cards.map((c) => [c.id, c.title]));
-    const boardById = new Map(boards.map((b) => [b.id, b.name]));
+    const cardById = new Map(cardDocs.map((c) => [c.id, c.title]));
+    const boardById = new Map(boardsList.map((b) => [b.id, b.name]));
 
-    const activities = page.map((a) => ({
+    const activityRows = page.map((a) => ({
       id: a.id,
       type: a.type,
       cardId: a.cardId,
@@ -168,7 +137,7 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({
-      activities,
+      activities: activityRows,
       nextCursor,
       lastSeenAt: isInitialLoad
         ? previousSeenAt?.toISOString() ?? null

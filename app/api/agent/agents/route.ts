@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db/prisma';
 import { verifyAgentAuth, isUnauthorizedError, unauthorizedResponse } from '@/lib/auth/helpers';
+import { agents, toId } from '@/lib/db/mongo';
 
 export const runtime = 'nodejs';
 
@@ -17,13 +17,15 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Agent not linked to an account' }, { status: 400 });
     }
 
-    const agents = await prisma.agent.findMany({
-      where: { ownerId, token: { not: { startsWith: '__pending__' } } },
-      select: { id: true, name: true, createdAt: true },
-      orderBy: { name: 'asc' },
-    });
+    const agentDocs = await agents.find(
+      {
+        ownerId: toId(ownerId),
+        token: { $not: { $regex: '^__pending__' } },
+      },
+      { sort: { name: 1 } }
+    );
 
-    const result = agents.map((a: { id: string; name: string; createdAt: Date }) => ({
+    const result = agentDocs.map((a) => ({
       id: a.id,
       name: a.name,
       approvedAt: a.createdAt,

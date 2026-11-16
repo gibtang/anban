@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db/prisma';
+import { agentConfigs, toId } from '@/lib/db/mongo';
 import { verifyAuth, isUnauthorizedError, unauthorizedResponse } from '@/lib/auth/helpers';
 
 export const runtime = 'nodejs';
@@ -9,10 +9,10 @@ export async function GET(request: NextRequest) {
     const userId = await verifyAuth(request);
 
     // Get agent configs owned by this user
-    const agents = await prisma.agentConfig.findMany({
-      where: { ownerId: userId },
-      orderBy: { name: 'asc' },
-    });
+    const agents = await agentConfigs.find(
+      { ownerId: toId(userId) },
+      { sort: { name: 1 } }
+    );
 
     return NextResponse.json(agents);
   } catch (error) {
@@ -49,15 +49,16 @@ export async function POST(request: NextRequest) {
     }
 
     // Create agent config with owner
-    const agent = await prisma.agentConfig.create({
-      data: {
-        name: name.trim(),
-        openClawId: openClawId.trim(),
-        description: description?.trim() || null,
-        model: model?.trim() || null,
-        ownerId: userId,
-      },
+    const id = await agentConfigs.insertOne({
+      name: name.trim(),
+      openClawId: openClawId.trim(),
+      description: description?.trim() || null,
+      model: model?.trim() || null,
+      enabled: true,
+      ownerId: toId(userId),
     });
+
+    const agent = await agentConfigs.findOne({ _id: toId(id) });
 
     return NextResponse.json(agent, { status: 201 });
   } catch (error) {

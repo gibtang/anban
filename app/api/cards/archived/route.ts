@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db/prisma';
+import { boards, cards, toId, toIdOrNull } from '@/lib/db/mongo';
 import { verifyAuth, isUnauthorizedError, unauthorizedResponse } from '@/lib/auth/helpers';
 
 export async function GET(request: NextRequest) {
@@ -12,18 +12,19 @@ export async function GET(request: NextRequest) {
     }
 
     // Verify board ownership
-    const board = await prisma.board.findFirst({
-      where: { id: boardId, ownerId: userId },
-    });
+    const boardOid = toIdOrNull(boardId);
+    const board = boardOid
+      ? await boards.findOne({ _id: boardOid, ownerId: toId(userId) })
+      : null;
 
     if (!board) {
       return NextResponse.json({ error: 'Board not found' }, { status: 404 });
     }
 
-    const archivedCards = await prisma.card.findMany({
-      where: { boardId, archived: true },
-      orderBy: { updatedAt: 'desc' },
-    });
+    const archivedCards = await cards.find(
+      { boardId: boardOid, archived: true },
+      { sort: { updatedAt: -1 } }
+    );
 
     return NextResponse.json(archivedCards);
   } catch (error) {

@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/db/prisma';
+import { boards, cards, columns, toId, toIdOrNull, type CardDoc } from './mongo';
 
 interface AgentCardResult {
   id: string;
@@ -32,68 +32,46 @@ export async function getAgentCards(
   }
 
   // Get all board IDs on this account (include archived for human view)
-  const accountBoards = await prisma.board.findMany({
-    where: {
-      ownerId,
-      ...(boardId ? { id: boardId } : {}),
-    },
-    select: { id: true, name: true, archived: true },
+  const accountBoards = await boards.find({
+    ownerId: toId(ownerId),
+    ...(boardId ? { _id: toId(boardId) } : {}),
   });
 
-  const boardIds = accountBoards.map((b: { id: string }) => b.id);
   const boardMap = new Map<string, { name: string; archived: boolean }>(
-    accountBoards.map((b: { id: string; name: string; archived: boolean }) => [
-      b.id,
-      { name: b.name, archived: b.archived },
-    ])
+    accountBoards.map((b) => [b.id, { name: b.name, archived: b.archived }])
   );
 
-  if (boardIds.length === 0) {
+  if (accountBoards.length === 0) {
     return [];
   }
 
-  const cards = await prisma.card.findMany({
-    where: {
-      agentId,
-      boardId: { in: boardIds },
-    },
-    include: {
-      column: { select: { id: true, name: true } },
-    },
-    orderBy: { createdAt: 'desc' },
-  });
-
-  return cards.map(
-    (card: {
-      id: string;
-      title: string;
-      description: string | null;
-      tags: string[];
-      position: number;
-      boardId: string;
-      columnId: string;
-      agentId: string | null;
-      createdAt: Date;
-      updatedAt: Date;
-      column: { id: string; name: string };
-    }) => {
-      const board = boardMap.get(card.boardId);
-      return {
-        id: card.id,
-        title: card.title,
-        description: card.description,
-        tags: card.tags,
-        position: card.position,
-        boardId: card.boardId,
-        boardName: board?.name || 'Unknown',
-        boardArchived: board?.archived || false,
-        columnId: card.columnId,
-        columnName: card.column.name,
-        agentId: card.agentId,
-        blocked: (card as any).blocked ?? null,
-        createdAt: card.createdAt,
-        updatedAt: card.updatedAt,
-      };
-    }
+  const cardDocs = await cards.find(
+    { agentId: toId(agentId), boardId: { $in: accountBoards.map((b) => toId(b.id)) } },
+    { sort: { createdAt: -1 } }
   );
+  const columnIds = [...new Set(cardDocs.map((c) => c.columnId))];
+  const columnDocs = columnIds.length
+    ? await columns.find({ _id: { $in: columnIds.map(toId) } })
+    : [];
+  const columnMap = new Map(columnDocs.map((c) => [c.id, c.name]));
+
+  return cardDocs.map((card: CardDoc) => {
+    const board = boardMap.get(card.boardId);
+    return {
+      id: card.id,
+      title: card.title,
+      description: card.description,
+      tags: card.tags,
+      position: card.position,
+      boardId: card.boardId,
+      boardName: board?.name || 'Unknown',
+      boardArchived: board?.archived || false,
+      columnId: card.columnId,
+      columnName: columnMap.get(card.columnId) || 'Unknown',
+      agentId: card.agentId,
+      blocked: card.blocked,
+      createdAt: card.createdAt,
+      updatedAt: card.updatedAt,
+    };
+  });
 }

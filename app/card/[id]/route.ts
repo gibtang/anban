@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { unauthorizedResponse } from '@/lib/auth/helpers';
-import { prisma } from '@/lib/db/prisma';
+import { agents, boards, cards, columns, comments as commentsCollection, toId } from '@/lib/db/mongo';
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -24,8 +24,8 @@ export async function GET(request: NextRequest, context: RouteContext) {
     }
 
     // Validate agent exists with this token
-    const agent = await prisma.agent.findUnique({
-      where: { token },
+    const agent = await agents.findOne({
+      token,
     });
 
     if (!agent) {
@@ -33,8 +33,8 @@ export async function GET(request: NextRequest, context: RouteContext) {
     }
 
     // Fetch card — agent has account-level access
-    const card = await prisma.card.findFirst({
-      where: { id: cardId },
+    const card = await cards.findOne({
+      _id: toId(cardId),
     });
 
     if (!card) {
@@ -42,28 +42,25 @@ export async function GET(request: NextRequest, context: RouteContext) {
     }
 
     // Get column name
-    const column = await prisma.column.findFirst({
-      where: { id: card.columnId },
+    const column = await columns.findOne({
+      _id: toId(card.columnId),
     });
 
     // Get board name
-    const board = await prisma.board.findFirst({
-      where: { id: card.boardId },
+    const board = await boards.findOne({
+      _id: toId(card.boardId),
     });
 
     // Get comments
-    const comments = await prisma.comment.findMany({
-      where: { cardId: card.id },
-      orderBy: { createdAt: 'asc' },
-    });
+    const commentsList = await commentsCollection.find(
+      { cardId: toId(card.id) },
+      { sort: { createdAt: 1 } }
+    );
 
     // Get assignee name if card is assigned (agentId field)
     let assigneeName: string | null = null;
     if (card.agentId) {
-      const assigneeAgent = await prisma.agent.findUnique({
-        where: { id: card.agentId },
-        select: { name: true },
-      });
+      const assigneeAgent = await agents.findOne({ _id: toId(card.agentId) });
       assigneeName = assigneeAgent?.name || null;
     }
 
@@ -75,7 +72,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
       tags: card.tags,
       assignee: assigneeName,
       boardName: board?.name || 'Unknown',
-      comments: comments.map((c: { authorName: string; content: string; createdAt: Date }) => ({
+      comments: commentsList.map((c) => ({
         author: c.authorName,
         content: c.content,
         createdAt: c.createdAt,
@@ -143,7 +140,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
     <div class="comments">
       <h2>Comments (${cardDetails.comments.length})</h2>
       ${cardDetails.comments.length > 0
-        ? cardDetails.comments.map((c: { author: string; content: string; createdAt: string }) => `
+        ? cardDetails.comments.map((c: { author: string; content: string; createdAt: Date }) => `
           <div class="comment">
             <div class="comment-author">${escapeHtml(c.author)}</div>
             <div class="comment-content">${escapeHtml(c.content)}</div>

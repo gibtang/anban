@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db/prisma';
+import { boards, cards, toId, toIdOrNull, ObjectId, type CardDoc } from '@/lib/db/mongo';
 import { verifyAuth, isUnauthorizedError, unauthorizedResponse } from '@/lib/auth/helpers';
 import { logAuditEvent } from '@/lib/db/audit';
 import { logActivity } from '@/lib/db/activity';
@@ -17,8 +17,8 @@ export async function GET(request: NextRequest) {
 
     // Build where clause
     const where: {
-      boardId?: string;
-      columnId?: string;
+      boardId?: ObjectId;
+      columnId?: ObjectId;
       archived?: boolean;
     } = {};
 
@@ -28,32 +28,30 @@ export async function GET(request: NextRequest) {
     }
 
     if (boardId) {
+      const boardOid = toIdOrNull(boardId);
       // Verify board ownership
-      const board = await prisma.board.findFirst({
-        where: {
-          id: boardId,
-          ownerId: userId,
-        },
-      });
+      const board = boardOid
+        ? await boards.findOne({ _id: boardOid, ownerId: toId(userId) })
+        : null;
 
-      if (!board) {
+      if (!board || !boardOid) {
         return NextResponse.json({ error: 'Board not found' }, { status: 404 });
       }
 
-      where.boardId = boardId;
+      where.boardId = boardOid;
     }
 
     if (columnId) {
-      where.columnId = columnId;
+      const columnOid = toIdOrNull(columnId);
+      if (!columnOid) {
+        return NextResponse.json([]);
+      }
+      where.columnId = columnOid;
     }
-
     // Get cards
-    const cards = await prisma.card.findMany({
-      where,
-      orderBy: { position: 'asc' },
-    });
+    const cardDocs = await cards.find(where, { sort: { position: 1 } });
 
-    return NextResponse.json(cards);
+    return NextResponse.json(cardDocs);
   } catch (error) {
     console.error('Error fetching cards:', error);
     if (isUnauthorizedError(error)) {
@@ -84,59 +82,60 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify board ownership
-    const board = await prisma.board.findFirst({
-      where: {
-        id: boardId,
-        ownerId: userId,
-      },
-    });
+    const boardOid = toIdOrNull(boardId);
+    const board = boardOid
+      ? await boards.findOne({ _id: boardOid, ownerId: toId(userId) })
+      : null;
 
     if (!board) {
       return NextResponse.json({ error: 'Board not found' }, { status: 404 });
     }
 
     // Get the current max position in the column
-    const maxPositionCard = await prisma.card.findFirst({
-      where: { columnId },
-      orderBy: { position: 'desc' },
-    });
+    const columnOid = toIdOrNull(columnId);
+    const maxPositionCard = columnOid
+      ? (await cards.find({ columnId: columnOid }, { sort: { position: -1 }, limit: 1 }))[0]
+      : undefined;
 
     const newPosition = maxPositionCard ? maxPositionCard.position + 1 : 0;
 
     // Create card
-    const card = await prisma.card.create({
-      data: {
-        title: title.trim(),
-        description: description?.trim() || null,
-        columnId,
-        boardId,
-        tags,
-        agentId: agentId || null,
-        position: newPosition,
-      },
+    const cardId = await cards.insertOne({
+      title: title.trim(),
+      description: description?.trim() || null,
+      columnId: toId(columnId),
+      boardId: toId(boardId),
+      tags,
+      agentId: toIdOrNull(agentId || null),
+      blocked: null,
+      archived: false,
+      position: newPosition,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     });
+    const card: CardDoc | null = await cards.findOne({ _id: toId(cardId) });
 
     // Log card creation
     await logAuditEvent({
       userId,
       action: 'CREATE',
       entityType: 'Card',
-      entityId: card.id,
+      entityId: cardId,
       newValues: {
-        title: card.title,
-        description: card.description,
-        columnId: card.columnId,
-        boardId: card.boardId,
-        tags: card.tags,
-        agentId: card.agentId,
-        position: card.position,
+        title: card?.title,
+        description: card?.description ?? null,
+        columnId: card?.columnId,
+        boardId: card?.boardId,
+        tags: card?.tags ?? [],
+        agentId: card?.agentId ?? null,
+        position: card?.position ?? newPosition,
       },
     });
 
     // Log activity
     await logActivity({
-      cardId: card.id,
-      boardId: card.boardId,
+      cardId,
+      boardId: card?.boardId ?? boardId,
       type: 'created',
       authorId: userId,
       authorName: 'You',

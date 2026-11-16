@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db/prisma';
 import { verifyAgentAuth, isUnauthorizedError, unauthorizedResponse } from '@/lib/auth/helpers';
 import { eventBus } from '@/lib/events/event-bus';
 import { logActivity } from '@/lib/db/activity';
 import { logAuditEvent } from '@/lib/db/audit';
+import { cards, columns, toId } from '@/lib/db/mongo';
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -38,8 +38,9 @@ export async function PUT(request: NextRequest, context: RouteContext) {
 
 
     // Verify card belongs to this board
-    const existingCard = await prisma.card.findFirst({
-      where: { id: cardId, boardId },
+    const existingCard = await cards.findOne({
+      _id: toId(cardId),
+      boardId: toId(boardId),
     });
 
     if (!existingCard) {
@@ -48,32 +49,37 @@ export async function PUT(request: NextRequest, context: RouteContext) {
 
     // If moving to a new column, verify it belongs to this board
     if (columnId && columnId !== existingCard.columnId) {
-      const targetColumn = await prisma.column.findFirst({
-        where: { id: columnId, boardId },
+      const targetColumn = await columns.findOne({
+        _id: toId(columnId),
+        boardId: toId(boardId),
       });
       if (!targetColumn) {
         return NextResponse.json({ error: 'Target column not found on this board' }, { status: 400 });
       }
 
       // Get next position in target column
-      const maxPosCard = await prisma.card.findFirst({
-        where: { columnId },
-        orderBy: { position: 'desc' },
-      });
-      const newPosition = maxPosCard ? maxPosCard.position + 1 : 0;
+      const maxPosCards = await cards.find(
+        { columnId: toId(columnId) },
+        { sort: { position: -1 }, limit: 1 }
+      );
+      const newPosition = maxPosCards.length > 0 ? maxPosCards[0].position + 1 : 0;
 
-      const updatedCard = await prisma.card.update({
-        where: { id: cardId },
-        data: {
-          columnId,
-          position: newPosition,
-          ...(title !== undefined && { title: title.trim() }),
-          ...(description !== undefined && { description: description?.trim() || null }),
-          ...(tags !== undefined && { tags }),
-          ...(blocked !== undefined && { blocked: blocked || null }),
-          ...(archived !== undefined && { archived }),
+      await cards.updateOne(
+        { _id: toId(cardId) },
+        {
+          $set: {
+            columnId: toId(columnId),
+            position: newPosition,
+            updatedAt: new Date(),
+            ...(title !== undefined && { title: title.trim() }),
+            ...(description !== undefined && { description: description?.trim() || null }),
+            ...(tags !== undefined && { tags }),
+            ...(blocked !== undefined && { blocked: blocked || null }),
+            ...(archived !== undefined && { archived }),
+          },
         },
-      });
+      );
+      const updatedCard = (await cards.findOne({ _id: toId(cardId) }))!;
 
       // Emit real-time event
       eventBus.emitEvent({
@@ -96,8 +102,8 @@ export async function PUT(request: NextRequest, context: RouteContext) {
           columnId: existingCard.columnId,
           position: existingCard.position,
           tags: existingCard.tags,
-          blocked: (existingCard as any).blocked ?? null,
-          archived: (existingCard as any).archived ?? false,
+          blocked: existingCard.blocked ?? null,
+          archived: existingCard.archived ?? false,
         },
         newValues: {
           title: updatedCard.title,
@@ -105,14 +111,14 @@ export async function PUT(request: NextRequest, context: RouteContext) {
           columnId: updatedCard.columnId,
           position: updatedCard.position,
           tags: updatedCard.tags,
-          blocked: (updatedCard as any).blocked ?? null,
-          archived: (updatedCard as any).archived ?? false,
+          blocked: updatedCard.blocked ?? null,
+          archived: updatedCard.archived ?? false,
         },
       });
 
       // Log activity
-      const fromCol = await prisma.column.findUnique({ where: { id: existingCard.columnId } });
-      const toCol = await prisma.column.findUnique({ where: { id: columnId } });
+      const fromCol = await columns.findOne({ _id: toId(existingCard.columnId) });
+      const toCol = await columns.findOne({ _id: toId(columnId) });
       await logActivity({
         cardId,
         boardId,
@@ -137,10 +143,11 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     if (blocked !== undefined) updateData.blocked = blocked || null;
     if (archived !== undefined) updateData.archived = archived;
 
-    const updatedCard = await prisma.card.update({
-      where: { id: cardId },
-      data: updateData,
-    });
+    await cards.updateOne(
+      { _id: toId(cardId) },
+      { $set: { ...updateData, updatedAt: new Date() } },
+    );
+    const updatedCard = (await cards.findOne({ _id: toId(cardId) }))!;
 
     // Audit trail for simple update
     const hasChanges = Object.keys(updateData).length > 0;
@@ -154,15 +161,15 @@ export async function PUT(request: NextRequest, context: RouteContext) {
           title: existingCard.title,
           description: existingCard.description,
           tags: existingCard.tags,
-          blocked: (existingCard as any).blocked ?? null,
-          archived: (existingCard as any).archived ?? false,
+          blocked: existingCard.blocked ?? null,
+          archived: existingCard.archived ?? false,
         },
         newValues: {
           title: updatedCard.title,
           description: updatedCard.description,
           tags: updatedCard.tags,
-          blocked: (updatedCard as any).blocked ?? null,
-          archived: (updatedCard as any).archived ?? false,
+          blocked: updatedCard.blocked ?? null,
+          archived: updatedCard.archived ?? false,
         },
       });
     }
@@ -179,8 +186,8 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     if (title !== undefined && existingCard.title !== title.trim()) fieldsChanged.push('title');
     if (description !== undefined && existingCard.description !== (description?.trim() || null)) fieldsChanged.push('description');
     if (tags !== undefined && JSON.stringify(existingCard.tags) !== JSON.stringify(tags)) fieldsChanged.push('tags');
-    if (archived !== undefined && (existingCard as any).archived !== archived) fieldsChanged.push('archived');
-    if (blocked !== undefined && ((existingCard as any).blocked ?? null) !== (blocked || null)) fieldsChanged.push('blocked');
+    if (archived !== undefined && existingCard.archived !== archived) fieldsChanged.push('archived');
+    if (blocked !== undefined && (existingCard.blocked ?? null) !== (blocked || null)) fieldsChanged.push('blocked');
     if (fieldsChanged.length > 0) {
       await logActivity({
         cardId,

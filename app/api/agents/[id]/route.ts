@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db/prisma';
+import { agentConfigs, toId } from '@/lib/db/mongo';
 import { verifyAuth, isUnauthorizedError, unauthorizedResponse } from '@/lib/auth/helpers';
 
 interface RouteContext {
@@ -15,12 +15,9 @@ export async function GET(request: NextRequest, context: RouteContext) {
     const { id } = await context.params;
 
     // Get agent config by ID and verify ownership
-    const agent = await prisma.agentConfig.findFirst({
-      where: {
-        id,
-        ownerId: userId,
-      },
-    });
+    const agent = /^[a-fA-F0-9]{24}$/.test(id)
+      ? await agentConfigs.findOne({ _id: toId(id), ownerId: toId(userId) })
+      : null;
 
     if (!agent) {
       return NextResponse.json({ error: 'Agent not found' }, { status: 404 });
@@ -45,12 +42,9 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     const { name, openClawId, description, model, enabled } = body;
 
     // Verify agent exists and user owns it
-    const existingAgent = await prisma.agentConfig.findFirst({
-      where: {
-        id,
-        ownerId: userId,
-      },
-    });
+    const existingAgent = /^[a-fA-F0-9]{24}$/.test(id)
+      ? await agentConfigs.findOne({ _id: toId(id), ownerId: toId(userId) })
+      : null;
 
     if (!existingAgent) {
       return NextResponse.json({ error: 'Agent not found' }, { status: 404 });
@@ -107,10 +101,9 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     }
 
     // Update agent config
-    const agent = await prisma.agentConfig.update({
-      where: { id },
-      data: updateData,
-    });
+    await agentConfigs.updateOne({ _id: toId(id) }, { $set: updateData });
+
+    const agent = await agentConfigs.findOne({ _id: toId(id) });
 
     return NextResponse.json(agent);
   } catch (error) {
@@ -129,21 +122,16 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
     const { id } = await context.params;
 
     // Verify agent exists and user owns it before deletion
-    const existingAgent = await prisma.agentConfig.findFirst({
-      where: {
-        id,
-        ownerId: userId,
-      },
-    });
+    const existingAgent = /^[a-fA-F0-9]{24}$/.test(id)
+      ? await agentConfigs.findOne({ _id: toId(id), ownerId: toId(userId) })
+      : null;
 
     if (!existingAgent) {
       return NextResponse.json({ error: 'Agent not found' }, { status: 404 });
     }
 
     // Delete agent config
-    await prisma.agentConfig.delete({
-      where: { id },
-    });
+    await agentConfigs.deleteOne({ _id: toId(id) });
 
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (error) {

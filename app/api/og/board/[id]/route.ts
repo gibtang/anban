@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db/prisma';
+import { boards, toId } from '@/lib/db/mongo';
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -20,10 +20,9 @@ export async function GET(_request: NextRequest, context: RouteContext) {
 
   let title = 'Board';
   try {
-    const board = await prisma.board.findUnique({
-      where: { id: boardId },
-      select: { name: true },
-    });
+    const board = /^[a-fA-F0-9]{24}$/.test(boardId)
+      ? await boards.findOne({ _id: toId(boardId) })
+      : null;
     if (board?.name) title = board.name;
   } catch {
     // DB error or invalid ID — fall back to generic title
