@@ -320,9 +320,8 @@ function mapActivity(d: WithId<Document>): ActivityDoc {
  * Collection accessors — thin typed wrappers that apply the mappers.
  * ------------------------------------------------------------------ */
 
-export interface FindManyOptions extends FindOptions {
-  /** Convenience limit (FindOptions.limit also works). */
-}
+/** Convenience limit (FindOptions.limit also works). */
+export type FindManyOptions = FindOptions;
 
 export interface MappedCollection<Doc> {
   /** Escape hatch for driver operations the wrapper does not cover (deleteMany, updateMany, ...). */

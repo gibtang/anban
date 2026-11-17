@@ -118,7 +118,9 @@ export default function FeedPage() {
   const cursorRef = useRef<FeedResponse['nextCursor']>(null);
   const loadingMoreRef = useRef(false);
 
-  cursorRef.current = cursor;
+  useEffect(() => {
+    cursorRef.current = cursor;
+  }, [cursor]);
 
   const loadInitial = useCallback(async () => {
     setLoading(true);
@@ -140,7 +142,7 @@ export default function FeedPage() {
   }, []);
 
   useEffect(() => {
-    loadInitial();
+    queueMicrotask(loadInitial);
   }, [loadInitial]);
 
   const loadMore = useCallback(async () => {

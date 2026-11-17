@@ -51,7 +51,7 @@ export function CommentSection({ cardId }: CommentSectionProps) {
 
   useEffect(() => {
     if (!cardId) return;
-    fetchComments();
+    queueMicrotask(fetchComments);
   }, [cardId, fetchComments]);
 
   const handleSubmit = async (e: React.FormEvent) => {

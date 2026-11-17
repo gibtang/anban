@@ -13,6 +13,11 @@ interface AgentOption {
   name: string;
 }
 
+/** Structural slice of the board SWR cache entry the optimistic updaters touch. */
+interface BoardColumnsShape {
+  columns: Array<{ cards: Card[] }>;
+}
+
 interface KanbanCardProps {
   card: Card;
   isDragging?: boolean;
@@ -92,13 +97,13 @@ export default function KanbanCard({ card, isDragging, onEdit, onDelete, agentNa
     setAgentDropdownOpen(false);
 
     // Optimistic: update the local SWR cache
-    mutate(`/api/boards/${boardId}`, (current: any) => {
+    mutate(`/api/boards/${boardId}`, (current: BoardColumnsShape | undefined) => {
       if (!current) return current;
       return {
         ...current,
-        columns: current.columns.map((col: any) => ({
+        columns: current.columns.map((col) => ({
           ...col,
-          cards: col.cards.map((c: any) =>
+          cards: col.cards.map((c) =>
             c.id === card.id ? { ...c, agentId } : c
           ),
         })),
@@ -127,13 +132,13 @@ export default function KanbanCard({ card, isDragging, onEdit, onDelete, agentNa
     setBlockedDropdownOpen(false);
 
     // Optimistic update
-    mutate(`/api/boards/${boardId}`, (current: any) => {
+    mutate(`/api/boards/${boardId}`, (current: BoardColumnsShape | undefined) => {
       if (!current) return current;
       return {
         ...current,
-        columns: current.columns.map((col: any) => ({
+        columns: current.columns.map((col) => ({
           ...col,
-          cards: col.cards.map((c: any) =>
+          cards: col.cards.map((c) =>
             c.id === card.id ? { ...c, blocked } : c
           ),
         })),

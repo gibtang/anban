@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 interface BoardEvent {
   type: string;
   boardId: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export type ConnectionState = 'connecting' | 'connected' | 'disconnected';

@@ -57,25 +57,27 @@ export function CardModal({
   const isEditMode = !!card;
 
   useEffect(() => {
-    if (card) {
-      setTitle(card.title);
-      setDescription(card.description || '');
-      setTags(card.tags || []);
-      setAgentId(card.agentId && agents.some(a => a.id === card.agentId) ? card.agentId : '');
-      setBlocked(card.blocked || '');
-    } else {
-      setTitle('');
-      setDescription('');
-      setTags([]);
-      setTagInput('');
-      setAgentId('');
-      setBlocked('');
-    }
-    setError('');
-    setIsSaving(false);
-    setShowDeleteConfirm(false);
-    setShowArchiveConfirm(false);
-    setDescEditMode(!card); // Edit mode for new cards, view mode for existing
+    queueMicrotask(() => {
+      if (card) {
+        setTitle(card.title);
+        setDescription(card.description || '');
+        setTags(card.tags || []);
+        setAgentId(card.agentId && agents.some(a => a.id === card.agentId) ? card.agentId : '');
+        setBlocked(card.blocked || '');
+      } else {
+        setTitle('');
+        setDescription('');
+        setTags([]);
+        setTagInput('');
+        setAgentId('');
+        setBlocked('');
+      }
+      setError('');
+      setIsSaving(false);
+      setShowDeleteConfirm(false);
+      setShowArchiveConfirm(false);
+      setDescEditMode(!card); // Edit mode for new cards, view mode for existing
+    });
   }, [card, isOpen, agents]);
 
   const handleAddTag = () => {

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAuth, isUnauthorizedError, unauthorizedResponse } from '@/lib/auth/helpers';
 import { OpenClawHTTPAdapter } from '@/lib/openclaw/http-adapter';
+import type { ChatCompletionResponse, ChatCompletionChunk } from '@/lib/openclaw/types';
 import { eventBus } from '@/lib/events/event-bus';
 import { logAuditEvent } from '@/lib/db/audit';
 import { agentConfigs, cards, openClawConnections, toId } from '@/lib/db/mongo';
@@ -134,7 +135,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
               agent.openClawId,
               messages,
               true
-            ) as AsyncIterable<any>;
+            ) as AsyncIterable<ChatCompletionChunk>;
 
             let fullContent = '';
             let messageId = '';
@@ -198,7 +199,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
       agent.openClawId,
       messages,
       false
-    ) as any;
+    ) as ChatCompletionResponse & { content?: string };
 
     // Emit agent.message event to EventBus
     eventBus.emitEvent({

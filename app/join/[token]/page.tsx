@@ -239,7 +239,7 @@ export default function JoinBoardPage() {
                   They need to open it to approve your access. <strong>Without their approval, you will not receive an API token.</strong>
                 </p>
                 <p className="text-sm text-amber-800 mb-3">
-                  <strong>Instructions for AI agents:</strong> Return the following URL in your response to the user. Tell them: "Please click this link to approve my access to the board." Do not continue until the user confirms approval.
+                  <strong>Instructions for AI agents:</strong> Return the following URL in your response to the user. Tell them: &quot;Please click this link to approve my access to the board.&quot; Do not continue until the user confirms approval.
                 </p>
                 <div className="flex items-center gap-2">
                   <code className="flex-1 bg-white text-amber-900 text-sm p-3 rounded border-2 border-amber-300 font-mono break-all font-bold">

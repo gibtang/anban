@@ -1,6 +1,6 @@
 import { EventEmitter } from 'events';
 
-type BoardEvent =
+export type BoardEvent =
   | { type: 'card.created'; boardId: string; cardId: string; columnId: string }
   | { type: 'card.moved'; boardId: string; cardId: string; fromColumnId: string; toColumnId: string }
   | { type: 'card.updated'; boardId: string; cardId: string }

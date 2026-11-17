@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 import { eventBus } from '@/lib/events/event-bus';
+import type { BoardEvent } from '@/lib/events/event-bus';
 import { boards, toId } from '@/lib/db/mongo';
 import { verifyAuth, isUnauthorizedError, unauthorizedResponse } from '@/lib/auth/helpers';
 
@@ -36,7 +37,7 @@ export async function GET(request: NextRequest) {
       controller.enqueue(encoder.encode(data));
 
       // Subscribe to board-specific events
-      const boardEventHandler = (event: any) => {
+      const boardEventHandler = (event: BoardEvent) => {
         const eventData = `data: ${JSON.stringify(event)}\n\n`;
         controller.enqueue(encoder.encode(eventData));
       };

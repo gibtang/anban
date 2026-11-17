@@ -17,13 +17,16 @@ export function GlobalOverlay() {
           timerRef.current = null;
         }, 300);
       }
-    } else {
-      // Loading done — clear any pending timer and hide immediately
+    } else if (visible) {
+      // Loading done — clear any pending timer, then hide on the next tick
       if (timerRef.current) {
         clearTimeout(timerRef.current);
         timerRef.current = null;
       }
-      setVisible(false);
+      timerRef.current = setTimeout(() => {
+        setVisible(false);
+        timerRef.current = null;
+      }, 0);
     }
 
     return () => {

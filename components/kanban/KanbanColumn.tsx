@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useDroppable } from '@dnd-kit/core';
 import {
   SortableContext,
@@ -48,11 +48,13 @@ export default function KanbanColumn({
   onAddCard,
 }: KanbanColumnProps) {
   const [collapsed, setCollapsed] = useState(defaultCollapsed);
+  const [prevDefaultCollapsed, setPrevDefaultCollapsed] = useState(defaultCollapsed);
 
   // Sync if defaultCollapsed changes (e.g., on initial load)
-  useEffect(() => {
+  if (prevDefaultCollapsed !== defaultCollapsed) {
+    setPrevDefaultCollapsed(defaultCollapsed);
     setCollapsed(defaultCollapsed);
-  }, [defaultCollapsed]);
+  }
 
   const { setNodeRef, isOver } = useDroppable({
     id: column.id,

@@ -166,11 +166,13 @@ export default function KanbanBoard({ boardId, initialCardId }: KanbanBoardProps
   // card outside this already-authorized board response.
   useEffect(() => {
     if (!initialCardId || !displayBoard || modalState || attemptedDeepLinkCardId.current === initialCardId) return;
-    attemptedDeepLinkCardId.current = initialCardId;
-    const card = displayBoard.columns.flatMap((column) => column.cards)
-      .find((candidate) => candidate.id === initialCardId);
-    if (card) setModalState({ mode: 'edit', card });
-    else toast.showToast('This card is not available on this board.', 'error');
+    queueMicrotask(() => {
+      attemptedDeepLinkCardId.current = initialCardId;
+      const card = displayBoard.columns.flatMap((column) => column.cards)
+        .find((candidate) => candidate.id === initialCardId);
+      if (card) setModalState({ mode: 'edit', card });
+      else toast.showToast('This card is not available on this board.', 'error');
+    });
   }, [displayBoard, initialCardId, modalState, toast]);
 
   const handleDragStart = useCallback((event: DragStartEvent) => {

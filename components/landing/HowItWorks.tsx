@@ -91,8 +91,8 @@ export function HowItWorks() {
                 <span className="text-green-400">{'# Create a card'}</span>{'\n'}
                 <span className="text-blue-400">POST</span> <span className="text-gray-300">/api/agent/cards</span>{'\n'}
                 <span className="text-gray-300">{'{'}</span>{'\n'}
-                <span className="text-yellow-300">  "title"</span><span className="text-gray-300">:</span> <span className="text-green-300">"Research completed"</span><span className="text-gray-300">,</span>{'\n'}
-                <span className="text-yellow-300">  "columnId"</span><span className="text-gray-300">:</span> <span className="text-green-300">"done"</span>{'\n'}
+                <span className="text-yellow-300">  &quot;title&quot;</span><span className="text-gray-300">:</span> <span className="text-green-300">&quot;Research completed&quot;</span><span className="text-gray-300">,</span>{'\n'}
+                <span className="text-yellow-300">  &quot;columnId&quot;</span><span className="text-gray-300">:</span> <span className="text-green-300">&quot;done&quot;</span>{'\n'}
                 <span className="text-gray-300">{'}'}</span>
               </code>
             </pre>

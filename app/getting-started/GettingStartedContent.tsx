@@ -71,12 +71,14 @@ export default function GettingStartedContent() {
 
   useEffect(() => {
     // Check localStorage for completed steps
-    const stored = localStorage.getItem('anban-onboarding-steps');
-    if (stored) {
-      try {
-        setCompletedSteps(new Set(JSON.parse(stored)));
-      } catch {}
-    }
+    queueMicrotask(() => {
+      const stored = localStorage.getItem('anban-onboarding-steps');
+      if (stored) {
+        try {
+          setCompletedSteps(new Set(JSON.parse(stored)));
+        } catch {}
+      }
+    });
   }, []);
 
   const toggleStep = (stepNumber: number) => {

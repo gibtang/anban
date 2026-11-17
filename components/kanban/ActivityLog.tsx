@@ -73,14 +73,16 @@ export function ActivityLog({ cardId }: ActivityLogProps) {
   useEffect(() => {
     if (!cardId) return;
 
-    setLoading(true);
-    apiFetch(`/api/activities?cardId=${cardId}`)
-      .then((res) => res.ok ? res.json() : [])
-      .then((data) => {
-        setActivities(data);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
+    queueMicrotask(() => {
+      setLoading(true);
+      apiFetch(`/api/activities?cardId=${cardId}`)
+        .then((res) => res.ok ? res.json() : [])
+        .then((data) => {
+          setActivities(data);
+          setLoading(false);
+        })
+        .catch(() => setLoading(false));
+    });
   }, [cardId]);
 
   if (loading) {

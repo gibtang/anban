@@ -5,6 +5,8 @@ import useSWR from 'swr';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { fetchWithRetry } from '@/lib/utils/retry';
+import { useNow } from '@/lib/hooks/useNow';
+import { formatRelativeTime } from '@/lib/format/relativeTime';
 
 interface AgentCard {
   id: string;
@@ -40,19 +42,7 @@ export default function AgentCardsPage() {
     fetcher
   );
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const diffMs = Date.now() - date.getTime();
-    if (diffMs < 0) return 'Just now';
-    const mins = Math.floor(diffMs / 60000);
-    const hours = Math.floor(diffMs / 3600000);
-    const days = Math.floor(diffMs / 86400000);
-    if (mins < 1) return 'Just now';
-    if (mins < 60) return `${mins}m ago`;
-    if (hours < 24) return `${hours}h ago`;
-    if (days < 7) return `${days}d ago`;
-    return date.toLocaleDateString();
-  };
+  const now = useNow();
 
   // Group cards by board
   const cardsByBoard = data?.cards.reduce((acc, card) => {
@@ -181,7 +171,7 @@ export default function AgentCardsPage() {
                         </div>
                       </div>
                       <span className="text-xs text-gray-400 whitespace-nowrap">
-                        {formatDate(card.updatedAt)}
+                        {formatRelativeTime(card.updatedAt, now ?? 0)}
                       </span>
                     </div>
                   </Link>
