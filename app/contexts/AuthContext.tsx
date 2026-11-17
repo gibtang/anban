@@ -102,8 +102,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         toJSON: () => ({}),
       } as User;
 
-      setUser(mockUser);
-      setLoading(false);
+      queueMicrotask(() => {
+        setUser(mockUser);
+        setLoading(false);
+      });
     } else {
       initFirebase();
     }

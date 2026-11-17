@@ -402,7 +402,7 @@ export default function BoardsPage() {
               <div>
                 <h2 className="text-lg font-semibold text-gray-900">Archive Board</h2>
                 <p className="mt-1 text-sm text-gray-500">
-                  Archive <span className="font-medium text-gray-700">"{archiveBoardName}"</span>? It will be hidden from your boards list but can be restored anytime from the Archived page.
+                  Archive <span className="font-medium text-gray-700">&quot;{archiveBoardName}&quot;</span>? It will be hidden from your boards list but can be restored anytime from the Archived page.
                 </p>
               </div>
             </div>

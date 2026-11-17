@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import apiFetch from '@/lib/apiFetch';
 import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 
 interface OpenClawConfig {
   gatewayUrl: string;
@@ -35,12 +36,6 @@ function SettingsContent() {
   } | null>(null);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    if (boardId) {
-      loadSettings();
-    }
-  }, [boardId]);
-
   const loadSettings = async () => {
     if (!boardId) return;
 
@@ -57,6 +52,12 @@ function SettingsContent() {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (boardId) {
+      queueMicrotask(loadSettings);
+    }
+  }, [boardId]);
 
   const handleSave = async () => {
     if (!boardId) {
@@ -130,7 +131,7 @@ function SettingsContent() {
             <div className="ml-3">
               <h3 className="text-sm font-medium text-yellow-800">Board ID Required</h3>
               <div className="mt-2 text-sm text-yellow-700">
-                <p>Please access settings from a specific board. Go to <a href="/boards" className="underline font-medium">Boards</a> and select a board to configure its settings.</p>
+                <p>Please access settings from a specific board. Go to <Link href="/boards" className="underline font-medium">Boards</Link> and select a board to configure its settings.</p>
               </div>
             </div>
           </div>
